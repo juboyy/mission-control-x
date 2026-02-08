@@ -8,10 +8,11 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const zlib = require('zlib');
+const os = require('os');
 const crypto = require('crypto');
 
 // ===== Configuration =====
-const VERSION = '2.8.0';
+const VERSION = '2.9.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -1078,6 +1079,65 @@ const routes = {
     return {
       success: true,
       timeline: Object.entries(byHour).map(([hour, items]) => ({ hour, items, count: items.length }))
+    };
+  },
+
+  'GET /api/operations': async () => {
+    // Read crons from OpenClaw
+    const cronJobsPath = path.join(os.homedir(), '.openclaw/cron/jobs.json');
+    let crons = [];
+    
+    try {
+      if (fs.existsSync(cronJobsPath)) {
+        const data = JSON.parse(fs.readFileSync(cronJobsPath, 'utf8'));
+        crons = (data.jobs || []).map(job => ({
+          id: job.id,
+          name: job.name,
+          enabled: job.enabled,
+          schedule: job.schedule,
+          nextRun: job.state?.nextRunAtMs,
+          lastRun: job.state?.lastRunAtMs,
+          lastStatus: job.state?.lastStatus,
+          lastDuration: job.state?.lastDurationMs,
+          delivery: job.delivery?.channel
+        }));
+      }
+    } catch (e) {
+      logger.error('Error reading crons', { error: e.message });
+    }
+
+    // Get system stats
+    const uptime = process.uptime();
+    const memory = process.memoryUsage();
+    
+    // Categorize crons
+    const continuous = crons.filter(c => c.schedule?.kind === 'every');
+    const daily = crons.filter(c => c.schedule?.kind === 'cron' && c.schedule?.expr?.includes('* *'));
+    const weekly = crons.filter(c => c.schedule?.kind === 'cron' && !c.schedule?.expr?.includes('* *'));
+
+    return {
+      success: true,
+      operations: {
+        system: {
+          status: 'online',
+          version: VERSION,
+          uptime: Math.floor(uptime),
+          memory: Math.round(memory.heapUsed / 1024 / 1024),
+          nodeVersion: process.version
+        },
+        crons: {
+          total: crons.length,
+          enabled: crons.filter(c => c.enabled).length,
+          continuous: continuous.length,
+          daily: daily.length,
+          weekly: weekly.length,
+          list: crons.sort((a, b) => (a.nextRun || 0) - (b.nextRun || 0))
+        },
+        agents: {
+          emoji: { main: '🌀', nami: '🍊', robin: '📚', franky: '🔧', zoro: '⚔️', sanji: '🍳', chopper: '🩺', usopp: '🎯' },
+          roles: { main: 'Orquestrador', nami: 'Navegadora', robin: 'Arqueóloga', franky: 'Engenheiro', zoro: 'Executor', sanji: 'Provedor', chopper: 'Médico', usopp: 'Comunicador' }
+        }
+      }
     };
   }
 };
