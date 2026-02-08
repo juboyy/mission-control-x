@@ -566,6 +566,84 @@
       opacity: 0.5;
     }
 
+    /* Crew Groups */
+    .crew-group {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-sm);
+      overflow: hidden;
+    }
+
+    .crew-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-md);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .crew-header:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .crew-header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .crew-emoji {
+      font-size: 24px;
+    }
+
+    .crew-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--label);
+    }
+
+    .crew-badge {
+      background: var(--fill);
+      color: var(--label-secondary);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .crew-header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .crew-cost {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--teal);
+    }
+
+    .crew-expand {
+      color: var(--label-tertiary);
+      font-size: 12px;
+    }
+
+    .crew-members {
+      border-top: 1px solid var(--separator);
+      background: var(--bg-primary);
+    }
+
+    .agent-row.sub-agent {
+      padding-left: calc(var(--space-md) + 32px);
+      min-height: 48px;
+    }
+
+    .agent-row.sub-agent .agent-avatar {
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+    }
+
     .agent-role {
       font-size: 15px;
       color: var(--label-secondary);
@@ -3627,6 +3705,145 @@
     }
 
     function renderAgents(sessions, containerId, limit) {
+      const list = limit ? sessions.slice(0, limit) : sessions;
+      const container = document.getElementById(containerId);
+
+      if (!list.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
+        return;
+      }
+
+      // Group by parentCrew
+      const crewMembers = ['main', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'nami', 'usopp', 'cron'];
+      const grouped = {};
+      const ungrouped = [];
+
+      list.forEach(s => {
+        const parent = s.parentCrew;
+        if (parent && crewMembers.includes(parent)) {
+          if (!grouped[parent]) grouped[parent] = [];
+          grouped[parent].push(s);
+        } else {
+          ungrouped.push(s);
+        }
+      });
+
+      // Sort crew by total cost
+      const sortedCrew = crewMembers.filter(c => grouped[c]?.length > 0)
+        .sort((a, b) => {
+          const aCost = grouped[a].reduce((sum, s) => sum + (s.cost || 0), 0);
+          const bCost = grouped[b].reduce((sum, s) => sum + (s.cost || 0), 0);
+          return bCost - aCost;
+        });
+
+      let html = '';
+
+      // Render grouped by crew
+      sortedCrew.forEach(crew => {
+        const members = grouped[crew];
+        const totalCost = members.reduce((sum, s) => sum + (s.cost || 0), 0);
+        const totalTokens = members.reduce((sum, s) => sum + (s.totalTokens || 0), 0);
+        const isActive = members.some(s => s.status === 'active' || s.status === 'recent');
+        const statusColor = isActive ? 'var(--green)' : 'var(--label-tertiary)';
+
+        html += `
+          <div class="crew-group">
+            <div class="crew-header" onclick="toggleCrewGroup('${crew}')">
+              <div class="crew-header-left">
+                <span class="crew-emoji">${emojis[crew] || '🤖'}</span>
+                <span class="crew-name">${crew === 'main' ? 'Imu (Orquestrador)' : crew.charAt(0).toUpperCase() + crew.slice(1)}</span>
+                <span class="crew-badge">${members.length}</span>
+              </div>
+              <div class="crew-header-right">
+                <span class="crew-cost">${money(totalCost)}</span>
+                <span class="crew-expand" id="expand-${crew}">▼</span>
+              </div>
+            </div>
+            <div class="crew-members" id="members-${crew}">
+        `;
+
+        members.forEach(s => {
+          const statusColor = s.status === 'active' ? 'var(--green)' :
+                             s.status === 'recent' ? 'var(--blue)' :
+                             s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
+          html += `
+              <div class="agent-row sub-agent" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+                <div class="agent-avatar" style="position:relative;width:32px;height:32px;font-size:14px;">
+                  <span style="position:absolute;bottom:0;right:0;width:8px;height:8px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
+                </div>
+                <div class="agent-info">
+                  <div class="agent-name" style="font-size:13px;">${s.label || 'Session'}</div>
+                  <div class="agent-role" style="font-size:11px;">${s.status} • ${fmt(s.totalTokens || 0)} tok</div>
+                </div>
+                <div class="agent-stats">
+                  <div class="agent-cost" style="font-size:13px;">${money(s.cost)}</div>
+                </div>
+              </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      // Render ungrouped
+      ungrouped.forEach(s => {
+        const statusColor = s.status === 'active' ? 'var(--green)' :
+                           s.status === 'recent' ? 'var(--blue)' :
+                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
+        html += renderAgentRow(s, statusColor);
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderAgentRow(s, statusColor) {
+      const isMain = s.kind === 'main';
+      const isCore = isCoreCrew(s.label);
+      const isInactive = s.status === 'inactive';
+      const badge = getAgentBadge(s, cachedSessions);
+      return `
+        <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" 
+             onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
+             tabindex="0" role="button"
+             style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
+          <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
+            ${getEmoji(s.label)}
+            <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
+          </div>
+          <div class="agent-info">
+            <div class="agent-name">
+              ${s.label || 'Agent'}
+              ${isCore ? '<span class="agent-badge crew">CREW</span>' : ''}
+              <span class="agent-badge ${badge}">${badge}</span>
+            </div>
+            <div class="agent-role">${isInactive ? `Inativo há ${s.minutesSinceActive} min` : getRole(s.label)}</div>
+          </div>
+          <div class="agent-stats">
+            <div class="agent-cost">${money(s.cost)}</div>
+            <div class="agent-tokens">${fmt(s.totalTokens || 0)} tok</div>
+          </div>
+          <span class="agent-chevron">›</span>
+        </div>
+      `;
+    }
+
+    function toggleCrewGroup(crew) {
+      const members = document.getElementById('members-' + crew);
+      const expand = document.getElementById('expand-' + crew);
+      if (members.style.display === 'none') {
+        members.style.display = 'block';
+        expand.textContent = '▼';
+      } else {
+        members.style.display = 'none';
+        expand.textContent = '▶';
+      }
+    }
+
+    // Legacy render for compatibility
+    function renderAgentsLegacy(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
 

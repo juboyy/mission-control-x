@@ -13,7 +13,7 @@ const os = require('os');
 const crypto = require('crypto');
 
 // ===== Configuration =====
-const VERSION = '2.11.0';
+const VERSION = '2.12.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -555,12 +555,26 @@ class SessionRepository {
     const inputCost = (totalIn / 1000) * 0.015;
     const outputCost = (totalOut / 1000) * 0.075;
 
+    // Determine parent crew member based on label
+    const labelLower = (label || '').toLowerCase();
+    let parentCrew = null;
+    if (labelLower.includes('zoro') || labelLower.includes('impl')) parentCrew = 'zoro';
+    else if (labelLower.includes('robin') || labelLower.includes('research') || labelLower.includes('doc')) parentCrew = 'robin';
+    else if (labelLower.includes('franky') || labelLower.includes('infra')) parentCrew = 'franky';
+    else if (labelLower.includes('chopper') || labelLower.includes('debug') || labelLower.includes('qa')) parentCrew = 'chopper';
+    else if (labelLower.includes('nami') || labelLower.includes('ux') || labelLower.includes('product')) parentCrew = 'nami';
+    else if (labelLower.includes('usopp') || labelLower.includes('comm') || labelLower.includes('slack')) parentCrew = 'usopp';
+    else if (labelLower.includes('sanji') || labelLower.includes('api') || labelLower.includes('data')) parentCrew = 'sanji';
+    else if (labelLower.includes('cron')) parentCrew = 'cron';
+    else if (labelLower === 'main') parentCrew = 'main';
+
     return {
       key: `session:${file.replace('.jsonl', '')}`,
       sessionId: file.replace('.jsonl', ''),
       label,
       kind,
       status,
+      parentCrew,
       minutesSinceActive: Math.round(minutesSinceActive),
       channel: 'telegram',
       model: 'claude-opus-4-5-thinking',
