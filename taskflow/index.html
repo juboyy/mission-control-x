@@ -1615,6 +1615,13 @@
     };
     const timeStr = ts => ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
 
+    // Convert URLs to clickable links
+    function linkify(text) {
+      if (!text) return '';
+      const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+      return text.replace(urlRegex, '<a href="$1" target="_blank" style="color:var(--blue);text-decoration:underline;word-break:break-all;">$1</a>');
+    }
+
     const emojis = { main:'🌀', nami:'🍊', robin:'📚', franky:'🔧', zoro:'⚔️', sanji:'🍳', chopper:'🩺', luffy:'👒', usopp:'🎯', brook:'🎸', cron:'⏰' };
     const roles = { main:'Orquestrador', nami:'Navegadora', robin:'Arqueóloga', franky:'Engenheiro', zoro:'Executor', sanji:'Provedor', chopper:'Médico', cron:'Scheduler' };
     const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊', canvas:'🎨', nodes:'📱' };
@@ -1776,7 +1783,7 @@
         <div class="sheet-section-header">Descrição Completa</div>
         <div class="detail-list">
           <div style="padding: var(--space-md); font-size: 15px; line-height: 1.5; color: var(--label-secondary);">
-            ${activity.description || 'Sem descrição disponível.'}
+            ${linkify(activity.description) || 'Sem descrição disponível.'}
           </div>
         </div>
 
