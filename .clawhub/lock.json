@@ -4,6 +4,30 @@
     "gemini-web-search": {
       "version": "1.0.0",
       "installedAt": 1770524588646
+    },
+    "backend-patterns": {
+      "version": "0.1.2",
+      "installedAt": 1770528369944
+    },
+    "agentlens": {
+      "version": "1.0.0",
+      "installedAt": 1770528371075
+    },
+    "agenticflow-skill": {
+      "version": "0.1.0",
+      "installedAt": 1770528372572
+    },
+    "agent-doppelganger": {
+      "version": "1.0.0",
+      "installedAt": 1770528377483
+    },
+    "event-watcher": {
+      "version": "1.0.1",
+      "installedAt": 1770528379125
+    },
+    "doc-coauthoring": {
+      "version": "0.1.0",
+      "installedAt": 1770528380214
     }
   }
 }

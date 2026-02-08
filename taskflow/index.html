@@ -22,7 +22,7 @@
       --bg-grouped: #1C1C1E;
       --separator: rgba(84, 84, 88, 0.65);
       --fill: rgba(120, 120, 128, 0.32);
-      
+
       /* System Colors */
       --blue: #007AFF;
       --green: #34C759;
@@ -31,28 +31,28 @@
       --purple: #AF52DE;
       --teal: #5AC8FA;
       --yellow: #FFD60A;
-      
+
       /* Spacing - 8pt grid */
       --space-xs: 4px;
       --space-sm: 8px;
       --space-md: 16px;
       --space-lg: 24px;
       --space-xl: 32px;
-      
+
       /* Radius */
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-xl: 20px;
-      
+
       /* Safe areas */
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
+    * {
+      box-sizing: border-box;
+      margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
@@ -350,11 +350,11 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
-    
+
     .scroll-container::-webkit-scrollbar {
       display: none;
     }
-    
+
     .scroll-card {
       flex: 0 0 auto;
       width: 160px;
@@ -365,24 +365,24 @@
       cursor: pointer;
       transition: transform 0.2s, background 0.15s;
     }
-    
+
     .scroll-card:first-child {
       margin-left: var(--space-md);
     }
-    
+
     .scroll-card:last-child {
       margin-right: var(--space-md);
     }
-    
+
     .scroll-card:active {
       transform: scale(0.97);
       background: var(--bg-tertiary);
     }
-    
+
     .scroll-card.main {
       background: linear-gradient(135deg, var(--blue), var(--purple));
     }
-    
+
     .scroll-card-avatar {
       width: 48px;
       height: 48px;
@@ -394,11 +394,11 @@
       font-size: 24px;
       margin-bottom: var(--space-sm);
     }
-    
+
     .scroll-card.main .scroll-card-avatar {
       background: rgba(255,255,255,0.2);
     }
-    
+
     .scroll-card-name {
       font-size: 15px;
       font-weight: 600;
@@ -407,30 +407,38 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
+
     .scroll-card-role {
       font-size: 12px;
       color: var(--label-secondary);
       margin-bottom: var(--space-sm);
     }
-    
+
     .scroll-card.main .scroll-card-role {
       color: rgba(255,255,255,0.8);
     }
-    
+
     .scroll-card-stat {
       display: flex;
       justify-content: space-between;
       font-size: 13px;
     }
-    
+
     .scroll-card-stat-value {
       font-weight: 600;
       color: var(--teal);
     }
-    
+
     .scroll-card.main .scroll-card-stat-value {
       color: #fff;
+    }
+    
+    .scroll-card.inactive {
+      opacity: 0.5;
+    }
+    
+    .scroll-card.inactive .scroll-card-avatar {
+      filter: grayscale(50%);
     }
 
     .agent-row:active {
@@ -672,9 +680,9 @@
       overflow-x: auto;
       scrollbar-width: none;
     }
-    
+
     .timeline-filters::-webkit-scrollbar { display: none; }
-    
+
     .filter-chip {
       display: flex;
       align-items: center;
@@ -689,14 +697,14 @@
       transition: all 0.2s;
       border: 1.5px solid transparent;
     }
-    
+
     .filter-chip:active { transform: scale(0.96); }
-    .filter-chip.active { 
-      background: rgba(0, 122, 255, 0.15); 
+    .filter-chip.active {
+      background: rgba(0, 122, 255, 0.15);
       color: var(--blue);
       border-color: var(--blue);
     }
-    
+
     .filter-chip .count {
       background: var(--bg-tertiary);
       padding: 2px 7px;
@@ -704,7 +712,7 @@
       font-size: 11px;
       color: var(--label-secondary);
     }
-    
+
     .filter-chip.active .count {
       background: rgba(0, 122, 255, 0.25);
       color: var(--blue);
@@ -719,7 +727,7 @@
     .session-group {
       margin-bottom: var(--space-lg);
     }
-    
+
     .session-header {
       display: flex;
       align-items: center;
@@ -731,9 +739,9 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    
+
     .session-header:active { background: var(--bg-tertiary); }
-    
+
     .session-header-avatar {
       width: 32px;
       height: 32px;
@@ -744,20 +752,20 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-    
+
     .session-header-avatar.main {
       background: linear-gradient(135deg, var(--blue), var(--purple));
     }
-    
+
     .session-header-avatar:not(.main) {
       background: var(--fill);
     }
-    
+
     .session-header-info {
       flex: 1;
       min-width: 0;
     }
-    
+
     .session-header-name {
       font-size: 15px;
       font-weight: 600;
@@ -765,22 +773,22 @@
       align-items: center;
       gap: var(--space-sm);
     }
-    
+
     .session-header-meta {
       font-size: 12px;
       color: var(--label-secondary);
     }
-    
+
     .session-header-toggle {
       font-size: 14px;
       color: var(--label-tertiary);
       transition: transform 0.2s;
     }
-    
+
     .session-header.collapsed .session-header-toggle {
       transform: rotate(-90deg);
     }
-    
+
     .session-count-badge {
       font-size: 11px;
       padding: 2px 8px;
@@ -795,7 +803,7 @@
       overflow: hidden;
       transition: max-height 0.3s ease, opacity 0.2s;
     }
-    
+
     .timeline-items.collapsed {
       max-height: 0 !important;
       opacity: 0;
@@ -825,7 +833,7 @@
       margin-bottom: 2px;
       cursor: pointer;
     }
-    
+
     .timeline-node:active .timeline-card {
       background: var(--bg-tertiary);
       transform: scale(0.99);
@@ -847,21 +855,21 @@
       z-index: 2;
       box-shadow: 0 0 0 4px var(--bg-primary);
     }
-    
-    .timeline-status.completed { 
-      background: var(--green); 
+
+    .timeline-status.completed {
+      background: var(--green);
     }
-    .timeline-status.running { 
+    .timeline-status.running {
       background: var(--blue);
       animation: statusPulse 1.5s ease-in-out infinite;
     }
-    .timeline-status.pending { 
-      background: var(--orange); 
+    .timeline-status.pending {
+      background: var(--orange);
     }
-    .timeline-status.failed { 
-      background: var(--red); 
+    .timeline-status.failed {
+      background: var(--red);
     }
-    
+
     @keyframes statusPulse {
       0%, 100% { box-shadow: 0 0 0 4px var(--bg-primary), 0 0 0 6px rgba(0, 122, 255, 0.3); }
       50% { box-shadow: 0 0 0 4px var(--bg-primary), 0 0 0 10px rgba(0, 122, 255, 0.1); }
@@ -876,7 +884,7 @@
       transition: all 0.2s;
       border-left: 3px solid transparent;
     }
-    
+
     .timeline-card.completed { border-left-color: var(--green); }
     .timeline-card.running { border-left-color: var(--blue); }
     .timeline-card.pending { border-left-color: var(--orange); }
@@ -888,7 +896,7 @@
       align-items: flex-start;
       margin-bottom: var(--space-xs);
     }
-    
+
     .timeline-card-title {
       display: flex;
       align-items: center;
@@ -896,17 +904,17 @@
       font-size: 15px;
       font-weight: 500;
     }
-    
+
     .timeline-card-icon {
       font-size: 16px;
     }
-    
+
     .timeline-card-time {
       font-size: 12px;
       color: var(--label-secondary);
       white-space: nowrap;
     }
-    
+
     .timeline-card-desc {
       font-size: 14px;
       color: var(--label-secondary);
@@ -917,19 +925,19 @@
       overflow: hidden;
       margin-bottom: var(--space-sm);
     }
-    
+
     .timeline-card-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .timeline-card-tags {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
-    
+
     .timeline-tag {
       font-size: 11px;
       padding: 3px 8px;
@@ -937,12 +945,12 @@
       border-radius: 6px;
       color: var(--label-secondary);
     }
-    
+
     .timeline-tag.type-tool { background: rgba(0, 122, 255, 0.15); color: var(--blue); }
     .timeline-tag.type-user { background: rgba(175, 82, 222, 0.15); color: var(--purple); }
     .timeline-tag.type-assistant { background: rgba(52, 199, 89, 0.15); color: var(--green); }
     .timeline-tag.type-error { background: rgba(255, 59, 48, 0.15); color: var(--red); }
-    
+
     .timeline-card-chevron {
       color: var(--label-tertiary);
       font-size: 16px;
@@ -952,23 +960,23 @@
     .timeline-node.child {
       padding-left: 64px;
     }
-    
+
     .timeline-node.child .timeline-status {
       left: 32px;
       width: 12px;
       height: 12px;
       font-size: 7px;
     }
-    
+
     .timeline-node.child .timeline-card {
       background: var(--bg-tertiary);
       padding: var(--space-sm) var(--space-md);
     }
-    
+
     .timeline-node.child .timeline-card-title {
       font-size: 13px;
     }
-    
+
     .timeline-node.child .timeline-card-desc {
       font-size: 13px;
       -webkit-line-clamp: 1;
@@ -991,20 +999,20 @@
       padding: var(--space-xl) var(--space-md);
       color: var(--label-secondary);
     }
-    
+
     .timeline-empty-icon {
       font-size: 48px;
       margin-bottom: var(--space-md);
       opacity: 0.6;
     }
-    
+
     .timeline-empty-title {
       font-size: 17px;
       font-weight: 600;
       color: var(--label);
       margin-bottom: var(--space-xs);
     }
-    
+
     .timeline-empty-desc {
       font-size: 14px;
     }
@@ -1016,7 +1024,7 @@
       gap: var(--space-lg);
       padding: var(--space-sm) var(--space-md) var(--space-md);
     }
-    
+
     .legend-item {
       display: flex;
       align-items: center;
@@ -1024,13 +1032,13 @@
       font-size: 12px;
       color: var(--label-secondary);
     }
-    
+
     .legend-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
     }
-    
+
     .legend-dot.completed { background: var(--green); }
     .legend-dot.running { background: var(--blue); }
     .legend-dot.pending { background: var(--orange); }
@@ -1495,7 +1503,7 @@
     <!-- Activity View -->
     <div class="view" id="view-activity">
       <h1 class="large-title">Atividade</h1>
-      
+
       <!-- Status Legend -->
       <div class="status-legend">
         <div class="legend-item"><span class="legend-dot completed"></span>Completed</div>
@@ -1503,7 +1511,7 @@
         <div class="legend-item"><span class="legend-dot pending"></span>Pending</div>
         <div class="legend-item"><span class="legend-dot failed"></span>Failed</div>
       </div>
-      
+
       <!-- Filters -->
       <div class="timeline-filters" id="activityFilters">
         <div class="filter-chip active" data-filter="all" onclick="setActivityFilter('all')">
@@ -1525,7 +1533,7 @@
           <span>🔴</span> Failed
         </div>
       </div>
-      
+
       <!-- Timeline Container -->
       <div class="timeline-container" id="timelineContainer"></div>
     </div>
@@ -1605,26 +1613,26 @@
 
     // Determine agent state based on activity
     function getAgentState(agent, activities) {
-      const agentActivities = activities.filter(a => 
+      const agentActivities = activities.filter(a =>
         a.session && a.session.toLowerCase().includes(getKey(agent.label))
       );
-      
+
       if (!agentActivities.length) return 'idle';
-      
+
       const latest = agentActivities[0];
       const timeSince = (Date.now() - new Date(latest.timestamp)) / 1000;
-      
+
       // Check for errors
       if (latest.type === 'error' || (latest.tags && latest.tags.includes('error'))) {
         return 'error';
       }
-      
+
       // If recent activity (< 30s), consider working
       if (timeSince < 30) return 'working';
-      
+
       // If waiting on tool
       if (latest.type === 'tool' && timeSince < 120) return 'waiting';
-      
+
       return 'idle';
     }
 
@@ -1662,9 +1670,9 @@
       currentAgent = agent;
       const state = getAgentState(agent, cachedActivities);
       const badge = getAgentBadge(agent, cachedSessions);
-      
+
       // Get activities for this agent
-      const agentActivities = cachedActivities.filter(a => 
+      const agentActivities = cachedActivities.filter(a =>
         a.session && a.session.toLowerCase().includes(getKey(agent.label))
       ).slice(0, 10);
 
@@ -1679,7 +1687,7 @@
             ${stateLabels[state]}
           </div>
         </div>
-        
+
         <div class="detail-list">
           <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('/').pop() || 'N/A'}</span></div>
           <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${agent.channel || 'N/A'}</span></div>
@@ -1717,10 +1725,10 @@
     // L2: Open Activity Sheet
     function openActivitySheet(activity) {
       currentActivity = activity;
-      
+
       const tags = activity.tags || [];
       const toolName = tags.find(t => t !== 'tool' && toolIcons[t]) || tags[0] || 'unknown';
-      
+
       document.getElementById('activitySheetTitle').textContent = activity.title || 'Atividade';
       document.getElementById('activitySheetBody').innerHTML = `
         <div class="detail-avatar">
@@ -1773,7 +1781,7 @@
     }
 
     // ===== Render Functions =====
-    
+
     // Render horizontal scroll cards for agents
     function renderAgentsScroll(sessions, containerId) {
       const container = document.getElementById(containerId);
@@ -1783,14 +1791,24 @@
         return;
       }
 
-      container.innerHTML = sessions.map((s) => {
+      // Separate active from inactive (>30 min = inactive)
+      const activeSessions = sessions.filter(s => s.status !== 'inactive');
+      const inactiveSessions = sessions.filter(s => s.status === 'inactive');
+
+      const renderCard = (s) => {
         const isMain = s.kind === 'main';
-        const state = getAgentState(s, cachedActivities);
+        const isInactive = s.status === 'inactive';
+        const statusColor = s.status === 'active' ? 'var(--green)' : 
+                           s.status === 'recent' ? 'var(--blue)' :
+                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
-          <div class="scroll-card ${isMain ? 'main' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
-            <div class="scroll-card-avatar">${getEmoji(s.label)}</div>
+          <div class="scroll-card ${isMain ? 'main' : ''} ${isInactive ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+            <div class="scroll-card-avatar" style="position:relative;">
+              ${getEmoji(s.label)}
+              <span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
+            </div>
             <div class="scroll-card-name">${s.label || 'Agent'}</div>
-            <div class="scroll-card-role">${getRole(s.label)}</div>
+            <div class="scroll-card-role">${isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label)}</div>
             <div class="scroll-card-stat">
               <span>Custo</span>
               <span class="scroll-card-stat-value">${money(s.cost)}</span>
@@ -1801,13 +1819,24 @@
             </div>
           </div>
         `;
-      }).join('');
+      };
+
+      // Show active first, then inactive with separator
+      let html = activeSessions.map(renderCard).join('');
+      
+      if (inactiveSessions.length > 0 && activeSessions.length > 0) {
+        html += '<div style="flex:0 0 1px;background:var(--separator);margin:0 8px;align-self:stretch;"></div>';
+      }
+      
+      html += inactiveSessions.map(renderCard).join('');
+      
+      container.innerHTML = html;
     }
 
     function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
-      
+
       if (!list.length) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
         return;
@@ -1884,12 +1913,12 @@
       if (activity.error || activity.status === 'error' || activity.status === 'failed') {
         return 'failed';
       }
-      
+
       // Check for running/pending
       if (activity.status === 'running' || activity.status === 'pending') {
         return activity.status;
       }
-      
+
       // Check timing - if very recent tool call, might be running
       if (activity.type === 'tool') {
         const timeSince = (Date.now() - new Date(activity.timestamp)) / 1000;
@@ -1900,7 +1929,7 @@
           return 'pending';
         }
       }
-      
+
       return 'completed';
     }
 
@@ -1918,7 +1947,7 @@
     // Group activities by session
     function groupActivitiesBySession(activities) {
       const groups = {};
-      
+
       activities.forEach(activity => {
         const session = activity.session || 'unknown';
         if (!groups[session]) {
@@ -1926,14 +1955,14 @@
         }
         groups[session].push(activity);
       });
-      
+
       // Sort sessions by most recent activity
       const sortedGroups = Object.entries(groups).sort((a, b) => {
         const aTime = new Date(a[1][0]?.timestamp || 0);
         const bTime = new Date(b[1][0]?.timestamp || 0);
         return bTime - aTime;
       });
-      
+
       return sortedGroups;
     }
 
@@ -1941,27 +1970,27 @@
     function buildActivityTree(activities) {
       const result = [];
       let i = 0;
-      
+
       while (i < activities.length) {
         const current = activities[i];
         const node = { ...current, children: [] };
-        
+
         // Check if next item is a result of this tool call
         if (current.type === 'tool' && activities[i + 1]) {
           const next = activities[i + 1];
           // If next is a tool_result or same tool with output
-          if (next.type === 'tool_result' || 
+          if (next.type === 'tool_result' ||
               (next.toolCallId && next.toolCallId === current.toolCallId) ||
               (next.parentId && next.parentId === current.id)) {
             node.children.push(next);
             i++; // Skip the child
           }
         }
-        
+
         result.push(node);
         i++;
       }
-      
+
       return result;
     }
 
@@ -1977,12 +2006,12 @@
     // Set filter
     function setActivityFilter(filter) {
       currentActivityFilter = filter;
-      
+
       // Update filter chips UI
       document.querySelectorAll('.filter-chip').forEach(chip => {
         chip.classList.toggle('active', chip.dataset.filter === filter);
       });
-      
+
       // Re-render timeline
       renderTimeline(cachedActivities);
     }
@@ -2001,25 +2030,25 @@
     function renderTimeline(activities) {
       const container = document.getElementById('timelineContainer');
       if (!container) return;
-      
+
       // Update filter counts
       const toolCount = activities.filter(a => a.type === 'tool').length;
       const userCount = activities.filter(a => a.type === 'user').length;
       const assistantCount = activities.filter(a => a.type === 'assistant').length;
-      
+
       const filterCountAll = document.getElementById('filterCountAll');
       const filterCountTool = document.getElementById('filterCountTool');
       const filterCountUser = document.getElementById('filterCountUser');
       const filterCountAssistant = document.getElementById('filterCountAssistant');
-      
+
       if (filterCountAll) filterCountAll.textContent = activities.length;
       if (filterCountTool) filterCountTool.textContent = toolCount;
       if (filterCountUser) filterCountUser.textContent = userCount;
       if (filterCountAssistant) filterCountAssistant.textContent = assistantCount;
-      
+
       // Apply filters
       const filtered = filterActivities(activities, currentActivityFilter);
-      
+
       if (!filtered.length) {
         container.innerHTML = `
           <div class="timeline-empty">
@@ -2032,24 +2061,24 @@
         `;
         return;
       }
-      
+
       // Group by session
       const groups = groupActivitiesBySession(filtered);
-      
+
       // Render groups
       container.innerHTML = groups.map(([sessionKey, sessionActivities]) => {
         const isCollapsed = collapsedSessions.has(sessionKey);
         const agentKey = getKey(sessionKey);
         const isMain = agentKey === 'main';
-        
+
         // Build activity tree for parent-child relationships
         const activityTree = buildActivityTree(sessionActivities);
-        
+
         // Calculate session stats
         const completedCount = sessionActivities.filter(a => getActivityStatus(a) === 'completed').length;
         const failedCount = sessionActivities.filter(a => getActivityStatus(a) === 'failed').length;
         const runningCount = sessionActivities.filter(a => getActivityStatus(a) === 'running').length;
-        
+
         return `
           <div class="session-group">
             <div class="session-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleSessionCollapse('${sessionKey}')">
@@ -2070,7 +2099,7 @@
               </div>
               <span class="session-header-toggle">▼</span>
             </div>
-            
+
             <div class="timeline-items ${isCollapsed ? 'collapsed' : ''}" style="max-height: ${isCollapsed ? 0 : activityTree.length * 120 + 50}px">
               <div class="timeline-line"></div>
               ${activityTree.map(node => renderTimelineNode(node)).join('')}
@@ -2086,7 +2115,7 @@
       const statusIcon = getStatusIcon(status);
       const toolName = (node.tags || []).find(t => t !== 'tool' && toolIcons[t]) || node.tags?.[0];
       const icon = node.icon || toolIcons[toolName] || '📌';
-      
+
       let html = `
         <div class="timeline-node" onclick='openActivitySheet(${JSON.stringify(node).replace(/'/g, "&#39;")})'>
           <div class="timeline-status ${status}">${statusIcon}</div>
@@ -2102,7 +2131,7 @@
             <div class="timeline-card-footer">
               <div class="timeline-card-tags">
                 <span class="timeline-tag type-${node.type}">${node.type}</span>
-                ${(node.tags || []).filter(t => t !== 'tool' && t !== node.type).slice(0, 2).map(t => 
+                ${(node.tags || []).filter(t => t !== 'tool' && t !== node.type).slice(0, 2).map(t =>
                   `<span class="timeline-tag">${t}</span>`
                 ).join('')}
                 ${node.duration ? `<span class="timeline-tag">${node.duration}ms</span>` : ''}
@@ -2112,13 +2141,13 @@
           </div>
         </div>
       `;
-      
+
       // Render children (tool results)
       if (node.children && node.children.length) {
         html += node.children.map(child => {
           const childStatus = getActivityStatus(child);
           const childIcon = getStatusIcon(childStatus);
-          
+
           return `
             <div class="timeline-node child" onclick='openActivitySheet(${JSON.stringify(child).replace(/'/g, "&#39;")})'>
               <div class="timeline-status ${childStatus}">${childIcon}</div>
@@ -2136,7 +2165,7 @@
           `;
         }).join('');
       }
-      
+
       return html;
     }
 
@@ -2239,7 +2268,7 @@
 
     // Swipe to close sheets
     let sheetTouchStart = 0;
-    
+
     document.querySelector('#agentSheet .sheet-content')?.addEventListener('touchstart', e => {
       sheetTouchStart = e.touches[0].clientY;
     });

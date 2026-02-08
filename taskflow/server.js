@@ -306,6 +306,17 @@ class SessionRepository {
       }
     }
 
+    // Calculate activity status
+    const now = Date.now();
+    const lastActive = lastTimestamp ? new Date(lastTimestamp).getTime() : 0;
+    const minutesSinceActive = (now - lastActive) / 60000;
+    
+    let status = 'inactive';
+    if (minutesSinceActive < 1) status = 'active';
+    else if (minutesSinceActive < 5) status = 'recent';
+    else if (minutesSinceActive < 30) status = 'idle';
+    else status = 'inactive';
+
     const inputCost = (totalIn / 1000) * 0.015;
     const outputCost = (totalOut / 1000) * 0.075;
 
@@ -314,6 +325,8 @@ class SessionRepository {
       sessionId: file.replace('.jsonl', ''),
       label,
       kind,
+      status,
+      minutesSinceActive: Math.round(minutesSinceActive),
       channel: 'telegram',
       model: 'claude-opus-4-5-thinking',
       inputTokens: totalIn,
