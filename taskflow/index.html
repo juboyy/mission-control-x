@@ -432,15 +432,15 @@
     .scroll-card.main .scroll-card-stat-value {
       color: #fff;
     }
-    
+
     .scroll-card.inactive {
       opacity: 0.5;
     }
-    
+
     .scroll-card.inactive .scroll-card-avatar {
       filter: grayscale(50%);
     }
-    
+
     .scroll-card.crew {
       border: 1px solid var(--purple);
     }
@@ -543,6 +543,15 @@
     .agent-badge.solo {
       background: rgba(52, 199, 89, 0.2);
       color: var(--green);
+    }
+
+    .agent-badge.crew {
+      background: rgba(255, 214, 10, 0.2);
+      color: var(--yellow);
+    }
+
+    .agent-row.inactive {
+      opacity: 0.5;
     }
 
     .agent-role {
@@ -1788,7 +1797,7 @@
 
     // Core crew - always show these
     const CORE_CREW = ['main', 'nami', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'luffy', 'usopp', 'brook'];
-    
+
     function isCoreCrew(label) {
       const key = getKey(label);
       return CORE_CREW.includes(key);
@@ -1797,7 +1806,7 @@
     // Render horizontal scroll cards for agents
     function renderAgentsScroll(sessions, containerId) {
       const container = document.getElementById(containerId);
-      
+
       if (!sessions.length) {
         container.innerHTML = '<div class="empty-state" style="padding:20px;text-align:center;color:var(--label-tertiary)">Nenhum agente ativo</div>';
         return;
@@ -1811,7 +1820,7 @@
       const renderCard = (s, isCore = false) => {
         const isMain = s.kind === 'main';
         const isInactive = s.status === 'inactive' && !isCore;
-        const statusColor = s.status === 'active' ? 'var(--green)' : 
+        const statusColor = s.status === 'active' ? 'var(--green)' :
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
@@ -1836,7 +1845,7 @@
 
       // Core crew always first and visible
       let html = coreCrew.map(s => renderCard(s, true)).join('');
-      
+
       // Then other active agents
       if (otherActive.length > 0) {
         if (coreCrew.length > 0) {
@@ -1844,7 +1853,7 @@
         }
         html += otherActive.map(s => renderCard(s, false)).join('');
       }
-      
+
       // Then inactive (non-crew) - collapsed by default, show count
       if (otherInactive.length > 0) {
         html += `<div class="scroll-card inactive" style="opacity:0.4;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;">
@@ -1852,35 +1861,55 @@
           <div style="font-size:13px;margin-top:8px;">${otherInactive.length} inativos</div>
         </div>`;
       }
-      
+
       container.innerHTML = html;
     }
 
     function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
-
+      
       if (!list.length) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
         return;
       }
 
-      container.innerHTML = list.map((s) => {
+      // Sort: core crew first, then by status, then by cost
+      const sorted = [...list].sort((a, b) => {
+        const aCore = isCoreCrew(a.label) ? 0 : 1;
+        const bCore = isCoreCrew(b.label) ? 0 : 1;
+        if (aCore !== bCore) return aCore - bCore;
+        
+        const statusOrder = { active: 0, recent: 1, idle: 2, inactive: 3 };
+        const aStatus = statusOrder[a.status] || 3;
+        const bStatus = statusOrder[b.status] || 3;
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        
+        return (b.cost || 0) - (a.cost || 0);
+      });
+
+      container.innerHTML = sorted.map((s) => {
         const isMain = s.kind === 'main';
+        const isCore = isCoreCrew(s.label);
+        const isInactive = s.status === 'inactive';
         const state = getAgentState(s, cachedActivities);
-        const badge = getAgentBadge(s, sessions);
+        const badge = getAgentBadge(s, sorted);
+        const statusColor = s.status === 'active' ? 'var(--green)' : 
+                           s.status === 'recent' ? 'var(--blue)' :
+                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
-          <div class="agent-row" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
-            <div class="agent-avatar ${isMain ? 'main' : ''}">
+          <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'  style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
+            <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
               ${getEmoji(s.label)}
-              <span class="state-indicator ${state}"></span>
+              <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
             </div>
             <div class="agent-info">
               <div class="agent-name">
                 ${s.label || 'Agent'}
+                ${isCore ? '<span class="agent-badge crew">CREW</span>' : ''}
                 <span class="agent-badge ${badge}">${badge}</span>
               </div>
-              <div class="agent-role">${getRole(s.label)}</div>
+              <div class="agent-role">${isInactive ? `Inativo há ${s.minutesSinceActive} min` : getRole(s.label)}</div>
             </div>
             <div class="agent-stats">
               <div class="agent-cost">${money(s.cost)}</div>
