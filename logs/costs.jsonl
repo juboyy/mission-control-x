@@ -1,0 +1,2 @@
+{"ts":"2026-02-08T02:35:00Z","agent":"imu","model":"opus","tokens_in":1500,"tokens_out":800,"cost":0.02,"action":"bootstrap","status":"complete"}
+{"ts":"2026-02-08T02:55:00Z","agent":"imu","model":"opus","tokens_in":8000,"tokens_out":15000,"cost":0.12,"action":"mission_control_build","status":"complete"}
