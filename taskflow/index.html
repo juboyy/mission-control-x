@@ -1679,16 +1679,12 @@
     let currentActivity = null;
 
     // L1: Open Agent Sheet
-    function openAgentSheet(agent) {
+    async function openAgentSheet(agent) {
       currentAgent = agent;
       const state = getAgentState(agent, cachedActivities);
       const badge = getAgentBadge(agent, cachedSessions);
 
-      // Get activities for this agent
-      const agentActivities = cachedActivities.filter(a =>
-        a.session && a.session.toLowerCase().includes(getKey(agent.label))
-      ).slice(0, 10);
-
+      // Show sheet immediately with loading state
       document.getElementById('agentSheetTitle').textContent = agent.label || 'Agente';
       document.getElementById('agentSheetBody').innerHTML = `
         <div class="detail-avatar">
@@ -1697,7 +1693,7 @@
           <div class="detail-avatar-role">${getRole(agent.label)}</div>
           <div class="detail-avatar-state ${state}">
             <span class="state-dot ${state}"></span>
-            ${stateLabels[state]}
+            ${stateLabels[state] || 'Idle'}
           </div>
         </div>
 
@@ -1708,12 +1704,27 @@
           <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(agent.totalTokens || 0)}</span></div>
           <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(agent.cost)}</span></div>
           <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(agent.updatedAt)}</span></div>
+          <div class="detail-row"><span class="detail-label">Mensagens</span><span class="detail-value">${agent.messageCount || 0}</span></div>
+          <div class="detail-row"><span class="detail-label">Tool Calls</span><span class="detail-value">${agent.toolCalls || 0}</span></div>
         </div>
 
         <div class="sheet-section-header">Atividades Recentes</div>
         <div class="list-group" id="agentActivitiesList">
-          ${agentActivities.length ? agentActivities.map(a => `
-            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+          <div style="text-align:center;padding:20px;color:var(--label-tertiary)">Carregando...</div>
+        </div>
+      `;
+      document.getElementById('agentSheet').classList.add('active');
+
+      // Fetch activities for this specific session
+      try {
+        const response = await fetch(`/api/sessions/${agent.sessionId}/activities`);
+        const data = await response.json();
+        const activities = data.activities || [];
+        
+        const listEl = document.getElementById('agentActivitiesList');
+        if (activities.length > 0) {
+          listEl.innerHTML = activities.slice(0, 20).map(a => `
+            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'> 
               <div class="activity-icon ${a.type}">${a.icon || toolIcons[a.tags?.[0]] || '📌'}</div>
               <div class="activity-content">
                 <div class="activity-header">
@@ -1724,10 +1735,14 @@
               </div>
               <span class="activity-chevron">›</span>
             </div>
-          `).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem atividades</div></div>'}
-        </div>
-      `;
-      document.getElementById('agentSheet').classList.add('active');
+          `).join('');
+        } else {
+          listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem atividades</div></div>';
+        }
+      } catch (e) {
+        console.error('Failed to load activities:', e);
+        document.getElementById('agentActivitiesList').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div></div>';
+      }
     }
 
     function closeAgentSheet() {
