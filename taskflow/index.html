@@ -1442,8 +1442,828 @@
     .state-dot.error { background: var(--red); }
     .state-dot.waiting { background: var(--orange); }
 
-    /* Scrollbar hidden */
+    /* Scrollbar hidden on mobile */
     ::-webkit-scrollbar { display: none; }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+    
+    /* === Tablet (768px+) === */
+    @media (min-width: 768px) {
+      /* Enable custom scrollbar on tablet+ */
+      ::-webkit-scrollbar { 
+        display: block;
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--fill);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--label-tertiary);
+      }
+
+      /* Container max-width */
+      .navbar-content,
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      /* Larger touch targets not needed - use hover */
+      .list-item,
+      .agent-row,
+      .activity-row {
+        min-height: 52px;
+        cursor: pointer;
+      }
+
+      /* Stats grid: 4 columns */
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      /* Hover states for cards */
+      .stat-card {
+        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-2px);
+        background: var(--bg-tertiary);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Scroll cards hover */
+      .scroll-card {
+        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      }
+      .scroll-card:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      }
+      .scroll-card:active {
+        transform: translateY(-2px) scale(1.01);
+      }
+
+      /* Agent row hover - more elegant */
+      .agent-row {
+        transition: background 0.2s ease, transform 0.15s ease;
+        border-radius: var(--radius-md);
+        margin: 0 var(--space-sm);
+      }
+      .agent-row:hover {
+        background: var(--bg-tertiary);
+        transform: translateX(4px);
+      }
+
+      /* Activity row hover */
+      .activity-row {
+        transition: background 0.2s ease, transform 0.15s ease;
+        border-radius: var(--radius-md);
+      }
+      .activity-row:hover {
+        background: var(--bg-tertiary);
+        transform: translateX(4px);
+      }
+
+      /* Hero card hover effect */
+      .hero-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .hero-card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 16px 48px rgba(0, 122, 255, 0.2);
+      }
+
+      /* Better focus states for keyboard nav */
+      .stat-card:focus,
+      .scroll-card:focus,
+      .agent-row:focus,
+      .activity-row:focus,
+      .tab-item:focus,
+      .filter-chip:focus,
+      .tool-chip:focus {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      /* Make interactive elements focusable */
+      .stat-card,
+      .scroll-card,
+      .agent-row,
+      .activity-row,
+      .tool-chip,
+      .filter-chip {
+        outline: none;
+      }
+
+      /* Tooltips base */
+      [data-tooltip] {
+        position: relative;
+      }
+      [data-tooltip]::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        padding: 6px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--separator);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--label);
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+      }
+      [data-tooltip]::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--bg-tertiary);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+        pointer-events: none;
+      }
+      [data-tooltip]:hover::before,
+      [data-tooltip]:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-4px);
+      }
+      [data-tooltip]:hover::after {
+        transform: translateX(-50%);
+      }
+
+      /* Tab bar: centered with max-width */
+      .tabbar-content {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      .tab-item {
+        transition: color 0.2s, transform 0.15s;
+      }
+      .tab-item:hover:not(.active) {
+        color: var(--label-secondary);
+        transform: translateY(-2px);
+      }
+    }
+
+    /* === Desktop (1024px+) === */
+    @media (min-width: 1024px) {
+      /* Larger container */
+      .navbar-content {
+        max-width: 1200px;
+        padding: 0 var(--space-lg);
+      }
+
+      /* Main layout with sidebar */
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      main {
+        max-width: 1200px;
+        padding-left: var(--space-lg);
+        padding-right: var(--space-lg);
+        padding-bottom: calc(60px + var(--safe-bottom));
+      }
+
+      /* Convert tab bar to horizontal nav */
+      .tabbar {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: var(--space-md);
+        right: auto;
+        width: auto;
+        border-radius: var(--radius-xl);
+        background: rgba(28, 28, 30, 0.95);
+        border: 1px solid var(--separator);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        padding: var(--space-sm) var(--space-md);
+        padding-bottom: var(--space-sm);
+      }
+
+      .tabbar-content {
+        height: 44px;
+        gap: var(--space-sm);
+      }
+
+      .tab-item {
+        flex: none;
+        flex-direction: row;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+      }
+      .tab-item:hover:not(.active) {
+        background: var(--fill);
+        transform: none;
+      }
+      .tab-item.active {
+        background: var(--blue);
+        color: #fff;
+      }
+      .tab-item .tab-icon {
+        font-size: 18px;
+        height: 18px;
+      }
+      .tab-item span:last-child {
+        font-size: 13px;
+      }
+      .tab-badge {
+        position: static;
+        margin-left: var(--space-xs);
+      }
+
+      /* Two-column layout for Overview */
+      #view-overview .list-section:last-of-type {
+        margin-top: var(--space-lg);
+      }
+
+      /* Grid layout for agents + activities */
+      .desktop-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-lg);
+      }
+
+      /* Scroll container: show more cards */
+      .scroll-card {
+        width: 180px;
+      }
+
+      /* Sheet becomes modal */
+      .sheet-content {
+        max-width: 600px;
+        margin: 0 auto;
+        border-radius: var(--radius-xl);
+        max-height: 85vh;
+      }
+
+      .sheet.level-2 .sheet-content {
+        max-width: 550px;
+      }
+
+      /* Keyboard hint in footer */
+      .keyboard-hint {
+        display: inline;
+      }
+    }
+
+    /* === Large Desktop (1440px+) === */
+    @media (min-width: 1440px) {
+      .navbar-content,
+      main {
+        max-width: 1400px;
+      }
+
+      /* 3-column layout option */
+      .stats-grid {
+        gap: var(--space-lg);
+      }
+
+      /* Larger scroll cards */
+      .scroll-card {
+        width: 200px;
+        padding: var(--space-lg);
+      }
+
+      .scroll-card-avatar {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+      }
+
+      /* Agent rows more spacious */
+      .agent-row {
+        padding: var(--space-md) var(--space-lg);
+      }
+      .agent-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+      }
+
+      /* Activity rows */
+      .activity-row {
+        padding: var(--space-md) var(--space-lg);
+      }
+
+      /* Timeline cards */
+      .timeline-card {
+        padding: var(--space-lg);
+      }
+
+      /* Sheet modal centered */
+      .sheet-content {
+        position: absolute;
+        bottom: auto;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: modalFadeIn 0.3s ease;
+        max-height: 80vh;
+      }
+
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -48%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      /* Hero card more impactful */
+      .hero-card {
+        padding: var(--space-xl);
+      }
+      .hero-value {
+        font-size: 56px;
+      }
+    }
+
+    /* === Smooth animations === */
+    @media (prefers-reduced-motion: no-preference) {
+      .stat-card,
+      .scroll-card,
+      .agent-row,
+      .activity-row,
+      .timeline-card,
+      .tool-chip,
+      .filter-chip,
+      .tab-item {
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Entrance animations for views */
+      .view.active {
+        animation: viewEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes viewEnter {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Stagger animation for list items */
+      .list-group .agent-row,
+      .list-group .activity-row {
+        animation: listItemEnter 0.3s ease backwards;
+      }
+      .list-group .agent-row:nth-child(1),
+      .list-group .activity-row:nth-child(1) { animation-delay: 0.05s; }
+      .list-group .agent-row:nth-child(2),
+      .list-group .activity-row:nth-child(2) { animation-delay: 0.1s; }
+      .list-group .agent-row:nth-child(3),
+      .list-group .activity-row:nth-child(3) { animation-delay: 0.15s; }
+      .list-group .agent-row:nth-child(4),
+      .list-group .activity-row:nth-child(4) { animation-delay: 0.2s; }
+      .list-group .agent-row:nth-child(5),
+      .list-group .activity-row:nth-child(5) { animation-delay: 0.25s; }
+
+      @keyframes listItemEnter {
+        from {
+          opacity: 0;
+          transform: translateX(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+    }
+
+    /* Focus visible only for keyboard */
+    :focus:not(:focus-visible) {
+      outline: none;
+    }
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    /* ===== MOBILE ENHANCEMENTS ===== */
+    
+    /* Touch targets - minimum 44px for all interactive elements */
+    .tab-item,
+    .filter-chip,
+    .tool-chip,
+    .list-item,
+    .agent-row,
+    .activity-row,
+    .timeline-node,
+    .session-header,
+    .scroll-card,
+    .stat-card {
+      min-height: 44px;
+    }
+
+    .tab-item {
+      min-width: 44px;
+    }
+
+    .filter-chip,
+    .tool-chip {
+      min-height: 44px;
+      padding: 10px 16px;
+    }
+
+    /* Bottom sheet improvements */
+    .sheet-content {
+      max-height: 85vh;
+      min-height: 40vh;
+      padding-bottom: calc(var(--safe-bottom) + 20px);
+    }
+
+    .sheet-body {
+      padding: 0 var(--space-md) calc(var(--safe-bottom) + var(--space-xl));
+      max-height: calc(85vh - 100px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 5px;
+      margin: 12px auto 16px;
+    }
+
+    /* Pull-to-refresh visual indicator */
+    .refresh-indicator {
+      top: calc(44px + var(--safe-top) + 16px);
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .refresh-indicator .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--blue);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Horizontal scroll with snap points */
+    .scroll-container {
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      scroll-padding: var(--space-md);
+      gap: 12px;
+      padding: var(--space-md);
+    }
+
+    .scroll-card {
+      scroll-snap-align: start;
+      scroll-snap-stop: normal;
+      width: 150px;
+      flex-shrink: 0;
+    }
+
+    .scroll-card:first-child {
+      margin-left: 0;
+    }
+
+    .scroll-card:last-child {
+      margin-right: 0;
+    }
+
+    /* Safe area padding for notch and home indicator */
+    .navbar {
+      padding-top: max(var(--safe-top), 8px);
+    }
+
+    .tabbar {
+      padding-bottom: max(var(--safe-bottom), 8px);
+    }
+
+    main {
+      padding-bottom: calc(83px + max(var(--safe-bottom), 20px));
+    }
+
+    /* ===== iPhone SE and small screens (<390px) ===== */
+    @media screen and (max-width: 389px) {
+      :root {
+        --space-md: 12px;
+        --space-lg: 20px;
+      }
+
+      .large-title {
+        font-size: 28px;
+        padding: var(--space-sm) var(--space-md);
+      }
+
+      .hero-card {
+        padding: var(--space-md);
+        margin: 0 var(--space-sm) var(--space-md);
+      }
+
+      .hero-value {
+        font-size: 36px;
+      }
+
+      .hero-subtitle {
+        font-size: 13px;
+      }
+
+      .stats-grid {
+        gap: var(--space-sm);
+        padding: 0 var(--space-sm);
+      }
+
+      .stat-card {
+        padding: var(--space-sm);
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .stat-label {
+        font-size: 11px;
+      }
+
+      .scroll-card {
+        width: 130px;
+        padding: var(--space-sm);
+      }
+
+      .scroll-card-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+
+      .scroll-card-name {
+        font-size: 13px;
+      }
+
+      .scroll-card-role {
+        font-size: 11px;
+      }
+
+      .list-header {
+        font-size: 12px;
+        padding: 0 var(--space-sm);
+      }
+
+      .list-section {
+        margin: var(--space-sm);
+      }
+
+      .agent-row,
+      .activity-row {
+        padding: var(--space-sm);
+        gap: var(--space-sm);
+      }
+
+      .agent-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .agent-name {
+        font-size: 15px;
+      }
+
+      .agent-role {
+        font-size: 13px;
+      }
+
+      .agent-cost {
+        font-size: 15px;
+      }
+
+      .agent-tokens {
+        font-size: 11px;
+      }
+
+      .activity-title {
+        font-size: 14px;
+      }
+
+      .activity-desc {
+        font-size: 13px;
+        -webkit-line-clamp: 1;
+      }
+
+      .activity-time {
+        font-size: 11px;
+      }
+
+      .tabbar-content {
+        height: 54px;
+      }
+
+      .tab-icon {
+        font-size: 22px;
+      }
+
+      .tab-item span:last-child {
+        font-size: 9px;
+      }
+
+      /* Sheets */
+      .sheet-content {
+        max-height: 90vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+
+      .detail-avatar-icon {
+        font-size: 48px;
+      }
+
+      .detail-avatar-name {
+        font-size: 18px;
+      }
+
+      .detail-row {
+        font-size: 14px;
+        padding: 10px var(--space-sm);
+      }
+
+      /* Timeline */
+      .timeline-card {
+        padding: var(--space-sm);
+      }
+
+      .timeline-card-title {
+        font-size: 13px;
+      }
+
+      .timeline-card-desc {
+        font-size: 12px;
+      }
+
+      .filter-chip {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+
+      .filter-chip .count {
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+
+      /* Search input */
+      #agentSearch {
+        padding: 10px 14px;
+        font-size: 15px;
+      }
+    }
+
+    /* ===== iPhone 14 and medium screens (<430px) ===== */
+    @media screen and (max-width: 429px) and (min-width: 390px) {
+      .large-title {
+        font-size: 30px;
+      }
+
+      .hero-value {
+        font-size: 42px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .scroll-card {
+        width: 145px;
+      }
+
+      .agent-name {
+        font-size: 16px;
+      }
+
+      .agent-role {
+        font-size: 14px;
+      }
+
+      .activity-desc {
+        -webkit-line-clamp: 2;
+      }
+
+      .tabbar-content {
+        height: 52px;
+      }
+
+      /* Timeline adjustments */
+      .timeline-card-desc {
+        font-size: 13px;
+      }
+
+      .session-header {
+        padding: var(--space-sm) var(--space-md);
+      }
+    }
+
+    /* ===== Larger phones (>430px) ===== */
+    @media screen and (min-width: 430px) {
+      .scroll-card {
+        width: 165px;
+      }
+
+      .scroll-container {
+        gap: var(--space-md);
+      }
+    }
+
+    /* ===== Touch-specific enhancements ===== */
+    @media (hover: none) and (pointer: coarse) {
+      /* Larger touch targets for touch devices */
+      .list-item,
+      .agent-row,
+      .activity-row {
+        min-height: 52px;
+      }
+
+      .filter-chip,
+      .tool-chip {
+        min-height: 48px;
+      }
+
+      /* Remove hover states that don't make sense on touch */
+      .agent-row:hover,
+      .timeline-card:hover,
+      .session-header:hover {
+        background: transparent;
+        transform: none;
+      }
+
+      /* Keep active states */
+      .agent-row:active,
+      .timeline-card:active,
+      .session-header:active {
+        background: var(--fill);
+      }
+
+      .timeline-card:active {
+        transform: scale(0.99);
+      }
+    }
+
+    /* ===== Landscape mode adjustments ===== */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      .large-title {
+        font-size: 24px;
+        padding: var(--space-xs) var(--space-md);
+      }
+
+      .hero-card {
+        padding: var(--space-sm);
+      }
+
+      .hero-value {
+        font-size: 32px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .sheet-content {
+        max-height: 95vh;
+      }
+
+      .tabbar-content {
+        height: 44px;
+      }
+    }
 
     /* Toast notifications */
     .toast {
@@ -1535,28 +2355,28 @@
 
       <!-- Stats Grid -->
       <div class="stats-grid">
-        <div class="stat-card" onclick="switchView('agents')">
+        <div class="stat-card" onclick="switchView('agents')" tabindex="0" role="button" data-tooltip="Ver todos os agentes" onkeydown="if(event.key==='Enter')switchView('agents')">
           <div class="stat-header">
             <span class="stat-icon">🤖</span>
             <span class="stat-label">Agentes</span>
           </div>
           <div class="stat-value" id="statAgents">0</div>
         </div>
-        <div class="stat-card" onclick="switchView('activity')">
+        <div class="stat-card" onclick="switchView('activity')" tabindex="0" role="button" data-tooltip="Ver atividade recente" onkeydown="if(event.key==='Enter')switchView('activity')">
           <div class="stat-header">
             <span class="stat-icon">💬</span>
             <span class="stat-label">Mensagens</span>
           </div>
           <div class="stat-value" id="statMessages">0</div>
         </div>
-        <div class="stat-card" onclick="switchView('tools')">
+        <div class="stat-card" onclick="switchView('tools')" tabindex="0" role="button" data-tooltip="Ver ferramentas usadas" onkeydown="if(event.key==='Enter')switchView('tools')">
           <div class="stat-header">
             <span class="stat-icon">🔧</span>
             <span class="stat-label">Tool Calls</span>
           </div>
           <div class="stat-value" id="statTools">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" tabindex="0" role="button" data-tooltip="Total de tokens consumidos">
           <div class="stat-header">
             <span class="stat-icon">⚡</span>
             <span class="stat-label">Tokens</span>
@@ -1697,22 +2517,22 @@
   </main>
 
   <!-- Tab Bar -->
-  <nav class="tabbar">
+  <nav class="tabbar" role="navigation" aria-label="Navegação principal">
     <div class="tabbar-content">
-      <div class="tab-item active" data-view="overview">
+      <div class="tab-item active" data-view="overview" tabindex="0" role="tab" aria-selected="true" data-tooltip="Dashboard (1)" onkeydown="if(event.key==='Enter')switchView('overview')">
         <span class="tab-icon">📊</span>
         <span>Overview</span>
       </div>
-      <div class="tab-item" data-view="agents">
+      <div class="tab-item" data-view="agents" tabindex="0" role="tab" aria-selected="false" data-tooltip="Agentes (2)" onkeydown="if(event.key==='Enter')switchView('agents')">
         <span class="tab-icon">🤖</span>
         <span>Agentes</span>
         <span class="tab-badge" id="agentsBadge" style="display:none;"></span>
       </div>
-      <div class="tab-item" data-view="tools">
+      <div class="tab-item" data-view="tools" tabindex="0" role="tab" aria-selected="false" data-tooltip="Ferramentas (3)" onkeydown="if(event.key==='Enter')switchView('tools')">
         <span class="tab-icon">🔧</span>
         <span>Tools</span>
       </div>
-      <div class="tab-item" data-view="activity">
+      <div class="tab-item" data-view="activity" tabindex="0" role="tab" aria-selected="false" data-tooltip="Timeline (4)" onkeydown="if(event.key==='Enter')switchView('activity')">
         <span class="tab-icon">📡</span>
         <span>Atividade</span>
         <span class="tab-badge" id="activityBadge" style="display:none;"></span>
@@ -1841,7 +2661,11 @@
     function switchView(view) {
       currentView = view;
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
-      document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+      document.querySelectorAll('.tab-item').forEach(t => {
+        const isActive = t.dataset.view === view;
+        t.classList.toggle('active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
     }
 
     document.querySelectorAll('.tab-item').forEach(tab => {
@@ -2111,8 +2935,13 @@
         const statusColor = s.status === 'active' ? 'var(--green)' : 
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
+        const tooltipText = `${s.label}: ${money(s.cost)} • ${fmt(s.totalTokens || 0)} tokens`;
         return `
-          <div class="scroll-card ${isMain ? 'main' : ''} ${isCore ? 'crew' : ''} ${isInactive ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+          <div class="scroll-card ${isMain ? 'main' : ''} ${isCore ? 'crew' : ''} ${isInactive ? 'inactive' : ''}" 
+               onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
+               tabindex="0" role="button"
+               data-tooltip="${tooltipText}"
+               onkeydown="if(event.key==='Enter')openAgentSheet(${JSON.stringify(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;')})">
             <div class="scroll-card-avatar" style="position:relative;">
               ${getEmoji(s.label)}
               <span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
@@ -2185,8 +3014,14 @@
         const statusColor = s.status === 'active' ? 'var(--green)' :
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
+        const tooltipText = `Clique para ver detalhes de ${s.label}`;
         return `
-          <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'  style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
+          <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" 
+               onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
+               tabindex="0" role="button"
+               aria-label="${s.label}: ${money(s.cost)}, ${fmt(s.totalTokens || 0)} tokens"
+               onkeydown="if(event.key==='Enter')this.click()"
+               style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
             <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
               ${getEmoji(s.label)}
               <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
