@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <title>TaskFlow • Intelligent Project Management</title>
+  <meta name="description" content="Next-generation task management for development teams. Kanban, GitHub, Jira & Confluence integration.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/kanban.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+      <a href="#" class="mobile-nav-item active" data-view="board">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Board</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-view="timeline">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="12 5 21 12 12 19"/></svg>
+        <span>Timeline</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-view="integrations">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <span>Integrations</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-view="insights">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 21H4.6c-.56 0-.84 0-1.05-.11a1 1 0 0 1-.44-.44C3 20.24 3 19.96 3 19.4V3"/><path d="m7 14 4-4 4 4 6-6"/></svg>
+        <span>Insights</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar (Desktop) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 40 40">
+              <defs>
+                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#00d4ff"/>
+                  <stop offset="100%" style="stop-color:#7c3aed"/>
+                </linearGradient>
+              </defs>
+              <circle cx="20" cy="20" r="18" fill="none" stroke="url(#logoGrad)" stroke-width="2"/>
+              <path d="M12 20 L18 26 L28 14" stroke="url(#logoGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="logo-text">TaskFlow</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="sidebar-search">
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search tasks, projects..." id="globalSearch">
+        <kbd>⌘K</kbd>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Workspace</div>
+          <a href="#" class="nav-item active" data-view="board">
+            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Kanban Board</span>
+            <span class="nav-badge">12</span>
+          </a>
+          <a href="#" class="nav-item" data-view="timeline">
+            <svg class="nav-icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="12 5 21 12 12 19"/></svg>
+            <span>Timeline</span>
+          </a>
+          <a href="#" class="nav-item" data-view="calendar">
+            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Calendar</span>
+          </a>
+          <a href="#" class="nav-item" data-view="backlog">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+            <span>Backlog</span>
+            <span class="nav-badge secondary">24</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Integrations</div>
+          <a href="#" class="nav-item" data-view="github">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            <span>GitHub</span>
+            <span class="status-dot connected"></span>
+          </a>
+          <a href="#" class="nav-item" data-view="jira">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
+            <span>Jira</span>
+            <span class="status-dot connected"></span>
+          </a>
+          <a href="#" class="nav-item" data-view="confluence">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Confluence</span>
+            <span class="status-dot"></span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Analytics</div>
+          <a href="#" class="nav-item" data-view="insights">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 21H4.6c-.56 0-.84 0-1.05-.11a1 1 0 0 1-.44-.44C3 20.24 3 19.96 3 19.4V3"/><path d="m7 14 4-4 4 4 6-6"/></svg>
+            <span>Insights</span>
+          </a>
+          <a href="#" class="nav-item" data-view="velocity">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Velocity</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">
+            <span>J</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">João</span>
+            <span class="user-role">Admin</span>
+          </div>
+          <button class="user-menu-btn">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main" id="mainContent">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">revenue-OS</span>
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            <span class="breadcrumb-item active">Sprint 1</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="sprint-progress">
+            <div class="sprint-info">
+              <span class="sprint-label">Sprint Progress</span>
+              <span class="sprint-value">68%</span>
+            </div>
+            <div class="sprint-bar">
+              <div class="sprint-fill" style="width: 68%"></div>
+            </div>
+          </div>
+          <div class="header-buttons">
+            <button class="btn btn-ghost" id="filterBtn">
+              <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              <span class="btn-text">Filter</span>
+            </button>
+            <button class="btn btn-primary" id="newTaskBtn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span class="btn-text">New Task</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Board View -->
+      <section class="view active" id="view-board">
+        <div class="kanban-container" id="kanbanBoard">
+          <!-- Columns will be rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Timeline View -->
+      <section class="view" id="view-timeline">
+        <div class="timeline-container">
+          <div class="timeline-header">
+            <h2>Project Timeline</h2>
+            <div class="timeline-controls">
+              <button class="btn btn-ghost active">Week</button>
+              <button class="btn btn-ghost">Month</button>
+              <button class="btn btn-ghost">Quarter</button>
+            </div>
+          </div>
+          <div class="timeline-content" id="timelineContent">
+            <!-- Timeline will be rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Integrations View -->
+      <section class="view" id="view-integrations">
+        <div class="integrations-grid">
+          <div class="integration-card github">
+            <div class="integration-header">
+              <div class="integration-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              </div>
+              <div class="integration-info">
+                <h3>GitHub</h3>
+                <span class="integration-status connected">Connected</span>
+              </div>
+            </div>
+            <div class="integration-stats">
+              <div class="stat">
+                <span class="stat-value">23</span>
+                <span class="stat-label">Open PRs</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">156</span>
+                <span class="stat-label">Commits</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">8</span>
+                <span class="stat-label">Branches</span>
+              </div>
+            </div>
+            <div class="integration-activity" id="githubActivity">
+              <!-- Activity feed -->
+            </div>
+          </div>
+
+          <div class="integration-card jira">
+            <div class="integration-header">
+              <div class="integration-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
+              </div>
+              <div class="integration-info">
+                <h3>Jira</h3>
+                <span class="integration-status connected">Connected</span>
+              </div>
+            </div>
+            <div class="integration-stats">
+              <div class="stat">
+                <span class="stat-value">12</span>
+                <span class="stat-label">In Sprint</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">45</span>
+                <span class="stat-label">Story Points</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">3</span>
+                <span class="stat-label">Blockers</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="integration-card confluence">
+            <div class="integration-header">
+              <div class="integration-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="integration-info">
+                <h3>Confluence</h3>
+                <span class="integration-status">Not Connected</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary">Connect</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Insights View -->
+      <section class="view" id="view-insights">
+        <div class="insights-grid">
+          <div class="insight-card large">
+            <h3>Velocity Chart</h3>
+            <div class="chart-container" id="velocityChart"></div>
+          </div>
+          <div class="insight-card">
+            <h3>Burndown</h3>
+            <div class="chart-container" id="burndownChart"></div>
+          </div>
+          <div class="insight-card">
+            <h3>Task Distribution</h3>
+            <div class="distribution-bars" id="distributionBars"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Task Detail Modal -->
+    <div class="modal" id="taskModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="task-type-badge">
+            <span class="type-icon">📋</span>
+            <span>Feature</span>
+          </div>
+          <button class="modal-close" id="modalClose">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="task-title-input" placeholder="Task title..." id="taskTitleInput">
+          <div class="task-meta-row">
+            <div class="meta-item">
+              <label>Status</label>
+              <select id="taskStatus">
+                <option value="backlog">Backlog</option>
+                <option value="todo">To Do</option>
+                <option value="progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+            <div class="meta-item">
+              <label>Priority</label>
+              <select id="taskPriority">
+                <option value="low">🟢 Low</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="high">🟠 High</option>
+                <option value="critical">🔴 Critical</option>
+              </select>
+            </div>
+            <div class="meta-item">
+              <label>Assignee</label>
+              <select id="taskAssignee">
+                <option value="">Unassigned</option>
+                <option value="joao">João</option>
+                <option value="imu">Imu 🌀</option>
+              </select>
+            </div>
+          </div>
+          <div class="task-description">
+            <label>Description</label>
+            <textarea placeholder="Add a description..." id="taskDescription"></textarea>
+          </div>
+          <div class="task-integrations">
+            <div class="integration-link github">
+              <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              <span>Link GitHub Issue</span>
+            </div>
+            <div class="integration-link jira">
+              <svg viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
+              <span>Link Jira Ticket</span>
+            </div>
+            <div class="integration-link confluence">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span>Link Confluence Doc</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="cancelTask">Cancel</button>
+          <button class="btn btn-primary" id="saveTask">Save Task</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Add (Mobile FAB) -->
+    <button class="fab" id="fabAdd">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/kanban.js"></script>
+  <script src="js/integrations.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

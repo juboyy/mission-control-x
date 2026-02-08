@@ -1,0 +1,408 @@
+/* TaskFlow Responsive Styles - Mobile First */
+
+/* ===========================================
+   MOBILE (Default)
+   =========================================== */
+@media (max-width: 767px) {
+  /* Hide desktop sidebar */
+  .sidebar {
+    transform: translateX(-100%);
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-xl);
+  }
+  
+  /* Show mobile nav */
+  .mobile-nav {
+    display: grid;
+  }
+  
+  /* Main content full width */
+  .main {
+    margin-left: 0;
+    padding-bottom: calc(var(--mobile-nav-height) + var(--space-4));
+  }
+  
+  /* Show menu toggle */
+  .menu-toggle {
+    display: flex;
+  }
+  
+  /* Show FAB */
+  .fab {
+    display: flex;
+  }
+  
+  /* Header adjustments */
+  .header {
+    padding: 0 var(--space-4);
+    height: 56px;
+  }
+  
+  .header-actions {
+    gap: var(--space-3);
+  }
+  
+  .sprint-progress {
+    display: none;
+  }
+  
+  .btn-text {
+    display: none;
+  }
+  
+  .btn {
+    padding: var(--space-2);
+    width: 40px;
+    height: 40px;
+  }
+  
+  .btn svg {
+    margin: 0;
+  }
+  
+  /* Breadcrumb */
+  .breadcrumb-item:not(.active) {
+    display: none;
+  }
+  
+  .breadcrumb svg {
+    display: none;
+  }
+  
+  /* View padding */
+  .view {
+    padding: var(--space-4);
+  }
+  
+  /* Kanban mobile scroll */
+  .kanban-container {
+    padding: 0;
+    gap: var(--space-4);
+  }
+  
+  .kanban-column {
+    flex: 0 0 85vw;
+    min-width: 280px;
+    max-width: 85vw;
+  }
+  
+  /* Cards container */
+  .cards-container {
+    border-radius: var(--radius-lg);
+  }
+  
+  /* Task card */
+  .task-card {
+    padding: var(--space-3);
+  }
+  
+  /* Modal */
+  .modal-content {
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  
+  .task-meta-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+  
+  /* Integrations */
+  .integrations-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .integration-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Insights */
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .insight-card.large {
+    grid-column: span 1;
+  }
+  
+  /* Toast */
+  .toast-container {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(var(--mobile-nav-height) + var(--space-4));
+  }
+  
+  .toast {
+    max-width: 100%;
+  }
+}
+
+/* ===========================================
+   TABLET (768px+)
+   =========================================== */
+@media (min-width: 768px) {
+  .mobile-nav {
+    display: none;
+  }
+  
+  .fab {
+    display: none;
+  }
+  
+  .sidebar {
+    transform: translateX(0);
+  }
+  
+  .main {
+    margin-left: var(--sidebar-width);
+    padding-bottom: 0;
+  }
+  
+  .menu-toggle {
+    display: none;
+  }
+  
+  .kanban-column {
+    flex: 0 0 var(--kanban-column-width);
+  }
+  
+  .modal-content {
+    max-height: 90vh;
+    height: auto;
+    border-radius: var(--radius-xl);
+  }
+}
+
+/* ===========================================
+   SMALL DESKTOP (1024px+)
+   =========================================== */
+@media (min-width: 1024px) {
+  .btn-text {
+    display: inline;
+  }
+  
+  .btn {
+    padding: var(--space-2) var(--space-4);
+    width: auto;
+    height: 40px;
+  }
+  
+  .sprint-progress {
+    display: flex;
+  }
+  
+  .breadcrumb-item {
+    display: inline;
+  }
+  
+  .breadcrumb svg {
+    display: block;
+  }
+}
+
+/* ===========================================
+   LARGE DESKTOP (1280px+)
+   =========================================== */
+@media (min-width: 1280px) {
+  .kanban-column {
+    flex: 0 0 340px;
+  }
+  
+  .integration-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===========================================
+   EXTRA LARGE (1536px+)
+   =========================================== */
+@media (min-width: 1536px) {
+  .kanban-column {
+    flex: 0 0 360px;
+  }
+  
+  .view {
+    padding: var(--space-8);
+  }
+}
+
+/* ===========================================
+   SIDEBAR COLLAPSED STATE
+   =========================================== */
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+}
+
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .nav-section-title,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .nav-badge,
+.sidebar.collapsed .sidebar-search,
+.sidebar.collapsed .user-info,
+.sidebar.collapsed .user-menu-btn {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.sidebar.collapsed .nav-item::before {
+  display: none;
+}
+
+.sidebar.collapsed .user-card {
+  justify-content: center;
+}
+
+.sidebar.collapsed + .main {
+  margin-left: var(--sidebar-collapsed);
+}
+
+.sidebar.collapsed .sidebar-toggle svg {
+  transform: rotate(180deg);
+}
+
+/* ===========================================
+   DARK MODE OVERLAY FOR MOBILE SIDEBAR
+   =========================================== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: calc(var(--z-fixed) - 1);
+  backdrop-filter: blur(4px);
+}
+
+.sidebar-overlay.active {
+  display: block;
+  animation: fadeIn var(--transition-fast);
+}
+
+/* ===========================================
+   TOUCH OPTIMIZATIONS
+   =========================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  .nav-item {
+    padding: var(--space-4) var(--space-3);
+  }
+  
+  .btn {
+    min-height: 44px;
+  }
+  
+  .task-card {
+    padding: var(--space-4);
+  }
+  
+  .column-menu {
+    opacity: 1;
+    width: 44px;
+    height: 44px;
+  }
+  
+  /* Disable hover effects */
+  .task-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Smooth scrolling */
+  .kanban-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ===========================================
+   REDUCED MOTION
+   =========================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================
+   HIGH CONTRAST MODE
+   =========================================== */
+@media (prefers-contrast: high) {
+  :root {
+    --border-subtle: rgba(255, 255, 255, 0.2);
+    --border-default: rgba(255, 255, 255, 0.4);
+    --text-muted: rgba(255, 255, 255, 0.6);
+  }
+  
+  .task-card {
+    border-width: 2px;
+  }
+}
+
+/* ===========================================
+   LANDSCAPE PHONE
+   =========================================== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .mobile-nav {
+    height: 56px;
+    padding: var(--space-1) var(--space-4);
+  }
+  
+  .mobile-nav-item span {
+    display: none;
+  }
+  
+  .fab {
+    bottom: calc(56px + var(--space-3));
+    width: 48px;
+    height: 48px;
+  }
+  
+  .main {
+    padding-bottom: calc(56px + var(--space-2));
+  }
+  
+  .header {
+    height: 48px;
+  }
+}
+
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+@media print {
+  .sidebar,
+  .mobile-nav,
+  .fab,
+  .header-buttons,
+  .modal {
+    display: none !important;
+  }
+  
+  .main {
+    margin-left: 0;
+  }
+  
+  .task-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
