@@ -2,629 +2,969 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Mission Control X</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ===== Apple HIG Design System ===== */
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --surface-2: #1a1a25;
-      --surface-3: #222230;
-      --border: rgba(255,255,255,0.08);
-      --text: #fff;
-      --text-2: rgba(255,255,255,0.7);
-      --text-3: rgba(255,255,255,0.4);
-      --accent: #00d4ff;
-      --purple: #8b5cf6;
-      --green: #10b981;
-      --orange: #f59e0b;
-      --red: #ef4444;
-      --pink: #ec4899;
+      /* Semantic Colors - Light */
+      --label: #000000;
+      --label-secondary: rgba(60, 60, 67, 0.6);
+      --label-tertiary: rgba(60, 60, 67, 0.3);
+      --bg-primary: #F2F2F7;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #F2F2F7;
+      --separator: rgba(60, 60, 67, 0.12);
+      --fill: rgba(120, 120, 128, 0.2);
+      
+      /* System Colors */
+      --blue: #007AFF;
+      --green: #34C759;
+      --orange: #FF9500;
+      --red: #FF3B30;
+      --purple: #AF52DE;
+      --teal: #5AC8FA;
+      
+      /* Spacing - 8pt grid */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      
+      /* Radius */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      
+      /* Safe areas */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --label: #FFFFFF;
+        --label-secondary: rgba(235, 235, 245, 0.6);
+        --label-tertiary: rgba(235, 235, 245, 0.3);
+        --bg-primary: #000000;
+        --bg-secondary: #1C1C1E;
+        --bg-tertiary: #2C2C2E;
+        --separator: rgba(84, 84, 88, 0.65);
+        --fill: rgba(120, 120, 128, 0.32);
+      }
+    }
+
+    /* Force dark mode for this app */
+    :root {
+      --label: #FFFFFF;
+      --label-secondary: rgba(235, 235, 245, 0.6);
+      --label-tertiary: rgba(235, 235, 245, 0.3);
+      --bg-primary: #000000;
+      --bg-secondary: #1C1C1E;
+      --bg-tertiary: #2C2C2E;
+      --bg-grouped: #1C1C1E;
+      --separator: rgba(84, 84, 88, 0.65);
+      --fill: rgba(120, 120, 128, 0.32);
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html, body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg-primary);
+      color: var(--label);
       min-height: 100vh;
       min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
       overscroll-behavior: none;
     }
 
-    /* Header */
-    header {
+    /* ===== Navigation Bar ===== */
+    .navbar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(10,10,15,0.9);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
+      padding-top: var(--safe-top);
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid var(--separator);
+    }
+
+    .navbar-content {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      height: 44px;
+      padding: 0 var(--space-md);
     }
 
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-icon { font-size: 24px; }
-    .logo-text { font-weight: 700; font-size: 16px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    
-    .status { display: flex; align-items: center; gap: 8px; }
-    .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
-    .status-text { font-size: 12px; color: var(--text-3); }
-    
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    /* Main */
-    main {
-      padding: 16px;
-      padding-bottom: 90px;
+    .navbar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
     }
 
-    /* Tabs */
-    .tabs {
+    .navbar-status {
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-    
-    .tab {
-      flex-shrink: 0;
-      padding: 10px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 25px;
+      align-items: center;
+      gap: var(--space-sm);
       font-size: 13px;
-      font-weight: 600;
-      color: var(--text-2);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tab:active { transform: scale(0.96); }
-    .tab.active { background: var(--accent); border-color: var(--accent); color: #000; }
-
-    /* View containers */
-    .view { display: none; }
-    .view.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Cards */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 16px;
+      color: var(--label-secondary);
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
     }
 
-    .card-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-2);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
 
-    .card-action {
-      font-size: 12px;
-      color: var(--accent);
-      font-weight: 500;
-      cursor: pointer;
+    /* ===== Large Title ===== */
+    .large-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.37px;
+      padding: var(--space-md);
+      padding-top: var(--space-sm);
     }
 
-    /* Hero Stats */
-    .hero {
-      background: linear-gradient(135deg, var(--accent), var(--purple));
-      border-radius: 24px;
-      padding: 24px;
-      margin-bottom: 20px;
-      position: relative;
+    /* ===== Main Content ===== */
+    main {
+      padding-bottom: calc(83px + var(--safe-bottom));
+    }
+
+    /* ===== Inset Grouped List ===== */
+    .list-section {
+      margin: var(--space-md);
+    }
+
+    .list-header {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--label-secondary);
+      text-transform: uppercase;
+      letter-spacing: -0.08px;
+      padding: 0 var(--space-md);
+      margin-bottom: var(--space-sm);
+    }
+
+    .list-group {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
       overflow: hidden;
     }
-    .hero::before {
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: 11px var(--space-md);
+      min-height: 44px;
+      position: relative;
+      transition: background 0.15s;
+    }
+
+    .list-item:active {
+      background: var(--fill);
+    }
+
+    .list-item:not(:last-child)::after {
       content: '';
       position: absolute;
-      top: -50%;
-      right: -30%;
-      width: 200px;
-      height: 200px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
+      left: 56px;
+      right: 0;
+      bottom: 0;
+      height: 0.5px;
+      background: var(--separator);
     }
-    .hero-label { font-size: 13px; opacity: 0.9; margin-bottom: 6px; }
-    .hero-value { font-size: 48px; font-weight: 800; letter-spacing: -2px; }
-    .hero-sub { font-size: 14px; opacity: 0.8; margin-top: 8px; }
-    .hero-bar { height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; margin-top: 16px; overflow: hidden; }
-    .hero-fill { height: 100%; background: #fff; border-radius: 4px; transition: width 0.5s; }
-    .hero-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; opacity: 0.8; }
 
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-    }
-    .stat-icon { font-size: 24px; margin-bottom: 10px; }
-    .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-    .stat-label { font-size: 12px; color: var(--text-3); }
-    .stat-change { font-size: 11px; color: var(--green); margin-top: 6px; }
-    .stat-change.negative { color: var(--red); }
-
-    /* Agent List */
-    .agent-list { display: flex; flex-direction: column; gap: 12px; }
-    
-    .agent {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px;
-      background: var(--surface-2);
-      border-radius: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .agent:active { transform: scale(0.98); background: var(--surface-3); }
-    
-    .agent-avatar {
-      width: 48px;
-      height: 48px;
-      background: var(--surface-3);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-    .agent.main .agent-avatar { background: linear-gradient(135deg, var(--accent), var(--purple)); }
-    
-    .agent-info { flex: 1; }
-    .agent-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
-    .agent-role { font-size: 12px; color: var(--text-3); }
-    
-    .agent-stats { text-align: right; }
-    .agent-cost { font-size: 15px; font-weight: 600; color: var(--accent); }
-    .agent-tokens { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-
-    /* Tool Chips */
-    .tools { display: flex; flex-wrap: wrap; gap: 10px; }
-    .tool {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: var(--surface-2);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tool:active { transform: scale(0.96); }
-    .tool-icon { font-size: 18px; }
-    .tool-name { font-size: 13px; font-weight: 500; }
-    .tool-count { font-size: 11px; color: var(--text-3); background: var(--surface-3); padding: 3px 8px; border-radius: 8px; }
-
-    /* Activity */
-    .activity-list { display: flex; flex-direction: column; }
-    
-    .activity {
-      display: flex;
-      gap: 14px;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .activity:last-child { border-bottom: none; }
-    .activity:active { opacity: 0.7; }
-    
-    .activity-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--surface-2);
-      border-radius: 12px;
+    .list-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       flex-shrink: 0;
     }
-    .activity-icon.tool { background: rgba(0,212,255,0.15); }
-    .activity-icon.user { background: rgba(139,92,246,0.15); }
-    .activity-icon.assistant { background: rgba(16,185,129,0.15); }
-    
-    .activity-content { flex: 1; min-width: 0; }
-    .activity-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .activity-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .activity-time { font-size: 12px; color: var(--text-3); flex-shrink: 0; }
-    .activity-desc { font-size: 13px; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-    .activity-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-    .activity-tag { font-size: 10px; padding: 4px 8px; background: var(--surface-3); border-radius: 6px; color: var(--text-3); }
-    .activity-tag.accent { background: rgba(0,212,255,0.15); color: var(--accent); }
 
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      align-items: flex-end;
-      justify-content: center;
+    .list-icon.blue { background: var(--blue); }
+    .list-icon.green { background: var(--green); }
+    .list-icon.orange { background: var(--orange); }
+    .list-icon.purple { background: var(--purple); }
+    .list-icon.teal { background: var(--teal); }
+    .list-icon.red { background: var(--red); }
+
+    .list-content {
+      flex: 1;
+      min-width: 0;
     }
-    .modal.active { display: flex; animation: fadeIn 0.2s; }
-    
-    .modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
+
+    .list-title {
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: -0.4px;
     }
-    
-    .modal-content {
+
+    .list-subtitle {
+      font-size: 15px;
+      color: var(--label-secondary);
+      margin-top: 2px;
+    }
+
+    .list-value {
+      font-size: 17px;
+      color: var(--label-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .list-chevron {
+      color: var(--label-tertiary);
+      font-size: 14px;
+      margin-left: var(--space-xs);
+    }
+
+    /* ===== Stats Cards ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      padding: 0 var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      transition: transform 0.2s, background 0.15s;
+    }
+
+    .stat-card:active {
+      transform: scale(0.98);
+      background: var(--bg-tertiary);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .stat-icon {
+      font-size: 20px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--label-secondary);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Hero Card ===== */
+    .hero-card {
+      margin: 0 var(--space-md) var(--space-md);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
+      border-radius: var(--radius-xl);
+      padding: var(--space-lg);
       position: relative;
-      width: 100%;
-      max-height: 85vh;
-      background: var(--surface);
-      border-radius: 24px 24px 0 0;
-      padding: 20px;
-      animation: slideUp 0.3s;
-      overflow-y: auto;
-    }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    
-    .modal-handle {
-      width: 40px;
-      height: 4px;
-      background: var(--surface-3);
-      border-radius: 2px;
-      margin: 0 auto 20px;
-    }
-    
-    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center; }
-    
-    .modal-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-size: 24px;
-      color: var(--text-3);
-      cursor: pointer;
+      overflow: hidden;
     }
 
-    /* Detail Rows */
-    .detail-row {
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -20%;
+      width: 180px;
+      height: 180px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+
+    .hero-label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-bottom: var(--space-xs);
+    }
+
+    .hero-value {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: var(--space-sm);
+    }
+
+    .hero-subtitle {
+      font-size: 15px;
+      opacity: 0.8;
+      margin-bottom: var(--space-md);
+    }
+
+    .hero-progress {
+      height: 4px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .hero-progress-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.9);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+
+    .hero-meta {
       display: flex;
       justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--border);
+      margin-top: var(--space-sm);
+      font-size: 13px;
+      opacity: 0.8;
     }
-    .detail-row:last-child { border-bottom: none; }
-    .detail-label { color: var(--text-3); font-size: 14px; }
-    .detail-value { font-weight: 600; font-size: 14px; }
 
-    /* Bottom Nav */
-    nav {
+    /* ===== Agent Row ===== */
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      position: relative;
+    }
+
+    .agent-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 68px;
+      right: 0;
+      bottom: 0;
+      height: 0.5px;
+      background: var(--separator);
+    }
+
+    .agent-avatar {
+      width: 44px;
+      height: 44px;
+      background: var(--fill);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .agent-avatar.main {
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+    }
+
+    .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-name {
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: -0.4px;
+    }
+
+    .agent-role {
+      font-size: 15px;
+      color: var(--label-secondary);
+    }
+
+    .agent-stats {
+      text-align: right;
+    }
+
+    .agent-cost {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--teal);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .agent-tokens {
+      font-size: 13px;
+      color: var(--label-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Activity Row ===== */
+    .activity-row {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      position: relative;
+    }
+
+    .activity-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 56px;
+      right: 0;
+      bottom: 0;
+      height: 0.5px;
+      background: var(--separator);
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--fill);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.tool { background: rgba(0, 122, 255, 0.2); }
+    .activity-icon.user { background: rgba(175, 82, 222, 0.2); }
+    .activity-icon.assistant { background: rgba(52, 199, 89, 0.2); }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .activity-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .activity-time {
+      font-size: 13px;
+      color: var(--label-secondary);
+      flex-shrink: 0;
+    }
+
+    .activity-desc {
+      font-size: 15px;
+      color: var(--label-secondary);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .activity-tags {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--fill);
+      border-radius: 6px;
+      color: var(--label-secondary);
+    }
+
+    .tag.accent {
+      background: rgba(0, 122, 255, 0.2);
+      color: var(--blue);
+    }
+
+    /* ===== Tool Chips ===== */
+    .tools-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+    }
+
+    .tool-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--fill);
+      border-radius: 20px;
+      font-size: 15px;
+      transition: transform 0.15s;
+    }
+
+    .tool-chip:active {
+      transform: scale(0.96);
+    }
+
+    .tool-chip-icon {
+      font-size: 16px;
+    }
+
+    .tool-chip-count {
+      font-size: 13px;
+      color: var(--label-secondary);
+      background: var(--bg-tertiary);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* ===== Tab Bar ===== */
+    .tabbar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(10,10,15,0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      padding: 10px 20px;
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
-      display: flex;
-      justify-content: space-around;
+      background: rgba(28, 28, 30, 0.94);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid var(--separator);
+      padding-bottom: var(--safe-bottom);
     }
-    
-    .nav-item {
+
+    .tabbar-content {
+      display: flex;
+      height: 49px;
+    }
+
+    .tab-item {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      color: var(--text-3);
+      justify-content: center;
+      gap: 3px;
+      color: var(--label-tertiary);
       font-size: 10px;
       font-weight: 500;
-      cursor: pointer;
       transition: color 0.2s;
-      padding: 6px 12px;
     }
-    .nav-item:active { transform: scale(0.9); }
-    .nav-item.active { color: var(--accent); }
-    .nav-icon { font-size: 24px; }
 
-    /* Refresh indicator */
-    .refresh {
+    .tab-item.active {
+      color: var(--blue);
+    }
+
+    .tab-icon {
+      font-size: 24px;
+      height: 24px;
+    }
+
+    /* ===== Views ===== */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ===== Modal Sheet ===== */
+    .sheet {
+      display: none;
       position: fixed;
-      top: 70px;
+      inset: 0;
+      z-index: 200;
+    }
+
+    .sheet.active {
+      display: block;
+    }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.25s;
+    }
+
+    .sheet-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 90vh;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding-bottom: var(--safe-bottom);
+      animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 5px;
+      background: var(--fill);
+      border-radius: 3px;
+      margin: var(--space-sm) auto var(--space-md);
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 var(--space-md) var(--space-md);
+    }
+
+    .sheet-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .sheet-close {
+      font-size: 28px;
+      color: var(--label-secondary);
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .sheet-body {
+      padding: 0 var(--space-md) var(--space-lg);
+    }
+
+    /* Detail List */
+    .detail-list {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px var(--space-md);
+      font-size: 15px;
+    }
+
+    .detail-row:not(:last-child) {
+      border-bottom: 0.5px solid var(--separator);
+    }
+
+    .detail-label {
+      color: var(--label-secondary);
+    }
+
+    .detail-value {
+      font-weight: 500;
+      text-align: right;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-xl);
+      color: var(--label-secondary);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-md);
+    }
+
+    .empty-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--label);
+      margin-bottom: var(--space-xs);
+    }
+
+    /* Refresh Indicator */
+    .refresh-indicator {
+      position: fixed;
+      top: calc(44px + var(--safe-top) + 12px);
       left: 50%;
       transform: translateX(-50%);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 8px 16px;
+      background: var(--bg-secondary);
+      padding: var(--space-sm) var(--space-md);
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 13px;
       display: none;
       z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
-    .refresh.active { display: block; animation: fadeIn 0.2s; }
 
-    /* Empty */
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-3);
+    .refresh-indicator.active {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      animation: fadeIn 0.2s;
     }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-text { font-size: 14px; }
 
-    /* Skeleton */
-    .skeleton {
-      background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 8px;
-    }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* Scrollbar hidden */
+    ::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <span class="logo-icon">🌀</span>
-      <span class="logo-text">Mission Control X</span>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <span class="navbar-title">🌀 Mission Control X</span>
+      <div class="navbar-status">
+        <span class="status-dot"></span>
+        <span id="lastUpdate">--:--</span>
+      </div>
     </div>
-    <div class="status">
-      <span class="status-dot"></span>
-      <span class="status-text" id="lastUpdate">Atualizando...</span>
-    </div>
-  </header>
+  </nav>
 
-  <div class="refresh" id="refreshIndicator">🔄 Atualizando...</div>
+  <!-- Refresh Indicator -->
+  <div class="refresh-indicator" id="refreshIndicator">
+    <span>↻</span>
+    <span>Atualizando...</span>
+  </div>
 
+  <!-- Main Content -->
   <main>
-    <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active" data-view="overview">📊 Overview</div>
-      <div class="tab" data-view="agents">🤖 Agentes</div>
-      <div class="tab" data-view="tools">🛠️ Tools</div>
-      <div class="tab" data-view="activity">📡 Atividade</div>
-    </div>
-
     <!-- Overview View -->
     <div class="view active" id="view-overview">
-      <div class="hero">
-        <div class="hero-label">💰 Custo Total da Sessão</div>
+      <h1 class="large-title">Overview</h1>
+
+      <!-- Hero Card -->
+      <div class="hero-card">
+        <div class="hero-label">Custo Total</div>
         <div class="hero-value" id="totalCost">$0.00</div>
-        <div class="hero-sub" id="costSub">0 tokens processados</div>
-        <div class="hero-bar"><div class="hero-fill" id="costFill" style="width:0%"></div></div>
+        <div class="hero-subtitle" id="tokensSub">0 tokens processados</div>
+        <div class="hero-progress">
+          <div class="hero-progress-fill" id="costFill" style="width: 0%"></div>
+        </div>
         <div class="hero-meta">
-          <span id="costPercent">0%</span>
-          <span>Budget: $15/dia</span>
+          <span id="costPercent">0% do budget</span>
+          <span>$15.00/dia</span>
         </div>
       </div>
 
+      <!-- Stats Grid -->
       <div class="stats-grid">
-        <div class="stat" onclick="switchView('agents')">
-          <div class="stat-icon">🤖</div>
+        <div class="stat-card" onclick="switchView('agents')">
+          <div class="stat-header">
+            <span class="stat-icon">🤖</span>
+            <span class="stat-label">Agentes</span>
+          </div>
           <div class="stat-value" id="statAgents">0</div>
-          <div class="stat-label">Agentes Ativos</div>
         </div>
-        <div class="stat" onclick="switchView('activity')">
-          <div class="stat-icon">💬</div>
+        <div class="stat-card" onclick="switchView('activity')">
+          <div class="stat-header">
+            <span class="stat-icon">💬</span>
+            <span class="stat-label">Mensagens</span>
+          </div>
           <div class="stat-value" id="statMessages">0</div>
-          <div class="stat-label">Mensagens</div>
         </div>
-        <div class="stat" onclick="switchView('tools')">
-          <div class="stat-icon">🔧</div>
+        <div class="stat-card" onclick="switchView('tools')">
+          <div class="stat-header">
+            <span class="stat-icon">🔧</span>
+            <span class="stat-label">Tool Calls</span>
+          </div>
           <div class="stat-value" id="statTools">0</div>
-          <div class="stat-label">Tool Calls</div>
         </div>
-        <div class="stat">
-          <div class="stat-icon">⚡</div>
-          <div class="stat-value" id="statTokens">0</div>
-          <div class="stat-label">Tokens (K)</div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-icon">⚡</span>
+            <span class="stat-label">Tokens</span>
+          </div>
+          <div class="stat-value" id="statTokens">0K</div>
         </div>
       </div>
 
-      <!-- Quick Agents -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">🎭 Agentes</span>
-          <span class="card-action" onclick="switchView('agents')">Ver todos →</span>
-        </div>
-        <div class="agent-list" id="quickAgents"></div>
+      <!-- Agents Section -->
+      <div class="list-section">
+        <div class="list-header">Agentes Ativos</div>
+        <div class="list-group" id="agentsList"></div>
       </div>
 
       <!-- Recent Activity -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">📡 Atividade Recente</span>
-          <span class="card-action" onclick="switchView('activity')">Ver mais →</span>
-        </div>
-        <div class="activity-list" id="quickActivity"></div>
+      <div class="list-section">
+        <div class="list-header">Atividade Recente</div>
+        <div class="list-group" id="activityList"></div>
       </div>
     </div>
 
     <!-- Agents View -->
     <div class="view" id="view-agents">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">🤖 Todos os Agentes</span>
-          <span class="card-action" id="agentCount">0 ativos</span>
-        </div>
-        <div class="agent-list" id="allAgents"></div>
+      <h1 class="large-title">Agentes</h1>
+      <div class="list-section">
+        <div class="list-header" id="agentsCount">0 ativos</div>
+        <div class="list-group" id="allAgentsList"></div>
       </div>
     </div>
 
     <!-- Tools View -->
     <div class="view" id="view-tools">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">🛠️ Ferramentas Utilizadas</span>
-          <span class="card-action" id="toolCount">0 tipos</span>
+      <h1 class="large-title">Ferramentas</h1>
+      <div class="list-section">
+        <div class="list-header" id="toolsCount">0 tipos</div>
+        <div class="list-group">
+          <div class="tools-wrap" id="toolsList"></div>
         </div>
-        <div class="tools" id="allTools"></div>
       </div>
     </div>
 
     <!-- Activity View -->
     <div class="view" id="view-activity">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">📡 Todas as Atividades</span>
-          <span class="card-action" id="activityCount">0 eventos</span>
-        </div>
-        <div class="activity-list" id="allActivity"></div>
+      <h1 class="large-title">Atividade</h1>
+      <div class="list-section">
+        <div class="list-header" id="activityCount">0 eventos</div>
+        <div class="list-group" id="allActivityList"></div>
       </div>
     </div>
   </main>
 
-  <!-- Bottom Nav -->
-  <nav>
-    <div class="nav-item active" onclick="switchView('overview')">
-      <span class="nav-icon">📊</span>
-      <span>Overview</span>
-    </div>
-    <div class="nav-item" onclick="switchView('agents')">
-      <span class="nav-icon">🤖</span>
-      <span>Agentes</span>
-    </div>
-    <div class="nav-item" onclick="switchView('tools')">
-      <span class="nav-icon">🛠️</span>
-      <span>Tools</span>
-    </div>
-    <div class="nav-item" onclick="switchView('activity')">
-      <span class="nav-icon">📡</span>
-      <span>Atividade</span>
+  <!-- Tab Bar -->
+  <nav class="tabbar">
+    <div class="tabbar-content">
+      <div class="tab-item active" data-view="overview">
+        <span class="tab-icon">📊</span>
+        <span>Overview</span>
+      </div>
+      <div class="tab-item" data-view="agents">
+        <span class="tab-icon">🤖</span>
+        <span>Agentes</span>
+      </div>
+      <div class="tab-item" data-view="tools">
+        <span class="tab-icon">🔧</span>
+        <span>Tools</span>
+      </div>
+      <div class="tab-item" data-view="activity">
+        <span class="tab-icon">📡</span>
+        <span>Atividade</span>
+      </div>
     </div>
   </nav>
 
-  <!-- Agent Detail Modal -->
-  <div class="modal" id="agentModal">
-    <div class="modal-backdrop" onclick="closeModal()"></div>
-    <div class="modal-content">
-      <div class="modal-handle"></div>
-      <span class="modal-close" onclick="closeModal()">×</span>
-      <div id="agentModalContent"></div>
+  <!-- Agent Detail Sheet -->
+  <div class="sheet" id="agentSheet">
+    <div class="sheet-backdrop" onclick="closeSheet()"></div>
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title" id="sheetTitle">Detalhes</span>
+        <span class="sheet-close" onclick="closeSheet()">×</span>
+      </div>
+      <div class="sheet-body" id="sheetBody"></div>
     </div>
   </div>
 
   <script>
-    // State
-    let data = { stats: {}, sessions: [], activities: [] };
-    let currentView = 'overview';
-
     // Helpers
-    const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : n;
+    const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
     const money = n => '$' + (n || 0).toFixed(2);
     const ago = ts => {
       if (!ts) return '';
       const s = (Date.now() - new Date(ts)) / 1000;
       if (s < 60) return 'agora';
       if (s < 3600) return Math.floor(s/60) + ' min';
-      if (s < 86400) return Math.floor(s/3600) + ' h';
-      return Math.floor(s/86400) + ' d';
+      if (s < 86400) return Math.floor(s/3600) + 'h';
+      return Math.floor(s/86400) + 'd';
     };
 
     const emojis = { main:'🌀', nami:'🍊', robin:'📚', franky:'🔧', zoro:'⚔️', sanji:'🍳', chopper:'🩺', luffy:'👒', usopp:'🎯', brook:'🎸', cron:'⏰' };
     const roles = { main:'Orquestrador', nami:'Navegadora', robin:'Arqueóloga', franky:'Engenheiro', zoro:'Executor', sanji:'Provedor', chopper:'Médico', cron:'Scheduler' };
-    const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️' };
+    const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊' };
 
-    function getEmoji(label) {
-      const key = (label || '').toLowerCase().split('-')[0].replace('cron:', '').trim();
-      return emojis[key] || '🤖';
-    }
+    const getKey = label => (label || '').toLowerCase().split('-')[0].replace('cron:', '').trim();
+    const getEmoji = label => emojis[getKey(label)] || '🤖';
+    const getRole = label => roles[getKey(label)] || 'Agente';
 
-    function getRole(label) {
-      const key = (label || '').toLowerCase().split('-')[0].replace('cron:', '').trim();
-      return roles[key] || 'Agente';
-    }
+    // View switching
+    let currentView = 'overview';
 
-    // Switch view
     function switchView(view) {
       currentView = view;
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById('view-' + view).classList.add('active');
-      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
-      document.querySelectorAll('.nav-item').forEach((n, i) => {
-        const views = ['overview', 'agents', 'tools', 'activity'];
-        n.classList.toggle('active', views[i] === view);
-      });
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.view === view));
     }
 
-    // Tabs click
-    document.querySelectorAll('.tab').forEach(tab => {
+    document.querySelectorAll('.tab-item').forEach(tab => {
       tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Modal
-    function openAgentModal(session) {
-      const emoji = getEmoji(session.label);
-      const role = getRole(session.label);
-      document.getElementById('agentModalContent').innerHTML = `
-        <div style="text-align:center;margin-bottom:20px;">
-          <div style="font-size:48px;margin-bottom:10px;">${emoji}</div>
-          <div style="font-size:20px;font-weight:700;">${session.label || 'Agent'}</div>
-          <div style="color:var(--text-3);font-size:14px;">${role}</div>
+    // Sheet
+    let currentAgent = null;
+
+    function openSheet(agent) {
+      currentAgent = agent;
+      document.getElementById('sheetTitle').textContent = agent.label || 'Agente';
+      document.getElementById('sheetBody').innerHTML = `
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:56px;margin-bottom:8px;">${getEmoji(agent.label)}</div>
+          <div style="font-size:22px;font-weight:600;">${agent.label || 'Agent'}</div>
+          <div style="color:var(--label-secondary);">${getRole(agent.label)}</div>
         </div>
-        <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${session.model?.split('-').slice(-2).join(' ') || 'N/A'}</span></div>
-        <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${session.channel || 'N/A'}</span></div>
-        <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(session.totalTokens || 0)}</span></div>
-        <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--accent)">${money(session.cost)}</span></div>
-        <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(session.updatedAt)}</span></div>
-        <div class="detail-row"><span class="detail-label">Session ID</span><span class="detail-value" style="font-size:11px;color:var(--text-3)">${session.sessionId?.slice(0,8) || 'N/A'}...</span></div>
+        <div class="detail-list">
+          <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('-').slice(-2).join(' ')}</span></div>
+          <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${agent.channel || 'N/A'}</span></div>
+          <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(agent.totalTokens || 0)}</span></div>
+          <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(agent.cost)}</span></div>
+          <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(agent.updatedAt)}</span></div>
+        </div>
       `;
-      document.getElementById('agentModal').classList.add('active');
+      document.getElementById('agentSheet').classList.add('active');
     }
 
-    function closeModal() {
-      document.getElementById('agentModal').classList.remove('active');
+    function closeSheet() {
+      document.getElementById('agentSheet').classList.remove('active');
     }
 
-    // Render agents
-    function renderAgents(sessions, containerId, limit = null) {
+    // Render functions
+    function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
+      
       if (!list.length) {
-        container.innerHTML = '<div class="empty"><div class="empty-icon">🤖</div><div class="empty-text">Nenhum agente ativo</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
         return;
       }
-      container.innerHTML = list.map(s => {
-        const emoji = getEmoji(s.label);
-        const role = getRole(s.label);
+
+      container.innerHTML = list.map((s, i) => {
         const isMain = s.kind === 'main';
         return `
-          <div class="agent ${isMain ? 'main' : ''}" onclick='openAgentModal(${JSON.stringify(s)})'>
-            <div class="agent-avatar">${emoji}</div>
+          <div class="agent-row" onclick='openSheet(${JSON.stringify(s)})'>
+            <div class="agent-avatar ${isMain ? 'main' : ''}">${getEmoji(s.label)}</div>
             <div class="agent-info">
               <div class="agent-name">${s.label || 'Agent'}</div>
-              <div class="agent-role">${role}</div>
+              <div class="agent-role">${getRole(s.label)}</div>
             </div>
             <div class="agent-stats">
               <div class="agent-cost">${money(s.cost)}</div>
@@ -635,40 +975,17 @@
       }).join('');
     }
 
-    // Render tools
-    function renderTools(activities) {
-      const counts = {};
-      activities.forEach(a => {
-        if (a.type === 'tool' && a.tags) {
-          a.tags.forEach(t => { if (t !== 'tool') counts[t] = (counts[t] || 0) + 1; });
-        }
-      });
-      const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-      document.getElementById('toolCount').textContent = sorted.length + ' tipos';
-      const container = document.getElementById('allTools');
-      if (!sorted.length) {
-        container.innerHTML = '<div class="empty"><div class="empty-icon">🛠️</div><div class="empty-text">Nenhuma ferramenta usada</div></div>';
-        return;
-      }
-      container.innerHTML = sorted.map(([tool, count]) => `
-        <div class="tool">
-          <span class="tool-icon">${toolIcons[tool] || '🔧'}</span>
-          <span class="tool-name">${tool}</span>
-          <span class="tool-count">${count}x</span>
-        </div>
-      `).join('');
-    }
-
-    // Render activities
-    function renderActivities(activities, containerId, limit = null) {
+    function renderActivity(activities, containerId, limit) {
       const list = limit ? activities.slice(0, limit) : activities;
       const container = document.getElementById(containerId);
+
       if (!list.length) {
-        container.innerHTML = '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Nenhuma atividade ainda</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Nenhuma atividade</div></div>';
         return;
       }
+
       container.innerHTML = list.map(a => `
-        <div class="activity">
+        <div class="activity-row">
           <div class="activity-icon ${a.type}">${a.icon || '📌'}</div>
           <div class="activity-content">
             <div class="activity-header">
@@ -677,19 +994,46 @@
             </div>
             <div class="activity-desc">${a.description || ''}</div>
             <div class="activity-tags">
-              ${a.session ? `<span class="activity-tag accent">${a.session}</span>` : ''}
-              ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => `<span class="activity-tag">${t}</span>`).join('')}
-              ${a.cost ? `<span class="activity-tag">$${a.cost.toFixed(4)}</span>` : ''}
+              ${a.session ? `<span class="tag accent">${a.session}</span>` : ''}
+              ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
             </div>
           </div>
         </div>
       `).join('');
     }
 
+    function renderTools(activities) {
+      const counts = {};
+      activities.forEach(a => {
+        if (a.type === 'tool' && a.tags) {
+          a.tags.forEach(t => { if (t !== 'tool') counts[t] = (counts[t] || 0) + 1; });
+        }
+      });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      document.getElementById('toolsCount').textContent = sorted.length + ' tipos';
+
+      const container = document.getElementById('toolsList');
+      if (!sorted.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-title">Nenhuma ferramenta</div></div>';
+        return;
+      }
+
+      container.innerHTML = sorted.map(([tool, count]) => `
+        <div class="tool-chip">
+          <span class="tool-chip-icon">${toolIcons[tool] || '🔧'}</span>
+          <span>${tool}</span>
+          <span class="tool-chip-count">${count}x</span>
+        </div>
+      `).join('');
+    }
+
     // Load data
     async function loadData(showIndicator = false) {
-      if (showIndicator) document.getElementById('refreshIndicator').classList.add('active');
-      
+      if (showIndicator) {
+        document.getElementById('refreshIndicator').classList.add('active');
+      }
+
       try {
         const [stats, sessions, activities] = await Promise.all([
           fetch('/api/stats').then(r => r.json()),
@@ -697,13 +1041,11 @@
           fetch('/api/activities?limit=50').then(r => r.json())
         ]);
 
-        data = { stats, sessions, activities };
-
         // Hero
         const cost = stats.totalCost || 0;
         const pct = Math.min((cost / 15) * 100, 100);
         document.getElementById('totalCost').textContent = money(cost);
-        document.getElementById('costSub').textContent = fmt(stats.totalTokens || 0) + ' tokens processados';
+        document.getElementById('tokensSub').textContent = fmt(stats.totalTokens || 0) + ' tokens';
         document.getElementById('costFill').style.width = pct + '%';
         document.getElementById('costPercent').textContent = pct.toFixed(1) + '% usado';
 
@@ -711,22 +1053,20 @@
         document.getElementById('statAgents').textContent = stats.sessionCount || 0;
         document.getElementById('statMessages').textContent = (stats.totalMessages?.user || 0) + (stats.totalMessages?.assistant || 0);
         document.getElementById('statTools').textContent = stats.totalToolCalls || 0;
-        document.getElementById('statTokens').textContent = Math.round((stats.totalTokens || 0) / 1000);
+        document.getElementById('statTokens').textContent = fmt(stats.totalTokens || 0);
 
-        // Quick agents (top 3)
-        renderAgents(sessions, 'quickAgents', 3);
-        
-        // All agents
-        renderAgents(sessions, 'allAgents');
-        document.getElementById('agentCount').textContent = sessions.length + ' ativos';
+        // Agents
+        renderAgents(sessions, 'agentsList', 4);
+        renderAgents(sessions, 'allAgentsList');
+        document.getElementById('agentsCount').textContent = sessions.length + ' ativos';
+
+        // Activity
+        renderActivity(activities, 'activityList', 5);
+        renderActivity(activities, 'allActivityList');
+        document.getElementById('activityCount').textContent = activities.length + ' eventos';
 
         // Tools
         renderTools(activities);
-
-        // Activities
-        renderActivities(activities, 'quickActivity', 5);
-        renderActivities(activities, 'allActivity');
-        document.getElementById('activityCount').textContent = activities.length + ' eventos';
 
         // Update time
         document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -735,37 +1075,35 @@
         console.error('Load error:', e);
       }
 
-      if (showIndicator) {
-        setTimeout(() => document.getElementById('refreshIndicator').classList.remove('active'), 500);
-      }
+      setTimeout(() => {
+        document.getElementById('refreshIndicator').classList.remove('active');
+      }, 500);
     }
 
     // Pull to refresh
-    let touchStart = 0;
-    document.addEventListener('touchstart', e => { if (window.scrollY === 0) touchStart = e.touches[0].clientY; });
-    document.addEventListener('touchmove', e => {
-      if (touchStart && e.touches[0].clientY - touchStart > 80) {
-        document.getElementById('refreshIndicator').classList.add('active');
-      }
+    let touchStartY = 0;
+    document.addEventListener('touchstart', e => {
+      if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
     });
     document.addEventListener('touchend', e => {
-      if (touchStart && window.scrollY === 0 && e.changedTouches[0].clientY - touchStart > 100) {
+      if (touchStartY && window.scrollY === 0 && e.changedTouches[0].clientY - touchStartY > 80) {
         loadData(true);
       }
-      touchStart = 0;
-      if (!document.getElementById('refreshIndicator').classList.contains('active')) return;
+      touchStartY = 0;
+    });
+
+    // Swipe to close sheet
+    let sheetTouchStart = 0;
+    document.querySelector('.sheet-content')?.addEventListener('touchstart', e => {
+      sheetTouchStart = e.touches[0].clientY;
+    });
+    document.querySelector('.sheet-content')?.addEventListener('touchend', e => {
+      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeSheet();
     });
 
     // Init
     loadData();
     setInterval(() => loadData(), 10000);
-
-    // Swipe to close modal
-    let modalTouchStart = 0;
-    document.querySelector('.modal-content')?.addEventListener('touchstart', e => modalTouchStart = e.touches[0].clientY);
-    document.querySelector('.modal-content')?.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - modalTouchStart > 100) closeModal();
-    });
   </script>
 </body>
 </html>
