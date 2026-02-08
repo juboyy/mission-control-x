@@ -28,6 +28,10 @@
     "doc-coauthoring": {
       "version": "0.1.0",
       "installedAt": 1770528380214
+    },
+    "atlassian-mcp": {
+      "version": "1.0.0",
+      "installedAt": 1770530847460
     }
   }
 }
