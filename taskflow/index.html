@@ -1547,6 +1547,13 @@
     <div class="view" id="view-agents">
       <h1 class="large-title">Agentes</h1>
       
+      <!-- Search -->
+      <div style="padding:0 var(--space-md) var(--space-md);">
+        <input type="text" id="agentSearch" placeholder="🔍 Buscar agente..." 
+               style="width:100%;padding:12px 16px;border-radius:var(--radius-lg);border:none;background:var(--fill);color:var(--label);font-size:16px;outline:none;"
+               oninput="filterAgentsList(this.value)">
+      </div>
+      
       <!-- Quick Stats -->
       <div class="stats-grid" style="margin-bottom:var(--space-lg);">
         <div class="stat-card">
@@ -1939,6 +1946,19 @@
         }
       }
       return null;
+    }
+
+    // Filter agents by search query
+    function filterAgentsList(query) {
+      const q = (query || '').toLowerCase().trim();
+      const filtered = q ? cachedSessions.filter(s => 
+        (s.label || '').toLowerCase().includes(q) ||
+        getKey(s.label).includes(q) ||
+        (getParentCrew(s.label) || '').includes(q)
+      ) : cachedSessions;
+      
+      renderAgents(filtered, 'allAgentsList');
+      document.getElementById('agentsCount').textContent = filtered.length + ' encontrados';
     }
 
     // Render horizontal scroll cards for agents
