@@ -14,7 +14,155 @@ Este roadmap detalha a implementação da **Estrutura de Gateway** do revenue-OS
 | EPIC-03 | Subscriptions Engine | 55 SP | 3-4 |
 | EPIC-05 | Payments Processing | 34 SP | 4-5 |
 | EPIC-07 | Payouts and Transfers | 34 SP | 5-6 |
-| **Total** | | **191 SP** | **6 semanas** |
+| **Split** | Split Rules & Execution | 21 SP | 2-4 |
+| **Total** | | **212 SP** | **6 semanas** |
+
+---
+
+## 💰 Sistema de Split de Pagamentos
+
+O Split é o coração do modelo de marketplace, permitindo dividir pagamentos entre a plataforma e vendedores.
+
+### Tickets de Split (US-10.x)
+
+| Ticket | Descrição | Status | Semana |
+|--------|-----------|--------|--------|
+| SCRUM-1619 | Modelo de Dados e CRUD de Split Rules | ✅ CONCLUÍDO | - |
+| SCRUM-1620 | Gestão de Split Receivers (Destinatários) | Backlog | 2 |
+| SCRUM-1621 | Motor de Execução de Split (Orquestrador) | Backlog | 3 |
+| SCRUM-1622 | Split em Assinaturas Recorrentes | Backlog | 4 |
+| SCRUM-1623 | Dashboard de Reconciliação de Split | Backlog | 5 |
+
+### Arquitetura de Split
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    PAGAMENTO RECEBIDO                        │
+│                      (Payment Intent)                        │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────┐
+│                    SPLIT RULES ENGINE                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │ Regras Fixas    │  │ Regras %       │  │ Regras       │ │
+│  │ (R$ 5.00/tx)    │  │ (15% platform) │  │ Condicionais │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+       ┌──────────┐   ┌──────────┐   ┌──────────┐
+       │ Platform │   │ Vendor A │   │ Vendor B │
+       │   15%    │   │   70%    │   │   15%    │
+       └──────────┘   └──────────┘   └──────────┘
+              │              │              │
+              ▼              ▼              ▼
+       ┌──────────────────────────────────────┐
+       │         STRIPE TRANSFERS             │
+       │  (para Connected Accounts)           │
+       └──────────────────────────────────────┘
+```
+
+### Modelo de Dados de Split
+
+```sql
+-- Regras de Split (já implementado em SCRUM-1619)
+CREATE TABLE split_rules (
+    id UUID PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    description TEXT,
+    rule_type VARCHAR NOT NULL, -- 'percentage', 'fixed', 'tiered'
+    is_active BOOLEAN DEFAULT true,
+    priority INTEGER DEFAULT 0,
+    conditions JSONB, -- condições de aplicação
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+
+-- Destinatários do Split
+CREATE TABLE split_receivers (
+    id UUID PRIMARY KEY,
+    split_rule_id UUID REFERENCES split_rules(id),
+    receiver_type VARCHAR NOT NULL, -- 'platform', 'vendor', 'partner'
+    connected_account_id VARCHAR, -- Stripe Connected Account
+    percentage DECIMAL(5,2), -- para regras de %
+    fixed_amount INTEGER, -- para regras fixas (centavos)
+    description TEXT
+);
+
+-- Execuções de Split
+CREATE TABLE split_executions (
+    id UUID PRIMARY KEY,
+    payment_id UUID REFERENCES payments(id),
+    split_rule_id UUID REFERENCES split_rules(id),
+    total_amount INTEGER NOT NULL,
+    platform_amount INTEGER,
+    status VARCHAR, -- 'pending', 'executed', 'failed'
+    stripe_transfer_ids TEXT[], -- IDs dos transfers criados
+    executed_at TIMESTAMPTZ,
+    error_message TEXT
+);
+
+-- Distribuição por Receiver
+CREATE TABLE split_distributions (
+    id UUID PRIMARY KEY,
+    execution_id UUID REFERENCES split_executions(id),
+    receiver_id UUID REFERENCES split_receivers(id),
+    amount INTEGER NOT NULL,
+    stripe_transfer_id VARCHAR,
+    status VARCHAR
+);
+```
+
+### Tipos de Regras de Split
+
+| Tipo | Exemplo | Uso |
+|------|---------|-----|
+| **Percentage** | 15% plataforma, 85% vendedor | Modelo padrão de marketplace |
+| **Fixed** | R$ 2.00 por transação | Taxa fixa de processamento |
+| **Tiered** | 10% até R$ 1k, 8% acima | Volume-based pricing |
+| **Conditional** | Se categoria = "premium", 20% | Regras por produto/categoria |
+| **Composite** | R$ 1.00 + 10% | Combinação fixa + percentual |
+
+### Fluxo de Execução do Split
+
+```
+1. Pagamento confirmado (payment_intent.succeeded)
+   │
+2. Webhook Handler identifica o pagamento
+   │
+3. Split Rules Engine:
+   ├── Busca regras aplicáveis (por produto, tenant, categoria)
+   ├── Ordena por prioridade
+   ├── Calcula distribuição
+   │
+4. Para cada receiver:
+   ├── Calcula amount
+   ├── Cria Stripe Transfer
+   ├── Registra em split_distributions
+   │
+5. Atualiza status da execução
+   │
+6. Notifica stakeholders (webhook/email)
+```
+
+### Integração com Subscriptions (SCRUM-1622)
+
+Para assinaturas recorrentes, o split é aplicado automaticamente a cada fatura:
+
+```
+subscription.invoice.paid
+    │
+    ▼
+Buscar split_rule vinculada ao plano
+    │
+    ▼
+Executar split com amount da invoice
+    │
+    ▼
+Criar transfers para cada receiver
+```
 
 ---
 
@@ -39,80 +187,79 @@ Este roadmap detalha a implementação da **Estrutura de Gateway** do revenue-OS
 
 ---
 
-### Semana 2 (15-21/02): EPIC-01 (Parte 2) + EPIC-02 (Parte 1)
+### Semana 2 (15-21/02): EPIC-01 (Parte 2) + EPIC-02 (Parte 1) + Split Receivers
 
-**Objetivo:** Completar Connect e iniciar catálogo de produtos.
+**Objetivo:** Completar Connect, iniciar catálogo e gestão de receivers.
 
-| Dia | Tarefa | Responsável | Entregável |
-|-----|--------|-------------|------------|
-| Seg | Dashboard mínimo do vendedor | Zoro | Página de status |
-| Ter | Capability monitoring | Zoro | Webhooks capability.* |
-| Qua | **EPIC-02:** Modelo products/plans/prices | Zoro | Schema completo |
-| Qui | Product Service: CRUD | Zoro | API endpoints |
-| Sex | Sincronização Stripe Products | Zoro | Worker Celery |
+| Dia | Tarefa | Ticket | Responsável |
+|-----|--------|--------|-------------|
+| Seg | Dashboard mínimo do vendedor | EPIC-01 | Zoro |
+| Ter | Capability monitoring (webhooks) | EPIC-01 | Zoro |
+| Qua | **Split Receivers:** CRUD de destinatários | SCRUM-1620 | Zoro |
+| Qui | **EPIC-02:** Modelo products/plans/prices | SCRUM-255 | Zoro |
+| Sex | Product Service: CRUD + Sync Stripe | SCRUM-255 | Zoro |
 
 **Marcos da Semana 2:**
 - [ ] EPIC-01 100% funcional
+- [ ] Split Receivers funcionando (SCRUM-1620)
 - [ ] CRUD de produtos funcionando
-- [ ] Sincronização bidirecional Stripe
 
 ---
 
-### Semana 3 (22-28/02): EPIC-02 (Parte 2) + EPIC-03 (Parte 1)
+### Semana 3 (22-28/02): EPIC-02 (Parte 2) + EPIC-03 (Parte 1) + Split Engine
 
-**Objetivo:** Completar catálogo e iniciar subscriptions.
+**Objetivo:** Completar catálogo, iniciar subscriptions e motor de split.
 
-| Dia | Tarefa | Responsável | Entregável |
-|-----|--------|-------------|------------|
-| Seg | Versionamento de preços (grandfathering) | Zoro | Lógica de versioning |
-| Ter | Cache Redis para pricing | Franky | Cache layer |
-| Qua | API pública de planos | Zoro | GET /v1/products/*/plans |
-| Qui | **EPIC-03:** Modelo subscriptions | Zoro | Schema + State machine |
-| Sex | Subscription Service: criar assinatura | Zoro | POST /v1/subscriptions |
+| Dia | Tarefa | Ticket | Responsável |
+|-----|--------|--------|-------------|
+| Seg | Versionamento de preços (grandfathering) | SCRUM-255 | Zoro |
+| Ter | Cache Redis para pricing | SCRUM-255 | Franky |
+| Qua | **Split Engine:** Motor de execução | SCRUM-1621 | Zoro |
+| Qui | **EPIC-03:** Modelo subscriptions | SCRUM-256 | Zoro |
+| Sex | Subscription Service: criar assinatura | SCRUM-256 | Zoro |
 
 **Marcos da Semana 3:**
 - [ ] EPIC-02 100% funcional
+- [ ] Motor de Split funcionando (SCRUM-1621)
 - [ ] Criar assinatura funcionando
-- [ ] Stripe Subscription criada automaticamente
 
 ---
 
-### Semana 4 (01-07/03): EPIC-03 (Parte 2)
+### Semana 4 (01-07/03): EPIC-03 (Parte 2) + Split Recorrente
 
-**Objetivo:** Motor de subscriptions completo.
+**Objetivo:** Motor de subscriptions completo com split automático.
 
-| Dia | Tarefa | Responsável | Entregável |
-|-----|--------|-------------|------------|
-| Seg | Upgrade/Downgrade com proration | Zoro | PATCH /v1/subscriptions |
-| Ter | Cancelamento (imediato/fim período) | Zoro | DELETE /v1/subscriptions |
-| Qua | Webhooks: invoice.paid, subscription.updated | Zoro | Handlers completos |
-| Qui | State machine de status | Zoro | Transições validadas |
-| Sex | Reconciliação diária | Franky | Job de sync |
+| Dia | Tarefa | Ticket | Responsável |
+|-----|--------|--------|-------------|
+| Seg | Upgrade/Downgrade com proration | SCRUM-256 | Zoro |
+| Ter | Cancelamento (imediato/fim período) | SCRUM-256 | Zoro |
+| Qua | **Split Recorrente:** Integrar split com invoices | SCRUM-1622 | Zoro |
+| Qui | Webhooks: invoice.paid → trigger split | SCRUM-1622 | Zoro |
+| Sex | Reconciliação diária + testes E2E | SCRUM-256 | Chopper |
 
 **Marcos da Semana 4:**
 - [ ] EPIC-03 100% funcional
-- [ ] Ciclo completo: criar → upgrade → cancelar
-- [ ] Status sempre sincronizado com Stripe
+- [ ] Split em assinaturas funcionando (SCRUM-1622)
+- [ ] Ciclo completo: criar → cobrar → split
 
 ---
 
-### Semana 5 (08-14/03): EPIC-05 - Payments Processing
+### Semana 5 (08-14/03): EPIC-05 - Payments + Split Dashboard
 
-**Objetivo:** Processar pagamentos com múltiplos métodos.
+**Objetivo:** Processar pagamentos com múltiplos métodos e dashboard de reconciliação.
 
-| Dia | Tarefa | Responsável | Entregável |
-|-----|--------|-------------|------------|
-| Seg | Modelo payments + Payment Service | Zoro | Schema + Service base |
-| Ter | POST /payments/create-intent | Zoro | Payment Intent criado |
-| Qua | POST /payments/confirm | Zoro | Confirmar com PM |
-| Qui | Suporte a PIX e Boleto | Zoro | Métodos BR |
-| Sex | 3D Secure handling | Zoro | SCA compliance |
+| Dia | Tarefa | Ticket | Responsável |
+|-----|--------|--------|-------------|
+| Seg | Modelo payments + Payment Service | SCRUM-258 | Zoro |
+| Ter | POST /payments/create-intent + confirm | SCRUM-258 | Zoro |
+| Qua | Suporte a PIX e Boleto | SCRUM-258 | Zoro |
+| Qui | **Split Dashboard:** UI de reconciliação | SCRUM-1623 | Zoro |
+| Sex | Dashboard: métricas, filtros, exports | SCRUM-1623 | Zoro |
 
 **Marcos da Semana 5:**
 - [ ] EPIC-05 100% funcional
-- [ ] Pagamento com cartão funcionando
 - [ ] PIX e Boleto funcionando
-- [ ] 3D Secure tratado
+- [ ] Dashboard de Split (SCRUM-1623)
 
 ---
 
