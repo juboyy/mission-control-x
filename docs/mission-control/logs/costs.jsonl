@@ -2,3 +2,4 @@
 {"timestamp":"2026-02-08T03:15:00Z","agent":"imu","model":"claude-opus","task":"mission-control-docs","amount":0.45,"tokens":37500}
 {"timestamp":"2026-02-08T03:40:00Z","agent":"imu","model":"claude-opus","task":"taskflow-creation","amount":0.85,"tokens":70833}
 {"timestamp":"2026-02-08T03:50:00Z","agent":"imu","model":"claude-opus","task":"activity-feed","amount":0.25,"tokens":20833}
+{"timestamp":"2026-02-08T04:04:00Z","agent":"nami","model":"claude-opus","task":"navigator-status-check","amount":0.12,"tokens":10000}

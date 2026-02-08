@@ -333,14 +333,14 @@ async function handler(req, res) {
     return;
   }
   
-  // Check auth
-  if (!validateSession(getCookie(req, 'mcx_session'))) {
-    // Allow API without auth for now (internal only)
-    if (!url.pathname.startsWith('/api/')) {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(loginPage.replace('{{ERROR}}', ''));
-      return;
-    }
+  // Check auth - allow static assets without auth
+  const isStaticAsset = /\.(js|css|svg|png|ico|json|woff|woff2)$/.test(url.pathname);
+  const isApi = url.pathname.startsWith('/api/');
+  
+  if (!validateSession(getCookie(req, 'mcx_session')) && !isStaticAsset && !isApi) {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(loginPage.replace('{{ERROR}}', ''));
+    return;
   }
   
   // API endpoints

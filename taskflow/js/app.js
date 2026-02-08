@@ -12,7 +12,9 @@ const App = {
     // Initialize modules
     Kanban.init();
     Integrations.init();
-    Activity.init();
+    
+    // Activity uses async init
+    Activity.init().catch(console.error);
     
     // Render other views
     this.renderInsights();

@@ -1,5 +1,5 @@
 // Mission Control X - Activity Feed
-// Real-time activity log from Imu
+// Real-time activity log - NO MOCK DATA
 
 const Activity = {
   // Activity types and their icons
@@ -13,95 +13,78 @@ const Activity = {
     decision: { icon: '🎯', label: 'Decision' },
     memory: { icon: '🧠', label: 'Memory' },
     error: { icon: '⚠️', label: 'Error' },
+    cost: { icon: '💰', label: 'Cost' },
   },
   
-  // Activity log
-  activities: [
-    {
-      id: 1,
-      type: 'system',
-      title: 'Session Started',
-      description: 'Mission Control X initialized. Ready to serve.',
-      timestamp: new Date().toISOString(),
-      tags: ['boot'],
-    },
-    {
-      id: 2,
-      type: 'file',
-      title: 'Created TaskFlow Project',
-      description: 'Built complete task management system with Kanban, drag-drop, and integrations.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-      tags: ['taskflow', 'create'],
-    },
-    {
-      id: 3,
-      type: 'code',
-      title: 'Wrote 3,846 lines of code',
-      description: 'HTML, CSS, JavaScript for Mission Control X dashboard.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      tags: ['dev'],
-    },
-    {
-      id: 4,
-      type: 'decision',
-      title: 'Renamed to Mission Control X',
-      description: 'TaskFlow → Mission Control X. Centro de comando visual.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      tags: ['rebrand'],
-    },
-    {
-      id: 5,
-      type: 'memory',
-      title: 'Memory flush',
-      description: 'Saved session log to memory/2025-06-22.md',
-      timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-      tags: ['memory'],
-    },
-  ],
+  // Real data - loaded from API
+  activities: [],
+  stats: {},
+  session: {},
+  costs: {},
   
-  // Session stats
-  stats: {
-    tasks: 12,
-    searches: 3,
-    files: 15,
-    messages: 61,
-  },
-  
-  init() {
+  async init() {
+    await this.loadData();
     this.render();
     this.startPolling();
+  },
+  
+  async loadData() {
+    try {
+      const [activities, stats, session, costs] = await Promise.all([
+        fetch('/api/activities').then(r => r.json()).catch(() => []),
+        fetch('/api/stats').then(r => r.json()).catch(() => ({})),
+        fetch('/api/session').then(r => r.json()).catch(() => ({})),
+        fetch('/api/costs').then(r => r.json()).catch(() => ({})),
+      ]);
+      
+      this.activities = activities;
+      this.stats = stats;
+      this.session = session;
+      this.costs = costs;
+      
+      console.log('📊 Data loaded:', { 
+        activities: activities.length, 
+        stats, 
+        session: session.agent,
+        costs 
+      });
+    } catch (e) {
+      console.error('Failed to load data:', e);
+    }
   },
   
   render() {
     this.renderStats();
     this.renderSession();
     this.renderFeed();
+    this.renderCosts();
   },
   
   renderStats() {
     const container = document.getElementById('activityStats');
     if (!container) return;
     
+    const s = this.stats;
     container.innerHTML = `
       <div class="stat-card">
-        <div class="stat-icon">✓</div>
-        <div class="stat-value">${this.stats.tasks}</div>
-        <div class="stat-label">Tasks</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🔍</div>
-        <div class="stat-value">${this.stats.searches}</div>
-        <div class="stat-label">Searches</div>
+        <div class="stat-icon">🎯</div>
+        <div class="stat-value">${s.tasks || 0}</div>
+        <div class="stat-label">Decisions</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">📄</div>
-        <div class="stat-value">${this.stats.files}</div>
+        <div class="stat-value">${s.files || 0}</div>
         <div class="stat-label">Files</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">💬</div>
-        <div class="stat-value">${this.stats.messages}</div>
+        <div class="stat-value">${s.messages || 0}</div>
         <div class="stat-label">Messages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🧠</div>
+        <div class="stat-value">${s.memories || 0}</div>
+        <div class="stat-label">Memories</div>
       </div>
     `;
   },
@@ -110,26 +93,28 @@ const Activity = {
     const container = document.getElementById('sessionInfo');
     if (!container) return;
     
-    const uptime = this.getUptime();
+    const s = this.session;
+    const c = this.costs;
     
     container.innerHTML = `
       <div class="session-header">
         <div class="session-agent">
-          <div class="agent-avatar">🌀</div>
+          <div class="agent-avatar">${s.avatar || '🌀'}</div>
           <div class="agent-info">
-            <h2>Imu</h2>
-            <p>Familiar Digital • Claude Opus</p>
+            <h2>${s.agent || 'Imu'}</h2>
+            <p>${s.role || 'Familiar Digital'} • ${s.model || 'Claude Opus'}</p>
           </div>
         </div>
         <div class="session-status">
           <span class="dot"></span>
-          Online
+          ${s.status || 'Online'}
         </div>
       </div>
-      <div class="session-meta" style="display: flex; gap: 24px; color: var(--text-muted); font-size: 13px;">
-        <span>🕐 Uptime: ${uptime}</span>
-        <span>📍 Session: main</span>
-        <span>🌐 Channel: Telegram</span>
+      <div class="session-meta" style="display: flex; gap: 24px; color: var(--text-muted); font-size: 13px; margin-top: 12px;">
+        <span>🕐 Uptime: ${s.uptime || '0m'}</span>
+        <span>📍 Session: ${s.session || 'main'}</span>
+        <span>🌐 Channel: ${s.channel || 'Telegram'}</span>
+        <span>💰 Today: $${(c.today || 0).toFixed(2)} / $${c.dailyLimit || 15}</span>
       </div>
     `;
   },
@@ -138,18 +123,29 @@ const Activity = {
     const container = document.getElementById('activityFeed');
     if (!container) return;
     
-    const sortedActivities = [...this.activities].sort((a, b) => 
-      new Date(b.timestamp) - new Date(a.timestamp)
-    );
+    if (!this.activities.length) {
+      container.innerHTML = `
+        <div class="activity-card">
+          <div class="activity-card-header">
+            <h3><span class="live-dot"></span> Activity Feed</h3>
+            <span id="lastUpdate" style="font-size: 12px; color: var(--text-muted);">Loading...</span>
+          </div>
+          <div class="activity-list" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            No activities yet. Waiting for data...
+          </div>
+        </div>
+      `;
+      return;
+    }
     
     container.innerHTML = `
       <div class="activity-card">
         <div class="activity-card-header">
           <h3><span class="live-dot"></span> Activity Feed</h3>
-          <span style="font-size: 12px; color: var(--text-muted);">Live</span>
+          <span id="lastUpdate" style="font-size: 12px; color: var(--text-muted);">${new Date().toLocaleTimeString('pt-BR')}</span>
         </div>
         <div class="activity-list">
-          ${sortedActivities.map(activity => this.renderActivity(activity)).join('')}
+          ${this.activities.slice(0, 20).map(activity => this.renderActivity(activity)).join('')}
         </div>
       </div>
     `;
@@ -158,14 +154,14 @@ const Activity = {
   renderActivity(activity) {
     const type = this.types[activity.type] || this.types.system;
     const time = this.formatTime(activity.timestamp);
-    const tags = activity.tags.map(t => `<span class="activity-tag">${t}</span>`).join('');
+    const tags = (activity.tags || []).map(t => `<span class="activity-tag">${t}</span>`).join('');
     
     return `
       <div class="activity-item">
         <div class="activity-icon ${activity.type}">${type.icon}</div>
         <div class="activity-content">
           <div class="activity-title">${activity.title}</div>
-          <div class="activity-description">${activity.description}</div>
+          <div class="activity-description">${activity.description || ''}</div>
           <div class="activity-meta">
             <span class="activity-time">${time}</span>
             ${tags}
@@ -175,7 +171,12 @@ const Activity = {
     `;
   },
   
+  renderCosts() {
+    // Cost info is now shown in session header
+  },
+  
   formatTime(timestamp) {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
@@ -192,29 +193,11 @@ const Activity = {
     });
   },
   
-  getUptime() {
-    // Simulated uptime since session start
-    const startTime = new Date(Date.now() - 1000 * 60 * 45); // 45 min ago
-    const diff = Date.now() - startTime;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  },
-  
-  addActivity(activity) {
-    this.activities.unshift({
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      ...activity,
-    });
-    this.renderFeed();
-  },
-  
   startPolling() {
-    // In real implementation, this would poll the server
-    // For now, simulate occasional updates
-    setInterval(() => {
-      // Could fetch from /api/activities
+    // Poll every 30 seconds for updates
+    setInterval(async () => {
+      await this.loadData();
+      this.render();
     }, 30000);
   },
 };
