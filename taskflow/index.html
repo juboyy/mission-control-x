@@ -111,6 +111,11 @@
       border-radius: 50%;
       animation: pulse 2s ease-in-out infinite;
     }
+    
+    .status-dot.loading {
+      background: var(--orange);
+      animation: pulse 0.3s ease-in-out infinite;
+    }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -2514,11 +2519,13 @@
 
     // ===== Load Data =====
     async function loadData(showIndicator = false) {
+      const statusDot = document.querySelector('.status-dot');
       if (showIndicator) {
         document.getElementById('refreshIndicator').classList.add('active');
         // Haptic feedback on manual refresh
         if (navigator.vibrate) navigator.vibrate(10);
       }
+      if (statusDot) statusDot.classList.add('loading');
 
       try {
         const [stats, sessions, activities, health] = await Promise.all([
@@ -2594,6 +2601,9 @@
         console.error('Load error:', e);
         showToast('Erro ao carregar dados', 'error');
       }
+
+      const statusDotEnd = document.querySelector('.status-dot');
+      if (statusDotEnd) statusDotEnd.classList.remove('loading');
 
       setTimeout(() => {
         document.getElementById('refreshIndicator').classList.remove('active');
