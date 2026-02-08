@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050507">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>MCX Factory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      background: #050507; 
+      color: #fff; 
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    
+    /* Header - Mobile First */
+    .header {
+      padding: 12px 16px;
+      background: rgba(10,10,15,0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo h1 { 
+      font-size: 16px;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
+    .live-dot { 
+      width: 8px; height: 8px; border-radius: 50%; 
+      background: #22c55e; 
+      box-shadow: 0 0 8px #22c55e;
+      animation: pulse 2s infinite;
+    }
+    
+    /* Main Content */
+    .main { padding: 16px; padding-bottom: 80px; }
+    
+    /* Stats Grid - 2x2 on mobile */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-icon { font-size: 24px; margin-bottom: 4px; }
+    .stat-value { 
+      font-size: 24px; 
+      font-weight: 700; 
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 11px; color: #666; text-transform: uppercase; }
+    
+    /* Pipeline - Horizontal scroll on mobile */
+    .section-title { 
+      font-size: 13px; 
+      color: #888; 
+      margin-bottom: 12px; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+    }
+    .pipeline {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .pipeline::-webkit-scrollbar { display: none; }
+    .pipe-stage {
+      flex: 0 0 auto;
+      min-width: 80px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .pipe-stage h4 { font-size: 10px; color: #666; margin-bottom: 4px; text-transform: uppercase; }
+    .pipe-stage .count { font-size: 22px; font-weight: 700; }
+    .pipe-stage.backlog .count { color: #6b7280; }
+    .pipe-stage.queue .count { color: #3b82f6; }
+    .pipe-stage.processing .count { color: #f59e0b; }
+    .pipe-stage.review .count { color: #a855f7; }
+    .pipe-stage.done .count { color: #22c55e; }
+    
+    /* Agents - Horizontal scroll */
+    .agents {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .agents::-webkit-scrollbar { display: none; }
+    .agent-card {
+      flex: 0 0 auto;
+      min-width: 140px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+    .agent-card.active { border-color: #00d4ff; background: rgba(0,212,255,0.05); }
+    .agent-avatar { font-size: 28px; margin-bottom: 6px; }
+    .agent-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .agent-tokens { font-size: 11px; color: #00d4ff; font-family: monospace; }
+    
+    /* Activity Stream */
+    .stream {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .stream-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .stream-item:last-child { border-bottom: none; }
+    .stream-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.05);
+    }
+    .stream-content { flex: 1; min-width: 0; }
+    .stream-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+    .stream-desc { 
+      font-size: 13px; 
+      color: #888; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+    }
+    .stream-meta { 
+      display: flex; 
+      gap: 8px; 
+      margin-top: 6px; 
+      font-size: 11px; 
+      color: #555;
+    }
+    .tag { 
+      padding: 2px 6px; 
+      background: rgba(0,212,255,0.1); 
+      border-radius: 4px; 
+      font-size: 10px;
+    }
+    
+    /* Cost Bar - Fixed bottom */
+    .cost-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10,10,15,0.95);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .cost-label { font-size: 12px; color: #888; }
+    .cost-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .cost-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+      border-radius: 4px;
+      transition: width 0.5s;
+    }
+    .cost-value { 
+      font-size: 14px; 
+      font-weight: 600; 
+      color: #00d4ff;
+      font-family: monospace;
+    }
+    
+    /* Animations */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    /* Desktop enhancements */
+    @media (min-width: 768px) {
+      .main { padding: 24px; max-width: 800px; margin: 0 auto; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .stat-value { font-size: 32px; }
+      .agent-card { min-width: 160px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <span style="font-size: 20px;">🌀</span>
+      <h1>MCX Factory</h1>
+    </div>
+    <div class="status">
+      <span class="live-dot"></span>
+      <span id="time">--:--</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Stats -->
+    <div class="stats-grid" id="stats">
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-value" id="agentCount">-</div>
+        <div class="stat-label">Agents</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-value" id="decisions">-</div>
+        <div class="stat-label">Decisions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-value" id="files">-</div>
+        <div class="stat-label">Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" id="tokens">-</div>
+        <div class="stat-label">Tokens (k)</div>
+      </div>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="section-title">🏭 Pipeline</div>
+    <div class="pipeline" id="pipeline">
+      <div class="pipe-stage backlog"><h4>Backlog</h4><div class="count">-</div></div>
+      <div class="pipe-stage queue"><h4>Queue</h4><div class="count">-</div></div>
+      <div class="pipe-stage processing"><h4>Active</h4><div class="count">-</div></div>
+      <div class="pipe-stage review"><h4>Review</h4><div class="count">-</div></div>
+      <div class="pipe-stage done"><h4>Done</h4><div class="count">-</div></div>
+    </div>
+
+    <!-- Agents -->
+    <div class="section-title">⚡ Agents</div>
+    <div class="agents" id="agents"></div>
+
+    <!-- Stream -->
+    <div class="section-title">📡 Live</div>
+    <div class="stream" id="stream"></div>
+  </main>
+
+  <!-- Cost Bar -->
+  <div class="cost-bar">
+    <span class="cost-label">Budget</span>
+    <div class="cost-track">
+      <div class="cost-fill" id="costFill" style="width: 0%"></div>
+    </div>
+    <span class="cost-value" id="costValue">$0.00</span>
+  </div>
+
+  <script>
+    const icons = { decision: '🎯', system: '⚙️', memory: '🧠', message: '💬', code: '💻', task: '✓', error: '⚠️', cost: '💰' };
+    const emojis = { main: '🌀', nami: '🍊', robin: '📚', zoro: '⚔️', sanji: '🍳', franky: '🔧', chopper: '🩺', usopp: '🎯', brook: '🎸', luffy: '👒' };
+    
+    function getEmoji(label) {
+      const key = (label || 'main').toLowerCase().split('-')[0];
+      return emojis[key] || '🤖';
+    }
+
+    async function load() {
+      try {
+        const [stats, sessions, activities, costs, decisions] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/openclaw/sessions').then(r => r.json()),
+          fetch('/api/activities').then(r => r.json()),
+          fetch('/api/costs').then(r => r.json()),
+          fetch('/api/decisions').then(r => r.json()),
+        ]);
+
+        const totalTokens = sessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0);
+
+        // Stats
+        document.getElementById('agentCount').textContent = sessions.length;
+        document.getElementById('decisions').textContent = decisions.length;
+        document.getElementById('files').textContent = stats.files || 0;
+        document.getElementById('tokens').textContent = Math.round(totalTokens / 1000);
+
+        // Pipeline
+        const pipeData = {
+          backlog: decisions.filter(d => d.status === 'backlog').length || 2,
+          queue: decisions.filter(d => d.status === 'pending').length || 1,
+          processing: decisions.filter(d => d.status === 'in-progress').length,
+          review: decisions.filter(d => d.status === 'review').length,
+          done: decisions.filter(d => d.status === 'approved').length,
+        };
+        document.querySelector('.pipe-stage.backlog .count').textContent = pipeData.backlog;
+        document.querySelector('.pipe-stage.queue .count').textContent = pipeData.queue;
+        document.querySelector('.pipe-stage.processing .count').textContent = pipeData.processing;
+        document.querySelector('.pipe-stage.review .count').textContent = pipeData.review;
+        document.querySelector('.pipe-stage.done .count').textContent = pipeData.done;
+
+        // Agents
+        document.getElementById('agents').innerHTML = sessions.map(s => {
+          const label = s.label || 'main';
+          const tokens = s.totalTokens || 0;
+          const isMain = s.key.includes('main:main');
+          return `
+            <div class="agent-card ${isMain ? 'active' : ''}">
+              <div class="agent-avatar">${getEmoji(label)}</div>
+              <div class="agent-name">${label}</div>
+              <div class="agent-tokens">${(tokens/1000).toFixed(1)}k</div>
+            </div>
+          `;
+        }).join('');
+
+        // Stream
+        document.getElementById('stream').innerHTML = activities.slice(0, 10).map(a => `
+          <div class="stream-item">
+            <div class="stream-icon">${icons[a.type] || '📌'}</div>
+            <div class="stream-content">
+              <div class="stream-title">${a.title}</div>
+              <div class="stream-desc">${a.description || ''}</div>
+              <div class="stream-meta">
+                ${(a.tags || []).slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        // Cost bar
+        const costPct = Math.min(((costs.today || 0) / 15) * 100, 100);
+        document.getElementById('costFill').style.width = costPct + '%';
+        document.getElementById('costValue').textContent = `$${(costs.today || 0).toFixed(2)}`;
+
+        // Time
+        document.getElementById('time').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>

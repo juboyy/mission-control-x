@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050507">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Mission Control X</title>
+  <style>
+    :root {
+      --bg-primary: #050507;
+      --bg-secondary: rgba(255,255,255,0.03);
+      --bg-tertiary: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --text-primary: #fff;
+      --text-secondary: rgba(255,255,255,0.6);
+      --text-muted: rgba(255,255,255,0.4);
+      --accent: #00d4ff;
+      --accent-purple: #7c3aed;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gradient: linear-gradient(135deg, var(--accent), var(--accent-purple));
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 16px;
+      background: rgba(5,5,7,0.95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+    }
+
+    .logo h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Main Container */
+    .main {
+      padding: 16px;
+      padding-bottom: 100px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Section Titles */
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title:first-child { margin-top: 0; }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'SF Mono', 'Monaco', monospace;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* Cost Card - Special */
+    .cost-card {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(124,58,237,0.1));
+      border-color: rgba(0,212,255,0.3);
+    }
+
+    .cost-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .cost-amount {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'SF Mono', monospace;
+    }
+
+    .cost-limit {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .cost-bar {
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .cost-fill {
+      height: 100%;
+      background: var(--gradient);
+      border-radius: 5px;
+      transition: width 0.5s ease;
+    }
+
+    .cost-fill.warning { background: var(--warning); }
+    .cost-fill.danger { background: var(--danger); }
+
+    .cost-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Agents Grid */
+    .agents-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .agents-scroll::-webkit-scrollbar { display: none; }
+
+    .agent-card {
+      flex: 0 0 auto;
+      min-width: 140px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--accent);
+      transform: scale(1.02);
+    }
+
+    .agent-card.active {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.08);
+      box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    }
+
+    .agent-avatar {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .agent-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .agent-tokens {
+      font-size: 12px;
+      color: var(--accent);
+      font-family: monospace;
+    }
+
+    .agent-cost {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Model Distribution */
+    .model-dist {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .model-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .model-name {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .model-count {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Activity Stream */
+    .activity-list {
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+    
+    .activity-item:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      background: var(--bg-tertiary);
+    }
+
+    .activity-icon.user { background: rgba(59,130,246,0.2); }
+    .activity-icon.tool { background: rgba(124,58,237,0.2); }
+    .activity-icon.response { background: rgba(34,197,94,0.2); }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .activity-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .activity-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .activity-tag {
+      padding: 2px 8px;
+      background: rgba(0,212,255,0.15);
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--accent);
+    }
+
+    .activity-tag.session {
+      background: rgba(124,58,237,0.15);
+      color: var(--accent-purple);
+    }
+
+    .activity-tokens {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    /* Today Summary Card */
+    .summary-card {
+      background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(0,212,255,0.1));
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .summary-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .summary-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .summary-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .summary-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .summary-tool {
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(5,5,7,0.95);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .bottom-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .uptime {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .uptime-value {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .refresh-btn {
+      padding: 8px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Desktop */
+    @media (min-width: 768px) {
+      .main { padding: 24px; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .cost-card { grid-column: span 2; }
+      .stat-value { font-size: 32px; }
+      .model-dist { grid-template-columns: repeat(4, 1fr); }
+      .agent-card { min-width: 160px; }
+    }
+
+    @media (min-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🌀</span>
+      <h1>Mission Control X</h1>
+    </div>
+    <div class="status-bar">
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span id="lastUpdate">--:--</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Cost Card -->
+    <div class="stats-grid">
+      <div class="stat-card cost-card">
+        <div class="cost-header">
+          <div>
+            <div class="cost-amount" id="costAmount">$0.00</div>
+            <div class="cost-limit">/ <span id="dailyLimit">$15.00</span> diário</div>
+          </div>
+          <div style="font-size: 40px">💰</div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-fill" id="costFill" style="width: 0%"></div>
+        </div>
+        <div class="cost-meta">
+          <span id="costPercent">0%</span>
+          <span id="alertLevel">OK</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" id="totalTokens">-</div>
+        <div class="stat-label">Tokens (k)</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-value" id="totalMessages">-</div>
+        <div class="stat-label">Mensagens</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">🔧</div>
+        <div class="stat-value" id="toolCalls">-</div>
+        <div class="stat-label">Tool Calls</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-value" id="sessionCount">-</div>
+        <div class="stat-label">Sessões</div>
+      </div>
+    </div>
+
+    <!-- Model Distribution -->
+    <div class="section-title">📊 Modelos Usados</div>
+    <div class="model-dist" id="modelDist">
+      <div class="model-item">
+        <div class="model-name">Thinking</div>
+        <div class="model-count" id="thinkingCount">-</div>
+      </div>
+      <div class="model-item">
+        <div class="model-name">Opus</div>
+        <div class="model-count" id="opusCount">-</div>
+      </div>
+      <div class="model-item">
+        <div class="model-name">Sonnet</div>
+        <div class="model-count" id="sonnetCount">-</div>
+      </div>
+      <div class="model-item">
+        <div class="model-name">Haiku</div>
+        <div class="model-count" id="haikuCount">-</div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="section-title">🏴‍☠️ Agentes Ativos</div>
+    <div class="agents-scroll" id="agentsList"></div>
+
+    <!-- Today Summary -->
+    <div class="section-title">📋 Resumo do Dia</div>
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-header">
+        <span class="summary-title">Hoje</span>
+        <span class="summary-date" id="summaryDate">--</span>
+      </div>
+      <div class="summary-text" id="summaryText">Carregando...</div>
+      <div class="summary-tools" id="summaryTools"></div>
+    </div>
+
+    <!-- Activity Stream -->
+    <div class="section-title">📡 Atividade em Tempo Real</div>
+    <div class="activity-list" id="activityList">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </main>
+
+  <div class="bottom-bar">
+    <div class="bottom-content">
+      <div class="uptime">
+        <span>⏱️ Uptime:</span>
+        <span class="uptime-value" id="uptime">--</span>
+      </div>
+      <button class="refresh-btn" onclick="loadData()">🔄 Atualizar</button>
+    </div>
+  </div>
+
+  <script>
+    const EMOJIS = {
+      main: '🌀', nami: '🍊', robin: '📚', zoro: '⚔️', sanji: '🍳',
+      franky: '🔧', chopper: '🩺', usopp: '🎯', brook: '🎸', luffy: '👒',
+      cron: '⏰', subagent: '🤖', default: '🤖'
+    };
+
+    function getEmoji(label) {
+      if (!label) return EMOJIS.default;
+      const key = label.toLowerCase().split('-')[0].split(':')[0];
+      return EMOJIS[key] || EMOJIS.default;
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '--:--';
+      const d = new Date(ts);
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatRelative(ts) {
+      if (!ts) return '';
+      const now = Date.now();
+      const time = new Date(ts).getTime();
+      const diff = now - time;
+      
+      if (diff < 60000) return 'agora';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+      return Math.floor(diff / 86400000) + 'd';
+    }
+
+    function formatNumber(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+      return n.toString();
+    }
+
+    async function loadData() {
+      try {
+        const [stats, sessions, activities, summary] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/sessions').then(r => r.json()),
+          fetch('/api/activities?limit=30').then(r => r.json()),
+          fetch('/api/summary').then(r => r.json()),
+        ]);
+
+        // Update stats
+        document.getElementById('costAmount').textContent = '$' + stats.totalCost.toFixed(2);
+        document.getElementById('dailyLimit').textContent = '$' + stats.budget.daily;
+        document.getElementById('costPercent').textContent = stats.budget.percentUsed.toFixed(1) + '%';
+        
+        const fill = document.getElementById('costFill');
+        fill.style.width = Math.min(100, stats.budget.percentUsed) + '%';
+        fill.classList.remove('warning', 'danger');
+        if (stats.budget.percentUsed > 90) fill.classList.add('danger');
+        else if (stats.budget.percentUsed > 75) fill.classList.add('warning');
+
+        document.getElementById('alertLevel').textContent = 
+          stats.alertLevel === 'warning' ? '⚠️ 75%+' :
+          stats.alertLevel === 'danger' ? '🚨 90%+' : '✅ OK';
+
+        document.getElementById('totalTokens').textContent = formatNumber(stats.totalTokens);
+        document.getElementById('totalMessages').textContent = 
+          stats.totalMessages.user + stats.totalMessages.assistant;
+        document.getElementById('toolCalls').textContent = stats.totalToolCalls;
+        document.getElementById('sessionCount').textContent = stats.sessionCount;
+        document.getElementById('uptime').textContent = stats.uptime;
+
+        // Model counts
+        const models = stats.modelUsage || {};
+        let thinking = 0, opus = 0, sonnet = 0, haiku = 0;
+        for (const [model, count] of Object.entries(models)) {
+          if (model.includes('thinking')) thinking += count;
+          else if (model.includes('opus')) opus += count;
+          else if (model.includes('sonnet')) sonnet += count;
+          else if (model.includes('haiku')) haiku += count;
+        }
+        document.getElementById('thinkingCount').textContent = thinking;
+        document.getElementById('opusCount').textContent = opus;
+        document.getElementById('sonnetCount').textContent = sonnet;
+        document.getElementById('haikuCount').textContent = haiku;
+
+        // Agents
+        const agentsList = document.getElementById('agentsList');
+        agentsList.innerHTML = sessions.map(s => {
+          const label = s.label || s.key.split(':').pop();
+          const isMain = s.kind === 'main';
+          return `
+            <div class="agent-card ${isMain ? 'active' : ''}">
+              <div class="agent-avatar">${getEmoji(label)}</div>
+              <div class="agent-name">${label}</div>
+              <div class="agent-tokens">${formatNumber(s.totalTokens)} tok</div>
+              <div class="agent-cost">$${(s.cost || 0).toFixed(3)}</div>
+            </div>
+          `;
+        }).join('');
+
+        // Summary
+        document.getElementById('summaryDate').textContent = summary.date;
+        document.getElementById('summaryText').textContent = summary.summary;
+        document.getElementById('summaryTools').innerHTML = 
+          (summary.toolsUsed || []).map(t => `<span class="summary-tool">${t}</span>`).join('');
+
+        // Activities
+        const activityList = document.getElementById('activityList');
+        activityList.innerHTML = activities.map(a => `
+          <div class="activity-item">
+            <div class="activity-icon ${a.type}">${a.icon || '📌'}</div>
+            <div class="activity-content">
+              <div class="activity-header">
+                <span class="activity-title">${a.title}</span>
+                <span class="activity-time">${formatRelative(a.timestamp)}</span>
+              </div>
+              <div class="activity-desc">${a.description || ''}</div>
+              <div class="activity-meta">
+                ${a.session ? `<span class="activity-tag session">${a.session}</span>` : ''}
+                ${(a.tags || []).slice(0, 2).map(t => `<span class="activity-tag">${t}</span>`).join('')}
+                ${a.tokens ? `<span class="activity-tokens">${formatNumber(a.tokens)} tok</span>` : ''}
+                ${a.cost ? `<span class="activity-tokens">$${a.cost.toFixed(4)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('') || '<div style="padding: 20px; text-align: center; color: var(--text-muted)">Nenhuma atividade recente</div>';
+
+        // Update time
+        document.getElementById('lastUpdate').textContent = formatTime(new Date());
+
+      } catch (e) {
+        console.error('Load error:', e);
+      }
+    }
+
+    // Initial load
+    loadData();
+    
+    // Auto-refresh every 10 seconds
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>

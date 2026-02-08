@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Mission Control X Server
- * Serve the application with real-time data from workspace
+ * Mission Control X Server - COMPLETE REBUILD
+ * Full-featured dashboard with real metrics from OpenClaw sessions
  */
 
 const http = require('http');
@@ -15,6 +15,16 @@ const CONFIG = {
   sessionTimeout: 7 * 24 * 60 * 60 * 1000, // 7 days
   workspacePath: process.env.WORKSPACE || '/home/ubuntu/.openclaw/workspace',
   openclawPath: process.env.OPENCLAW || '/home/ubuntu/.openclaw',
+  sessionsDir: '/home/ubuntu/.openclaw/agents/main/sessions',
+};
+
+// Pricing per 1K tokens
+const PRICING = {
+  'claude-opus-4-5-thinking': { input: 0.015, output: 0.075, cacheRead: 0.00375 },
+  'claude-opus-4-5': { input: 0.015, output: 0.075, cacheRead: 0.00375 },
+  'claude-sonnet-4-5': { input: 0.003, output: 0.015, cacheRead: 0.0003 },
+  'claude-haiku-4-5': { input: 0.0008, output: 0.004, cacheRead: 0.00008 },
+  'default': { input: 0.003, output: 0.015, cacheRead: 0.0003 },
 };
 
 const sessions = new Map();
@@ -30,6 +40,10 @@ const MIME = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
 };
+
+// ============================================
+// AUTH HELPERS
+// ============================================
 
 function createSession() {
   const token = crypto.randomBytes(32).toString('hex');
@@ -61,7 +75,10 @@ function parseBody(req) {
   });
 }
 
-// Read JSONL file and parse
+// ============================================
+// FILE HELPERS
+// ============================================
+
 function readJsonl(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
@@ -73,7 +90,6 @@ function readJsonl(filePath) {
   }
 }
 
-// Read markdown file
 function readMarkdown(filePath) {
   try {
     return fs.readFileSync(filePath, 'utf8');
@@ -82,7 +98,321 @@ function readMarkdown(filePath) {
   }
 }
 
-// Get memory files
+// ============================================
+// DEEP SESSION ANALYSIS
+// ============================================
+
+function parseSessionTranscript(filePath) {
+  const entries = readJsonl(filePath);
+  const stats = {
+    messages: { user: 0, assistant: 0, tool: 0 },
+    tokens: { input: 0, output: 0, cacheRead: 0, total: 0 },
+    cost: 0,
+    toolCalls: [],
+    timeline: [],
+    models: {},
+    firstTs: null,
+    lastTs: null,
+  };
+
+  for (const entry of entries) {
+    if (!entry.message) continue;
+    
+    const msg = entry.message;
+    const ts = entry.timestamp || msg.timestamp;
+    
+    if (ts) {
+      if (!stats.firstTs || ts < stats.firstTs) stats.firstTs = ts;
+      if (!stats.lastTs || ts > stats.lastTs) stats.lastTs = ts;
+    }
+
+    // Count message types
+    if (msg.role === 'user') {
+      stats.messages.user++;
+      stats.timeline.push({
+        ts,
+        type: 'user',
+        preview: (msg.content?.[0]?.text || '').substring(0, 100),
+      });
+    } else if (msg.role === 'assistant') {
+      stats.messages.assistant++;
+      
+      // Extract usage
+      if (msg.usage) {
+        const u = msg.usage;
+        stats.tokens.input += u.input || 0;
+        stats.tokens.output += u.output || 0;
+        stats.tokens.cacheRead += u.cacheRead || 0;
+        stats.tokens.total += u.totalTokens || (u.input + u.output);
+        
+        // Calculate cost
+        if (u.cost?.total) {
+          stats.cost += u.cost.total;
+        } else {
+          const model = msg.model || 'default';
+          const pricing = PRICING[model] || PRICING.default;
+          stats.cost += (u.input || 0) / 1000 * pricing.input;
+          stats.cost += (u.output || 0) / 1000 * pricing.output;
+          stats.cost += (u.cacheRead || 0) / 1000 * pricing.cacheRead;
+        }
+      }
+
+      // Track models
+      if (msg.model) {
+        stats.models[msg.model] = (stats.models[msg.model] || 0) + 1;
+      }
+
+      // Extract tool calls
+      if (msg.content && Array.isArray(msg.content)) {
+        for (const block of msg.content) {
+          if (block.type === 'toolCall') {
+            stats.messages.tool++;
+            stats.toolCalls.push({
+              ts,
+              name: block.name,
+              id: block.id,
+            });
+          }
+        }
+      }
+
+      stats.timeline.push({
+        ts,
+        type: 'assistant',
+        model: msg.model,
+        tokens: msg.usage?.totalTokens || 0,
+        cost: msg.usage?.cost?.total || 0,
+      });
+    } else if (msg.role === 'toolResult') {
+      stats.timeline.push({
+        ts,
+        type: 'tool',
+        name: msg.toolName,
+        isError: msg.isError,
+      });
+    }
+  }
+
+  return stats;
+}
+
+function getAllSessions() {
+  const sessionsFile = path.join(CONFIG.sessionsDir, 'sessions.json');
+  try {
+    const data = JSON.parse(fs.readFileSync(sessionsFile, 'utf8'));
+    const result = [];
+    
+    for (const [key, session] of Object.entries(data)) {
+      const sessionId = session.sessionId;
+      const jsonlPath = path.join(CONFIG.sessionsDir, `${sessionId}.jsonl`);
+      
+      let transcriptStats = null;
+      if (fs.existsSync(jsonlPath)) {
+        transcriptStats = parseSessionTranscript(jsonlPath);
+      }
+
+      result.push({
+        key,
+        sessionId,
+        label: session.label || key.split(':').pop(),
+        kind: key.includes('subagent') ? 'subagent' : key.includes('cron') ? 'cron' : 'main',
+        channel: session.channel || session.lastChannel,
+        model: session.model,
+        provider: session.modelProvider,
+        updatedAt: session.updatedAt,
+        totalTokens: session.totalTokens || transcriptStats?.tokens.total || 0,
+        inputTokens: session.inputTokens || 0,
+        outputTokens: session.outputTokens || 0,
+        cost: transcriptStats?.cost || 0,
+        messages: transcriptStats?.messages || { user: 0, assistant: 0, tool: 0 },
+        toolCalls: transcriptStats?.toolCalls?.length || 0,
+        models: transcriptStats?.models || {},
+        uptime: transcriptStats ? {
+          first: transcriptStats.firstTs,
+          last: transcriptStats.lastTs,
+        } : null,
+      });
+    }
+    
+    return result;
+  } catch (e) {
+    console.error('Error reading sessions:', e);
+    return [];
+  }
+}
+
+// ============================================
+// AGGREGATED STATS
+// ============================================
+
+function getAggregatedStats() {
+  const sessions = getAllSessions();
+  const now = Date.now();
+  const today = new Date().toISOString().split('T')[0];
+  
+  let totalTokens = 0;
+  let totalCost = 0;
+  let totalMessages = { user: 0, assistant: 0, tool: 0 };
+  let totalToolCalls = 0;
+  let modelUsage = {};
+  let agentCosts = {};
+  let timeline = [];
+  
+  for (const session of sessions) {
+    totalTokens += session.totalTokens || 0;
+    totalCost += session.cost || 0;
+    totalToolCalls += session.toolCalls || 0;
+    
+    totalMessages.user += session.messages?.user || 0;
+    totalMessages.assistant += session.messages?.assistant || 0;
+    totalMessages.tool += session.messages?.tool || 0;
+    
+    // Model usage
+    for (const [model, count] of Object.entries(session.models || {})) {
+      modelUsage[model] = (modelUsage[model] || 0) + count;
+    }
+    
+    // Per-agent costs
+    const agentName = session.label || 'unknown';
+    agentCosts[agentName] = (agentCosts[agentName] || 0) + (session.cost || 0);
+  }
+
+  // Calculate uptime from main session
+  const mainSession = sessions.find(s => s.kind === 'main');
+  let uptime = '0m';
+  if (mainSession?.uptime?.first) {
+    const first = new Date(mainSession.uptime.first).getTime();
+    const uptimeMs = now - first;
+    const hours = Math.floor(uptimeMs / (1000 * 60 * 60));
+    const mins = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
+    uptime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  }
+
+  return {
+    totalTokens,
+    totalCost,
+    totalMessages,
+    totalToolCalls,
+    modelUsage,
+    agentCosts,
+    sessionCount: sessions.length,
+    uptime,
+    budget: {
+      daily: 15,
+      monthly: 450,
+      usedToday: totalCost, // TODO: filter by today only
+      percentUsed: Math.min(100, (totalCost / 15) * 100),
+    },
+    alertLevel: totalCost > 11.25 ? 'warning' : totalCost > 13.5 ? 'danger' : 'ok',
+  };
+}
+
+// ============================================
+// ACTIVITY FEED
+// ============================================
+
+function getRecentActivities(limit = 50) {
+  const sessions = getAllSessions();
+  const activities = [];
+  
+  for (const session of sessions) {
+    const jsonlPath = path.join(CONFIG.sessionsDir, `${session.sessionId}.jsonl`);
+    if (!fs.existsSync(jsonlPath)) continue;
+    
+    const entries = readJsonl(jsonlPath);
+    const recent = entries.slice(-20);
+    
+    for (const entry of recent) {
+      if (!entry.message) continue;
+      const msg = entry.message;
+      const ts = entry.timestamp || msg.timestamp;
+      
+      if (msg.role === 'user' && msg.content?.[0]?.text) {
+        activities.push({
+          id: entry.id,
+          type: 'message',
+          icon: '💬',
+          title: 'User Message',
+          description: msg.content[0].text.substring(0, 120),
+          timestamp: ts,
+          session: session.label,
+          tags: ['user'],
+        });
+      } else if (msg.role === 'assistant' && msg.content) {
+        const hasToolCall = msg.content.some(b => b.type === 'toolCall');
+        const textContent = msg.content.find(b => b.type === 'text')?.text;
+        
+        if (hasToolCall) {
+          const tools = msg.content.filter(b => b.type === 'toolCall').map(b => b.name);
+          activities.push({
+            id: entry.id,
+            type: 'tool',
+            icon: '🔧',
+            title: `Tool: ${tools.join(', ')}`,
+            description: textContent?.substring(0, 80) || 'Executing tools...',
+            timestamp: ts,
+            session: session.label,
+            tokens: msg.usage?.totalTokens || 0,
+            cost: msg.usage?.cost?.total || 0,
+            tags: ['tool', ...tools.slice(0, 2)],
+          });
+        } else if (textContent) {
+          activities.push({
+            id: entry.id,
+            type: 'response',
+            icon: '🤖',
+            title: 'Assistant Response',
+            description: textContent.substring(0, 120),
+            timestamp: ts,
+            session: session.label,
+            tokens: msg.usage?.totalTokens || 0,
+            cost: msg.usage?.cost?.total || 0,
+            model: msg.model,
+            tags: ['assistant'],
+          });
+        }
+      }
+    }
+  }
+  
+  // Sort by timestamp descending
+  activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return activities.slice(0, limit);
+}
+
+// ============================================
+// TODAY SUMMARY
+// ============================================
+
+function getTodaySummary() {
+  const today = new Date().toISOString().split('T')[0];
+  const activities = getRecentActivities(100);
+  const todayActivities = activities.filter(a => a.timestamp?.startsWith(today));
+  
+  // Extract key activities
+  const toolsUsed = new Set();
+  const tasksCompleted = [];
+  
+  for (const act of todayActivities) {
+    if (act.type === 'tool') {
+      (act.tags || []).filter(t => t !== 'tool').forEach(t => toolsUsed.add(t));
+    }
+  }
+  
+  return {
+    date: today,
+    activityCount: todayActivities.length,
+    toolsUsed: Array.from(toolsUsed),
+    summary: `${todayActivities.length} atividades hoje. Tools: ${Array.from(toolsUsed).join(', ') || 'nenhum'}`,
+    pendingTasks: [], // TODO: parse from memory files
+    alerts: [],
+  };
+}
+
+// ============================================
+// MEMORY FILES
+// ============================================
+
 function getMemoryFiles() {
   const memoryDir = path.join(CONFIG.workspacePath, 'memory');
   try {
@@ -98,289 +428,54 @@ function getMemoryFiles() {
   }
 }
 
-// Build activities from real data
-function getActivities() {
-  const activities = [];
-  
-  // Read decisions log
-  const decisions = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl'));
-  decisions.forEach(d => {
-    activities.push({
-      id: `dec-${d.id}`,
-      type: 'decision',
-      title: d.title,
-      description: d.description,
-      timestamp: d.timestamp,
-      tags: [d.status, d.owner],
-    });
-  });
-  
-  // Read costs log
-  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
-  costs.slice(-10).forEach(c => {
-    activities.push({
-      id: `cost-${c.timestamp}`,
-      type: 'system',
-      title: `Cost: $${c.amount.toFixed(4)}`,
-      description: `${c.model} - ${c.task}`,
-      timestamp: c.timestamp,
-      tags: ['cost', c.agent],
-    });
-  });
-  
-  // Read incidents log
-  const incidents = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'incidents.jsonl'));
-  incidents.forEach(i => {
-    activities.push({
-      id: `inc-${i.id}`,
-      type: i.severity === 'high' ? 'error' : 'system',
-      title: i.title,
-      description: i.description,
-      timestamp: i.timestamp,
-      tags: [i.status, i.severity],
-    });
-  });
-  
-  // Read memory files as activities
-  const memories = getMemoryFiles();
-  memories.forEach(m => {
-    activities.push({
-      id: `mem-${m.date}`,
-      type: 'memory',
-      title: `Memory: ${m.date}`,
-      description: m.content?.substring(0, 200) + '...',
-      timestamp: `${m.date}T00:00:00Z`,
-      tags: ['memory'],
-    });
-  });
-  
-  // Add boot activity
-  activities.push({
-    id: 'boot',
-    type: 'system',
-    title: 'Mission Control X Started',
-    description: 'Server initialized and ready',
-    timestamp: new Date(startTime).toISOString(),
-    tags: ['boot'],
-  });
-  
-  // Sort by timestamp descending
-  return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-}
-
-// Get session info
-function getSession() {
-  const uptime = Date.now() - startTime;
-  const hours = Math.floor(uptime / (1000 * 60 * 60));
-  const mins = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
-  
-  return {
-    agent: 'Imu',
-    avatar: '🌀',
-    role: 'Familiar Digital',
-    model: 'Claude Opus',
-    status: 'online',
-    uptime: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`,
-    channel: 'Telegram',
-    session: 'main',
-  };
-}
-
-// Get stats
-function getStats() {
-  const decisions = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl'));
-  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
-  const memories = getMemoryFiles();
-  
-  // Count files in workspace
-  let fileCount = 0;
-  try {
-    const countFiles = (dir) => {
-      const items = fs.readdirSync(dir);
-      items.forEach(item => {
-        const full = path.join(dir, item);
-        const stat = fs.statSync(full);
-        if (stat.isFile()) fileCount++;
-        else if (stat.isDirectory() && !item.startsWith('.')) countFiles(full);
-      });
-    };
-    countFiles(CONFIG.workspacePath);
-  } catch {}
-  
-  return {
-    tasks: decisions.length,
-    searches: 5, // Placeholder - would need to track
-    files: fileCount,
-    messages: 62, // From telegram context
-    memories: memories.length,
-  };
-}
-
-// Get costs summary
-function getCosts() {
-  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
-  const today = new Date().toISOString().split('T')[0];
-  
-  let todayTotal = 0;
-  let monthTotal = 0;
-  
-  costs.forEach(c => {
-    const date = c.timestamp?.split('T')[0];
-    if (date === today) todayTotal += c.amount;
-    if (date?.startsWith(today.substring(0, 7))) monthTotal += c.amount;
-  });
-  
-  return {
-    today: todayTotal,
-    month: monthTotal,
-    dailyLimit: 15,
-    monthlyLimit: 450,
-  };
-}
-
 // ============================================
-// OPENCLAW INTEGRATION
+// API HANDLERS
 // ============================================
 
-// Get OpenClaw sessions
-function getOpenclawSessions() {
-  const sessionsFile = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions', 'sessions.json');
-  try {
-    const data = JSON.parse(fs.readFileSync(sessionsFile, 'utf8'));
-    return Object.entries(data).map(([key, session]) => ({
-      key,
-      label: session.label || key.split(':').pop(),
-      kind: session.kind || 'main',
-      channel: session.channel,
-      model: session.model,
-      totalTokens: session.totalTokens || 0,
-      updatedAt: session.updatedAt,
-      displayName: session.displayName,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-// Get OpenClaw transcript (last N entries)
-function getOpenclawTranscript(sessionId, limit = 20) {
-  const sessionsDir = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions');
-  const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('lock'));
-  
-  // Find the session file
-  const sessionFile = files.find(f => f.startsWith(sessionId));
-  if (!sessionFile) return [];
-  
-  const entries = readJsonl(path.join(sessionsDir, sessionFile));
-  
-  // Filter for user messages and assistant responses
-  return entries
-    .filter(e => e.type === 'user' || e.type === 'assistant')
-    .slice(-limit)
-    .map(e => ({
-      type: e.type,
-      timestamp: e.timestamp,
-      content: e.type === 'user' ? e.message?.substring(0, 200) : 
-               e.type === 'assistant' ? (e.message?.substring(0, 200) || '[tool use]') : null,
-      tokens: e.usage?.totalTokens,
-    }));
-}
-
-// Get OpenClaw config
-function getOpenclawConfig() {
-  const configFile = path.join(CONFIG.openclawPath, 'openclaw.json');
-  try {
-    const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    // Return safe subset (no secrets)
-    return {
-      model: config.model,
-      thinkingLevel: config.thinkingLevel,
-      timezone: config.timezone,
-      channels: Object.keys(config.channels || {}),
-    };
-  } catch {
-    return {};
-  }
-}
-
-// Get live activities from OpenClaw sessions
-function getOpenclawActivities() {
-  const activities = [];
-  const sessionsDir = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions');
-  
-  try {
-    const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('lock'));
-    
-    files.forEach(file => {
-      const entries = readJsonl(path.join(sessionsDir, file));
-      const sessionId = file.replace('.jsonl', '');
-      
-      // Get last 5 entries per session
-      entries.slice(-5).forEach(e => {
-        if (e.type === 'user') {
-          activities.push({
-            id: `oc-${e.id}`,
-            type: 'message',
-            title: 'User Message',
-            description: e.message?.substring(0, 100) || '',
-            timestamp: e.timestamp,
-            tags: ['openclaw', 'user'],
-            session: sessionId.substring(0, 8),
-          });
-        } else if (e.type === 'assistant' && e.message) {
-          activities.push({
-            id: `oc-${e.id}`,
-            type: 'code',
-            title: 'Assistant Response',
-            description: e.message?.substring(0, 100) || '',
-            timestamp: e.timestamp,
-            tags: ['openclaw', 'assistant'],
-            session: sessionId.substring(0, 8),
-            tokens: e.usage?.totalTokens,
-          });
-        } else if (e.type === 'tool_result') {
-          activities.push({
-            id: `oc-${e.id}`,
-            type: 'task',
-            title: `Tool: ${e.name || 'unknown'}`,
-            description: 'Tool execution completed',
-            timestamp: e.timestamp,
-            tags: ['openclaw', 'tool'],
-            session: sessionId.substring(0, 8),
-          });
-        }
-      });
-    });
-  } catch (e) {
-    console.error('Error reading OpenClaw sessions:', e);
-  }
-  
-  return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50);
-}
-
-// Enhanced getActivities with OpenClaw data
-function getActivitiesWithOpenclaw() {
-  const baseActivities = getActivities();
-  const openclawActivities = getOpenclawActivities();
-  
-  // Merge and sort
-  const all = [...baseActivities, ...openclawActivities];
-  return all.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 100);
-}
-
-// API Handlers
 const apiHandlers = {
-  '/api/activities': () => getActivitiesWithOpenclaw(),
-  '/api/session': () => getSession(),
-  '/api/stats': () => getStats(),
-  '/api/costs': () => getCosts(),
-  '/api/decisions': () => readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl')),
+  '/api/sessions': () => getAllSessions(),
+  '/api/stats': () => getAggregatedStats(),
+  '/api/activities': (req, url) => {
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+    return getRecentActivities(limit);
+  },
+  '/api/summary': () => getTodaySummary(),
   '/api/memory': () => getMemoryFiles(),
-  // OpenClaw endpoints
-  '/api/openclaw/sessions': () => getOpenclawSessions(),
-  '/api/openclaw/config': () => getOpenclawConfig(),
-  '/api/openclaw/activities': () => getOpenclawActivities(),
+  '/api/health': () => ({
+    status: 'ok',
+    uptime: Date.now() - startTime,
+    sessionsDir: fs.existsSync(CONFIG.sessionsDir),
+    workspacePath: fs.existsSync(CONFIG.workspacePath),
+  }),
+  // Legacy endpoints for compatibility
+  '/api/session': () => {
+    const stats = getAggregatedStats();
+    return {
+      agent: 'Imu',
+      avatar: '🌀',
+      role: 'Familiar Digital',
+      model: 'Claude Opus',
+      status: 'online',
+      uptime: stats.uptime,
+      channel: 'Telegram',
+      session: 'main',
+    };
+  },
+  '/api/costs': () => {
+    const stats = getAggregatedStats();
+    return {
+      today: stats.totalCost,
+      month: stats.totalCost,
+      dailyLimit: 15,
+      monthlyLimit: 450,
+    };
+  },
+  '/api/openclaw/sessions': () => getAllSessions(),
 };
+
+// ============================================
+// LOGIN PAGE
+// ============================================
 
 const loginPage = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -402,9 +497,6 @@ const loginPage = `<!DOCTYPE html>
     button{width:100%;height:52px;border:none;border-radius:12px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#050507;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s}
     button:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(0,212,255,.3)}
     .error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;margin-bottom:20px;color:#f87171;font-size:14px}
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
-    .feature{padding:16px;background:rgba(255,255,255,.02);border-radius:12px;font-size:13px;color:rgba(255,255,255,.6)}
-    .feature-icon{font-size:24px;margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -430,26 +522,27 @@ const loginPage = `<!DOCTYPE html>
         <button type="submit">Access Dashboard</button>
       </form>
     </div>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">🌀</div>
-        Activity Feed
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📋</div>
-        Tasks
-      </div>
-      <div class="feature">
-        <div class="feature-icon">🧠</div>
-        Memory
-      </div>
-    </div>
   </div>
 </body>
 </html>`;
 
+// ============================================
+// REQUEST HANDLER
+// ============================================
+
 async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  // CORS for API
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
+    res.end();
+    return;
+  }
   
   // Login POST
   if (url.pathname === '/login' && req.method === 'POST') {
@@ -480,17 +573,24 @@ async function handler(req, res) {
   
   // API endpoints
   if (apiHandlers[url.pathname]) {
-    const data = apiHandlers[url.pathname]();
-    res.writeHead(200, { 
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    });
-    res.end(JSON.stringify(data));
+    try {
+      const data = apiHandlers[url.pathname](req, url);
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(JSON.stringify(data));
+    } catch (e) {
+      console.error('API Error:', e);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
     return;
   }
   
   // Serve static files
-  let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
+  let filePath = url.pathname === '/' ? '/dashboard.html' : url.pathname;
   const fullPath = path.join(staticDir, filePath);
   
   // Security check
@@ -502,8 +602,16 @@ async function handler(req, res) {
   
   fs.readFile(fullPath, (err, data) => {
     if (err) {
-      res.writeHead(404);
-      res.end('Not Found');
+      // Try index.html as fallback
+      fs.readFile(path.join(staticDir, 'dashboard.html'), (err2, data2) => {
+        if (err2) {
+          res.writeHead(404);
+          res.end('Not Found');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(data2);
+      });
       return;
     }
     
@@ -518,11 +626,11 @@ const server = http.createServer(handler);
 server.listen(CONFIG.port, '0.0.0.0', () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
-║       🌀 Mission Control X Server         ║
+║       🌀 Mission Control X v2.0           ║
 ╠═══════════════════════════════════════════╣
 ║  URL:   http://0.0.0.0:${CONFIG.port}              ║
 ║  Code:  ${CONFIG.password.padEnd(20)}          ║
-║  Data:  ${CONFIG.workspacePath.substring(0, 25)}... ║
+║  Data:  Real-time OpenClaw sessions       ║
 ╚═══════════════════════════════════════════╝
   `);
 });
