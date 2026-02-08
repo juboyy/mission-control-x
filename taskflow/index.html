@@ -1690,6 +1690,8 @@
       currentAgent = agent;
       const state = getAgentState(agent, cachedActivities);
       const badge = getAgentBadge(agent, cachedSessions);
+      const parentCrew = getParentCrew(agent.label);
+      const isCore = isCoreCrew(agent.label);
 
       // Show sheet immediately with loading state
       document.getElementById('agentSheetTitle').textContent = agent.label || 'Agente';
@@ -1702,12 +1704,14 @@
             <span class="state-dot ${state}"></span>
             ${stateLabels[state] || 'Idle'}
           </div>
+          ${parentCrew && !isCore ? `<div style="margin-top:8px;font-size:12px;color:var(--label-secondary);">Filho de ${emojis[parentCrew] || '👤'} ${parentCrew.charAt(0).toUpperCase() + parentCrew.slice(1)}</div>` : ''}
         </div>
 
         <div class="detail-list">
           <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('/').pop() || 'N/A'}</span></div>
           <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${agent.channel || 'N/A'}</span></div>
           <div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-value"><span class="agent-badge ${badge}">${badge}</span></span></div>
+          ${parentCrew ? `<div class="detail-row"><span class="detail-label">Parent</span><span class="detail-value">${emojis[parentCrew] || '👤'} ${parentCrew}</span></div>` : ''}
           <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(agent.totalTokens || 0)}</span></div>
           <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(agent.cost)}</span></div>
           <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(agent.updatedAt)}</span></div>
@@ -1727,11 +1731,11 @@
         const response = await fetch(`/api/sessions/${agent.sessionId}/activities`);
         const data = await response.json();
         const activities = data.activities || [];
-        
+
         const listEl = document.getElementById('agentActivitiesList');
         if (activities.length > 0) {
           listEl.innerHTML = activities.slice(0, 20).map(a => `
-            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'> 
+            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
               <div class="activity-icon ${a.type}">${a.icon || toolIcons[a.tags?.[0]] || '📌'}</div>
               <div class="activity-content">
                 <div class="activity-header">
@@ -1820,9 +1824,29 @@
     // Core crew - always show these
     const CORE_CREW = ['main', 'nami', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'luffy', 'usopp', 'brook'];
 
+    // Crew hierarchy - which crew member spawned which agents
+    const CREW_CHILDREN = {
+      robin: ['analysis', 'research', 'docs', 'transcript'],
+      franky: ['infra', 'build', 'scripts', 'mcx'],
+      nami: ['ux', 'design', 'gemini', 'nav'],
+      zoro: ['implement', 'execute', 'code'],
+      sanji: ['api', 'data', 'crud'],
+      chopper: ['debug', 'test', 'skills', 'agent']
+    };
+
     function isCoreCrew(label) {
       const key = getKey(label);
       return CORE_CREW.includes(key);
+    }
+
+    function getParentCrew(label) {
+      const lowerLabel = (label || '').toLowerCase();
+      for (const [crew, keywords] of Object.entries(CREW_CHILDREN)) {
+        if (keywords.some(k => lowerLabel.includes(k))) {
+          return crew;
+        }
+      }
+      return null;
     }
 
     // Render horizontal scroll cards for agents
@@ -1842,7 +1866,8 @@
       const renderCard = (s, isCore = false) => {
         const isMain = s.kind === 'main';
         const isInactive = s.status === 'inactive' && !isCore;
-        const statusColor = s.status === 'active' ? 'var(--green)' :
+        const parentCrew = getParentCrew(s.label);
+        const statusColor = s.status === 'active' ? 'var(--green)' : 
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
@@ -1852,7 +1877,7 @@
               <span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
             </div>
             <div class="scroll-card-name">${s.label || 'Agent'}</div>
-            <div class="scroll-card-role">${isCore ? getRole(s.label) : (isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label))}</div>
+            <div class="scroll-card-role">${isCore ? getRole(s.label) : (parentCrew ? `${emojis[parentCrew] || '👤'} ${parentCrew}` : (isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label)))}</div>
             <div class="scroll-card-stat">
               <span>Custo</span>
               <span class="scroll-card-stat-value">${money(s.cost)}</span>
@@ -1890,7 +1915,7 @@
     function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
-      
+
       if (!list.length) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
         return;
@@ -1901,12 +1926,12 @@
         const aCore = isCoreCrew(a.label) ? 0 : 1;
         const bCore = isCoreCrew(b.label) ? 0 : 1;
         if (aCore !== bCore) return aCore - bCore;
-        
+
         const statusOrder = { active: 0, recent: 1, idle: 2, inactive: 3 };
         const aStatus = statusOrder[a.status] || 3;
         const bStatus = statusOrder[b.status] || 3;
         if (aStatus !== bStatus) return aStatus - bStatus;
-        
+
         return (b.cost || 0) - (a.cost || 0);
       });
 
@@ -1916,7 +1941,7 @@
         const isInactive = s.status === 'inactive';
         const state = getAgentState(s, cachedActivities);
         const badge = getAgentBadge(s, sorted);
-        const statusColor = s.status === 'active' ? 'var(--green)' : 
+        const statusColor = s.status === 'active' ? 'var(--green)' :
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
