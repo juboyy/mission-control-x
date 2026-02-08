@@ -343,6 +343,11 @@
       padding: var(--space-md);
       position: relative;
       cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .agent-row:hover {
+      background: var(--fill);
     }
 
     /* ===== Horizontal Scroll ===== */
@@ -1695,6 +1700,13 @@
     </div>
   </nav>
 
+  <!-- Scroll to Top Button -->
+  <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" 
+    style="position:fixed;bottom:calc(var(--tab-bar-height) + var(--safe-area-bottom) + 70px);right:20px;
+           width:44px;height:44px;border-radius:22px;border:none;background:var(--blue);
+           color:#fff;font-size:20px;cursor:pointer;display:none;z-index:100;
+           box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:opacity 0.2s;">↑</button>
+
   <!-- L1: Agent Detail Sheet -->
   <div class="sheet" id="agentSheet">
     <div class="sheet-backdrop" onclick="closeAgentSheet()"></div>
@@ -2753,6 +2765,12 @@
         const tabs = ['overview', 'agents', 'tools', 'activity'];
         switchView(tabs[parseInt(e.key) - 1]);
       }
+    });
+
+    // Scroll to top button visibility
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('scrollTopBtn');
+      if (btn) btn.style.display = window.scrollY > 300 ? 'block' : 'none';
     });
   </script>
 </body>
