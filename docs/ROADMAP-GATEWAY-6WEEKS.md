@@ -19,19 +19,220 @@ Este roadmap detalha a implementação da **Estrutura de Gateway** do revenue-OS
 
 ---
 
-## 💰 Sistema de Split de Pagamentos
+## 💰 Sistema de Split de Pagamentos (Multi-Nível)
 
-O Split é o coração do modelo de marketplace, permitindo dividir pagamentos entre a plataforma e vendedores.
+O Split é o coração do modelo de marketplace, permitindo dividir pagamentos em **múltiplos níveis**:
 
-### Tickets de Split (US-10.x)
+### Modelo Multi-Nível
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PAGAMENTO DO CLIENTE FINAL                  │
+│                              (R$ 1.000,00)                          │
+└───────────────────────────────────┬─────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      NÍVEL 1: PLATAFORMA (revenue-OS)               │
+│                         Taxa: 2% = R$ 20,00                         │
+└───────────────────────────────────┬─────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      NÍVEL 2: TENANT (Usuário do revenue-OS)        │
+│                    Recebe: R$ 980,00 - splits internos              │
+│                                                                     │
+│    ┌─────────────────────────────────────────────────────────┐      │
+│    │              SPLIT RULES DO TENANT                      │      │
+│    │  O tenant define como dividir entre seus parceiros      │      │
+│    └─────────────────────────────────────────────────────────┘      │
+└───────────────────────────────────┬─────────────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│  NÍVEL 3: Cliente A │ │  NÍVEL 3: Cliente B │ │  NÍVEL 3: Cliente C │
+│  (Sub-merchant)     │ │  (Parceiro)         │ │  (Afiliado)         │
+│  70% = R$ 686,00    │ │  20% = R$ 196,00    │ │  10% = R$ 98,00     │
+└─────────────────────┘ └─────────────────────┘ └─────────────────────┘
+```
+
+### Casos de Uso
+
+| Cenário | Nível 1 (Plataforma) | Nível 2 (Tenant) | Nível 3 (Clientes do Tenant) |
+|---------|---------------------|------------------|------------------------------|
+| **Marketplace** | 2% taxa fixa | Loja virtual | Fornecedores da loja |
+| **SaaS Whitelabel** | 3% da receita | Agência | Clientes da agência |
+| **Afiliados** | 1% + R$0.50 | Infoprodutor | Afiliados do curso |
+| **Franchising** | 5% royalty | Franqueador | Franqueados |
+
+### Arquitetura de Split Multi-Nível
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    PAGAMENTO RECEBIDO                        │
+│                      (Payment Intent)                        │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────┐
+│              SPLIT ORCHESTRATOR (Motor Central)              │
+│                                                              │
+│  1. Aplica regras de Nível 1 (plataforma)                   │
+│  2. Identifica o Tenant owner do pagamento                  │
+│  3. Busca Split Rules do Tenant                             │
+│  4. Aplica regras de Nível 2 (tenant → clientes)            │
+│  5. Calcula distribuição final                              │
+│  6. Executa Stripe Transfers em cascata                     │
+│                                                              │
+└────────────────────────────┬─────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │ Platform    │     │ Tenant      │     │ Sub-merchants│
+  │ Account     │     │ Connected   │     │ Connected    │
+  │ (revenue-OS)│     │ Account     │     │ Accounts     │
+  └─────────────┘     └─────────────┘     └─────────────┘
+```
+
+### Modelo de Dados Atualizado
+
+```sql
+-- Níveis de Split
+CREATE TYPE split_level AS ENUM ('platform', 'tenant', 'sub_merchant');
+
+-- Regras de Split (com suporte multi-nível)
+CREATE TABLE split_rules (
+    id UUID PRIMARY KEY,
+    tenant_id UUID REFERENCES tenants(id), -- NULL = regra da plataforma
+    name VARCHAR NOT NULL,
+    description TEXT,
+    level split_level NOT NULL DEFAULT 'tenant',
+    rule_type VARCHAR NOT NULL, -- 'percentage', 'fixed', 'tiered', 'composite'
+    is_active BOOLEAN DEFAULT true,
+    priority INTEGER DEFAULT 0,
+    conditions JSONB, -- condições de aplicação
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+
+-- Destinatários do Split (Clientes do Tenant)
+CREATE TABLE split_receivers (
+    id UUID PRIMARY KEY,
+    split_rule_id UUID REFERENCES split_rules(id),
+    tenant_id UUID REFERENCES tenants(id), -- Owner da regra
+    receiver_type VARCHAR NOT NULL, -- 'platform', 'tenant', 'sub_merchant', 'partner', 'affiliate'
+    connected_account_id VARCHAR, -- Stripe Connected Account
+    receiver_tenant_id UUID, -- Se for outro tenant
+    receiver_sub_merchant_id UUID, -- Se for cliente do tenant
+    percentage DECIMAL(5,2),
+    fixed_amount INTEGER,
+    description TEXT,
+    CONSTRAINT valid_receiver CHECK (
+        connected_account_id IS NOT NULL OR 
+        receiver_tenant_id IS NOT NULL OR 
+        receiver_sub_merchant_id IS NOT NULL
+    )
+);
+
+-- Sub-merchants (Clientes dos Tenants)
+CREATE TABLE sub_merchants (
+    id UUID PRIMARY KEY,
+    tenant_id UUID REFERENCES tenants(id) NOT NULL, -- A qual tenant pertence
+    stripe_account_id VARCHAR, -- Connected Account no Stripe
+    name VARCHAR NOT NULL,
+    email VARCHAR,
+    status VARCHAR DEFAULT 'pending', -- 'pending', 'active', 'disabled'
+    onboarding_completed BOOLEAN DEFAULT false,
+    metadata JSONB,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+
+-- Execuções de Split (com rastreio multi-nível)
+CREATE TABLE split_executions (
+    id UUID PRIMARY KEY,
+    payment_id UUID REFERENCES payments(id),
+    tenant_id UUID REFERENCES tenants(id),
+    total_amount INTEGER NOT NULL,
+    platform_amount INTEGER, -- Nível 1
+    tenant_amount INTEGER, -- Nível 2
+    distributed_amount INTEGER, -- Nível 3 (soma dos sub-merchants)
+    status VARCHAR,
+    executed_at TIMESTAMPTZ
+);
+
+-- Distribuição por Receiver (detalhada)
+CREATE TABLE split_distributions (
+    id UUID PRIMARY KEY,
+    execution_id UUID REFERENCES split_executions(id),
+    receiver_id UUID REFERENCES split_receivers(id),
+    level split_level NOT NULL,
+    amount INTEGER NOT NULL,
+    stripe_transfer_id VARCHAR,
+    destination_account VARCHAR, -- Stripe account ID
+    status VARCHAR,
+    executed_at TIMESTAMPTZ
+);
+```
+
+### Fluxo de Onboarding Multi-Nível
+
+```
+1. PLATAFORMA (revenue-OS)
+   └── Stripe Platform Account (já configurado)
+
+2. TENANT se cadastra
+   ├── Cria Connected Account (Express)
+   ├── Completa KYC
+   └── Pode criar Split Rules
+
+3. CLIENTE DO TENANT (Sub-merchant) se cadastra
+   ├── Tenant inicia onboarding do sub-merchant
+   ├── Sub-merchant completa KYC via Stripe
+   ├── Tenant define split rules para o sub-merchant
+   └── Sub-merchant aparece no dashboard do Tenant
+```
+
+### Tickets de Split Atualizados (US-10.x)
 
 | Ticket | Descrição | Status | Semana |
 |--------|-----------|--------|--------|
 | SCRUM-1619 | Modelo de Dados e CRUD de Split Rules | ✅ CONCLUÍDO | - |
-| SCRUM-1620 | Gestão de Split Receivers (Destinatários) | Backlog | 2 |
-| SCRUM-1621 | Motor de Execução de Split (Orquestrador) | Backlog | 3 |
+| SCRUM-1620 | Gestão de Split Receivers (Multi-nível) | Backlog | 2 |
+| **NOVO** | Onboarding de Sub-merchants (clientes do tenant) | A criar | 2 |
+| SCRUM-1621 | Motor de Execução de Split (Orquestrador Multi-nível) | Backlog | 3 |
+| **NOVO** | API para Tenants gerenciarem sub-merchants | A criar | 3 |
 | SCRUM-1622 | Split em Assinaturas Recorrentes | Backlog | 4 |
-| SCRUM-1623 | Dashboard de Reconciliação de Split | Backlog | 5 |
+| SCRUM-1623 | Dashboard de Reconciliação de Split (por Tenant) | Backlog | 5 |
+
+### API para Tenants Gerenciarem Split
+
+```
+# Sub-merchants do Tenant (Clientes do usuário)
+POST   /v1/tenants/{tenantId}/sub-merchants          # Iniciar onboarding
+GET    /v1/tenants/{tenantId}/sub-merchants          # Listar sub-merchants
+GET    /v1/tenants/{tenantId}/sub-merchants/{id}     # Detalhes
+PATCH  /v1/tenants/{tenantId}/sub-merchants/{id}     # Atualizar
+DELETE /v1/tenants/{tenantId}/sub-merchants/{id}     # Desativar
+
+# Split Rules do Tenant
+POST   /v1/tenants/{tenantId}/split-rules            # Criar regra
+GET    /v1/tenants/{tenantId}/split-rules            # Listar regras
+PATCH  /v1/tenants/{tenantId}/split-rules/{id}       # Atualizar
+DELETE /v1/tenants/{tenantId}/split-rules/{id}       # Desativar
+
+# Receivers (destinos do split)
+POST   /v1/tenants/{tenantId}/split-rules/{ruleId}/receivers
+GET    /v1/tenants/{tenantId}/split-rules/{ruleId}/receivers
+DELETE /v1/tenants/{tenantId}/split-rules/{ruleId}/receivers/{id}
+
+# Dashboard do Tenant
+GET    /v1/tenants/{tenantId}/splits                 # Histórico de splits
+GET    /v1/tenants/{tenantId}/splits/summary         # Métricas agregadas
+GET    /v1/tenants/{tenantId}/payouts                # Payouts para sub-merchants
+```
 
 ### Arquitetura de Split
 
