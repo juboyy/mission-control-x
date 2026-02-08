@@ -2657,6 +2657,23 @@
       font-size: 20px;
       cursor: pointer;
       transition: transform 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .crew-status {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--label-tertiary);
+      border: 2px solid var(--bg-secondary);
+    }
+
+    .crew-member.active .crew-status {
+      background: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
     }
 
     .crew-member:hover {
@@ -2907,15 +2924,15 @@
         <!-- Agents Quick View -->
         <div class="ops-section">
           <div class="ops-section-title">Tripulação</div>
-          <div class="ops-crew">
-            <div class="crew-member" title="Imu - Orquestrador"><span>🌀</span></div>
-            <div class="crew-member" title="Robin - Arqueóloga"><span>📚</span></div>
-            <div class="crew-member" title="Franky - Engenheiro"><span>🔧</span></div>
-            <div class="crew-member" title="Zoro - Executor"><span>⚔️</span></div>
-            <div class="crew-member" title="Sanji - Provedor"><span>🍳</span></div>
-            <div class="crew-member" title="Chopper - Médico"><span>🩺</span></div>
-            <div class="crew-member" title="Nami - Navegadora"><span>🍊</span></div>
-            <div class="crew-member" title="Usopp - Comunicador"><span>🎯</span></div>
+          <div class="ops-crew" id="opsCrew">
+            <div class="crew-member" data-agent="main" title="Imu - Orquestrador"><span>🌀</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="robin" title="Robin - Arqueóloga"><span>📚</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="franky" title="Franky - Engenheiro"><span>🔧</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="zoro" title="Zoro - Executor"><span>⚔️</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="sanji" title="Sanji - Provedor"><span>🍳</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="chopper" title="Chopper - Médico"><span>🩺</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="nami" title="Nami - Navegadora"><span>🍊</span><div class="crew-status"></div></div>
+            <div class="crew-member" data-agent="usopp" title="Usopp - Comunicador"><span>🎯</span><div class="crew-status"></div></div>
           </div>
         </div>
       </div>
@@ -3451,6 +3468,9 @@
           : '<span style="color:var(--red)">● Offline</span>';
       }
 
+      // Update crew status based on active sessions
+      updateCrewStatus();
+
       // Render crons list
       const cronsList = document.getElementById('opsCronsList');
       if (cronsList && ops.crons?.list) {
@@ -3504,6 +3524,38 @@
       if (hours > 24) return Math.floor(hours / 24) + 'd';
       if (hours > 0) return hours + 'h ' + (mins % 60) + 'm';
       return mins + 'm';
+    }
+
+    // Update crew member status indicators
+    function updateCrewStatus() {
+      if (!cachedSessions) return;
+
+      const crewLabels = {
+        main: ['main'],
+        robin: ['robin', 'robin-research'],
+        franky: ['franky', 'franky-infra'],
+        zoro: ['zoro', 'zoro-impl'],
+        sanji: ['sanji', 'sanji-api'],
+        chopper: ['chopper', 'chopper-debug'],
+        nami: ['nami', 'nami-ux'],
+        usopp: ['usopp', 'usopp-comm']
+      };
+
+      const activeLabels = cachedSessions
+        .filter(s => s.status === 'active' || s.status === 'recent')
+        .map(s => (s.label || '').toLowerCase());
+
+      document.querySelectorAll('.crew-member[data-agent]').forEach(el => {
+        const agent = el.dataset.agent;
+        const labels = crewLabels[agent] || [];
+        const isActive = labels.some(label => 
+          activeLabels.some(active => active.includes(label))
+        );
+        
+        el.classList.toggle('active', isActive);
+        el.title = el.title.split(' - ')[0] + ' - ' + 
+          (isActive ? '🟢 Trabalhando' : '⚫ Idle');
+      });
     }
 
     // Render horizontal scroll cards for agents
