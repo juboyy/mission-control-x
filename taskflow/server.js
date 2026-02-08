@@ -14,6 +14,7 @@ const CONFIG = {
   password: process.env.PASSWORD || 'mcx2026',
   sessionTimeout: 7 * 24 * 60 * 60 * 1000, // 7 days
   workspacePath: process.env.WORKSPACE || '/home/ubuntu/.openclaw/workspace',
+  openclawPath: process.env.OPENCLAW || '/home/ubuntu/.openclaw',
 };
 
 const sessions = new Map();
@@ -237,14 +238,148 @@ function getCosts() {
   };
 }
 
+// ============================================
+// OPENCLAW INTEGRATION
+// ============================================
+
+// Get OpenClaw sessions
+function getOpenclawSessions() {
+  const sessionsFile = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions', 'sessions.json');
+  try {
+    const data = JSON.parse(fs.readFileSync(sessionsFile, 'utf8'));
+    return Object.entries(data).map(([key, session]) => ({
+      key,
+      label: session.label || key.split(':').pop(),
+      kind: session.kind || 'main',
+      channel: session.channel,
+      model: session.model,
+      totalTokens: session.totalTokens || 0,
+      updatedAt: session.updatedAt,
+      displayName: session.displayName,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// Get OpenClaw transcript (last N entries)
+function getOpenclawTranscript(sessionId, limit = 20) {
+  const sessionsDir = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions');
+  const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('lock'));
+  
+  // Find the session file
+  const sessionFile = files.find(f => f.startsWith(sessionId));
+  if (!sessionFile) return [];
+  
+  const entries = readJsonl(path.join(sessionsDir, sessionFile));
+  
+  // Filter for user messages and assistant responses
+  return entries
+    .filter(e => e.type === 'user' || e.type === 'assistant')
+    .slice(-limit)
+    .map(e => ({
+      type: e.type,
+      timestamp: e.timestamp,
+      content: e.type === 'user' ? e.message?.substring(0, 200) : 
+               e.type === 'assistant' ? (e.message?.substring(0, 200) || '[tool use]') : null,
+      tokens: e.usage?.totalTokens,
+    }));
+}
+
+// Get OpenClaw config
+function getOpenclawConfig() {
+  const configFile = path.join(CONFIG.openclawPath, 'openclaw.json');
+  try {
+    const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    // Return safe subset (no secrets)
+    return {
+      model: config.model,
+      thinkingLevel: config.thinkingLevel,
+      timezone: config.timezone,
+      channels: Object.keys(config.channels || {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
+// Get live activities from OpenClaw sessions
+function getOpenclawActivities() {
+  const activities = [];
+  const sessionsDir = path.join(CONFIG.openclawPath, 'agents', 'main', 'sessions');
+  
+  try {
+    const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('lock'));
+    
+    files.forEach(file => {
+      const entries = readJsonl(path.join(sessionsDir, file));
+      const sessionId = file.replace('.jsonl', '');
+      
+      // Get last 5 entries per session
+      entries.slice(-5).forEach(e => {
+        if (e.type === 'user') {
+          activities.push({
+            id: `oc-${e.id}`,
+            type: 'message',
+            title: 'User Message',
+            description: e.message?.substring(0, 100) || '',
+            timestamp: e.timestamp,
+            tags: ['openclaw', 'user'],
+            session: sessionId.substring(0, 8),
+          });
+        } else if (e.type === 'assistant' && e.message) {
+          activities.push({
+            id: `oc-${e.id}`,
+            type: 'code',
+            title: 'Assistant Response',
+            description: e.message?.substring(0, 100) || '',
+            timestamp: e.timestamp,
+            tags: ['openclaw', 'assistant'],
+            session: sessionId.substring(0, 8),
+            tokens: e.usage?.totalTokens,
+          });
+        } else if (e.type === 'tool_result') {
+          activities.push({
+            id: `oc-${e.id}`,
+            type: 'task',
+            title: `Tool: ${e.name || 'unknown'}`,
+            description: 'Tool execution completed',
+            timestamp: e.timestamp,
+            tags: ['openclaw', 'tool'],
+            session: sessionId.substring(0, 8),
+          });
+        }
+      });
+    });
+  } catch (e) {
+    console.error('Error reading OpenClaw sessions:', e);
+  }
+  
+  return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50);
+}
+
+// Enhanced getActivities with OpenClaw data
+function getActivitiesWithOpenclaw() {
+  const baseActivities = getActivities();
+  const openclawActivities = getOpenclawActivities();
+  
+  // Merge and sort
+  const all = [...baseActivities, ...openclawActivities];
+  return all.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 100);
+}
+
 // API Handlers
 const apiHandlers = {
-  '/api/activities': () => getActivities(),
+  '/api/activities': () => getActivitiesWithOpenclaw(),
   '/api/session': () => getSession(),
   '/api/stats': () => getStats(),
   '/api/costs': () => getCosts(),
   '/api/decisions': () => readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl')),
   '/api/memory': () => getMemoryFiles(),
+  // OpenClaw endpoints
+  '/api/openclaw/sessions': () => getOpenclawSessions(),
+  '/api/openclaw/config': () => getOpenclawConfig(),
+  '/api/openclaw/activities': () => getOpenclawActivities(),
 };
 
 const loginPage = `<!DOCTYPE html>
