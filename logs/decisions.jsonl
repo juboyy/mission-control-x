@@ -1,1 +1,2 @@
 {"ts":"2026-02-08T02:55:00Z","type":"system","event":"mission_control_initialized","agent":"imu","details":"Full Mission Control structure created"}
+{"ts":"2026-02-08T03:25:00Z","type":"config_change","event":"budget_and_model_update","agent":"imu","details":"Opus 80% default, budget $15/day, $450/month","approved_by":"joao"}

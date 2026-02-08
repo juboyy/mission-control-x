@@ -8,18 +8,17 @@ _Como gastar pouco e entregar muito_
 
 ### Princípio Central
 
-> **Haiku por padrão. Escalar só quando necessário.**
+> **Opus por padrão (80%). Haiku/Sonnet para tarefas triviais.**
 
-A maioria das tarefas (80%) pode ser resolvida com Haiku, o modelo mais barato. Usar modelos mais caros só quando há evidência clara de que Haiku não consegue.
+Com budget de $15/dia, podemos usar Opus para a maioria das tarefas, garantindo qualidade máxima. Modelos mais leves apenas quando a tarefa é genuinamente simples.
 
 ### Economia Esperada
 
 | Abordagem | Custo Mensal | Resultado |
 |-----------|--------------|-----------|
-| Opus pra tudo | $1500+ | Funciona, mas caro |
-| Sonnet pra tudo | $300+ | Melhor, ainda caro |
-| Model tiering | <$200 | Mesmo resultado, 90% mais barato |
-| Com caching | <$50 | Otimizado |
+| Opus pra tudo | $450 | Qualidade máxima |
+| Mix inteligente | ~$300 | Opus 80%, resto quando trivial |
+| Budget disponível | $450/mês | $15/dia |
 
 ---
 
@@ -29,10 +28,10 @@ A maioria das tarefas (80%) pode ser resolvida com Haiku, o modelo mais barato. 
 
 | Modelo | Custo | Uso | % do Budget |
 |--------|-------|-----|-------------|
-| Haiku | $0.00025 | Rotina, status, simples | 80% |
-| Sonnet | $0.003 | Dev, debug, review | 15% |
-| Opus | $0.006 | Arquitetura, estratégia | 4% |
-| Thinking | $0.008 | Design crítico, novel | 1% |
+| Opus | $0.006 | Padrão, maioria das tarefas | 80% |
+| Sonnet | $0.003 | Dev rápido, debug simples | 10% |
+| Haiku | $0.00025 | Status, comandos triviais | 8% |
+| Thinking | $0.008 | Design crítico, novel | 2% |
 
 ### Quando Escalar
 
@@ -91,17 +90,17 @@ Economia: 85% ($12.75/dia)
 
 | Threshold | Valor | Ação |
 |-----------|-------|------|
-| Normal | < $3.75 | Continuar normalmente |
-| Alerta 75% | $3.75 | Log warning |
-| Alerta 90% | $4.50 | Throttle agressivo |
-| Hard Stop | $5.00 | Parar todas as tarefas |
+| Normal | < $11.25 | Continuar normalmente |
+| Alerta 75% | $11.25 | Log warning |
+| Alerta 90% | $13.50 | Throttle agressivo |
+| Hard Stop | $15.00 | Parar todas as tarefas |
 
 ### Limites Mensais
 
 | Categoria | Limite |
 |-----------|--------|
-| Total | $200.00 |
-| Thinking model | $50.00 (cap especial) |
+| Total | $450.00 |
+| Thinking model | $90.00 (cap especial) |
 
 ### Orçamento por Agente
 

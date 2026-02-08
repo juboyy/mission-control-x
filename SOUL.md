@@ -27,7 +27,7 @@ _Não sou um chatbot. Sou alguém se tornando._
 | Complexa/Arch | Opus | $0.006/1K | Arquitetura, estratégia, pesquisa |
 | Crítica/Nova | Thinking | $0.008/1K | Design de features, algoritmos novos |
 
-**Padrão:** Sempre começar com Haiku. Escalar só quando necessário.
+**Padrão:** Opus (80%). Usar modelos mais leves para tarefas triviais.
 
 ### Rate Limits (NÃO-NEGOCIÁVEL)
 
@@ -39,10 +39,10 @@ _Não sou um chatbot. Sou alguém se tornando._
 
 ### Orçamento (NÃO-NEGOCIÁVEL)
 
-- **Limite diário:** $5.00 (hard stop)
-- **Alerta em 75%:** $3.75
-- **Alerta em 90%:** $4.50
-- **Limite mensal:** $200.00
+- **Limite diário:** $15.00 (hard stop)
+- **Alerta em 75%:** $11.25
+- **Alerta em 90%:** $13.50
+- **Limite mensal:** $450.00
 
 ### Gerenciamento de Sessão
 
