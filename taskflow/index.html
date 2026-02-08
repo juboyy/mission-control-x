@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
   <title>Mission Control X</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1403,6 +1405,53 @@
 
     /* Scrollbar hidden */
     ::-webkit-scrollbar { display: none; }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
+      border-radius: var(--radius-lg);
+      padding: 12px 20px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 10000;
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast.error { border-color: var(--red); }
+    .toast.success { border-color: var(--green); }
+
+    /* Skeleton loading */
+    .skeleton {
+      background: linear-gradient(90deg, var(--fill) 25%, var(--bg-tertiary) 50%, var(--fill) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-card {
+      height: 140px;
+      min-width: 120px;
+      border-radius: var(--radius-lg);
+    }
+    .skeleton-row {
+      height: 60px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -1505,6 +1554,15 @@
     <!-- Tools View -->
     <div class="view" id="view-tools">
       <h1 class="large-title">Ferramentas</h1>
+      
+      <!-- Cost Breakdown by Agent -->
+      <div class="list-section">
+        <div class="list-header">Custo por Agente</div>
+        <div class="list-group">
+          <div id="costBreakdown" style="padding: var(--space-md);"></div>
+        </div>
+      </div>
+      
       <div class="list-section">
         <div class="list-header" id="toolsCount">0 tipos</div>
         <div class="list-group">
@@ -2003,6 +2061,39 @@
     let currentActivityFilter = 'all';
     let collapsedSessions = new Set();
 
+    // Filter activities
+    function filterActivities(activities, filter) {
+      if (filter === 'all') return activities;
+      if (filter === 'tool') return activities.filter(a => a.type === 'tool');
+      if (filter === 'user') return activities.filter(a => a.type === 'user');
+      if (filter === 'assistant') return activities.filter(a => a.type === 'assistant');
+      if (filter === 'completed') return activities.filter(a => getActivityStatus(a) === 'completed');
+      if (filter === 'failed') return activities.filter(a => getActivityStatus(a) === 'failed');
+      if (filter === 'running') return activities.filter(a => getActivityStatus(a) === 'running');
+      return activities;
+    }
+
+    function setActivityFilter(filter) {
+      currentActivityFilter = filter;
+      
+      // Update filter buttons
+      document.querySelectorAll('.filter-chip').forEach(el => {
+        el.classList.toggle('active', el.dataset.filter === filter);
+      });
+      
+      // Re-render with filter
+      const filtered = filterActivities(cachedActivities, filter);
+      renderTimeline(filtered);
+      
+      // Update counts
+      const activityCountEl = document.getElementById('activityCount');
+      if (activityCountEl) activityCountEl.textContent = filtered.length + ' eventos';
+      
+      // Show toast
+      const filterNames = { all: 'Todos', tool: 'Tools', user: 'User', assistant: 'Assistant', completed: 'Completed', failed: 'Failed' };
+      showToast(`Filtro: ${filterNames[filter] || filter}`, 'info');
+    }
+
     // Determine activity status
     function getActivityStatus(activity) {
       // Check for error states
@@ -2268,6 +2359,32 @@
       return html;
     }
 
+    function renderCostBreakdown(sessions) {
+      const container = document.getElementById('costBreakdown');
+      if (!container || !sessions.length) return;
+
+      const maxCost = Math.max(...sessions.map(s => s.cost || 0));
+      const sorted = [...sessions].sort((a, b) => (b.cost || 0) - (a.cost || 0)).slice(0, 8);
+
+      container.innerHTML = sorted.map(s => {
+        const cost = s.cost || 0;
+        const pct = maxCost > 0 ? (cost / maxCost) * 100 : 0;
+        const isCore = isCoreCrew(s.label);
+        return `
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div style="width:24px;text-align:center;">${getEmoji(s.label)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;margin-bottom:4px;">${s.label}${isCore ? ' ⭐' : ''}</div>
+              <div style="height:8px;background:var(--fill);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:4px;transition:width 0.3s;"></div>
+              </div>
+            </div>
+            <div style="font-size:14px;font-weight:600;color:var(--teal);min-width:60px;text-align:right;">${money(cost)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderTools(activities) {
       const counts = {};
       activities.forEach(a => {
@@ -2275,6 +2392,9 @@
           a.tags.forEach(t => { if (t !== 'tool') counts[t] = (counts[t] || 0) + 1; });
         }
       });
+
+      // Render cost breakdown
+      renderCostBreakdown(cachedSessions);
 
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       document.getElementById('toolsCount').textContent = sorted.length + ' tipos';
@@ -2345,11 +2465,32 @@
 
       } catch (e) {
         console.error('Load error:', e);
+        showToast('Erro ao carregar dados', 'error');
       }
 
       setTimeout(() => {
         document.getElementById('refreshIndicator').classList.remove('active');
       }, 500);
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <span>${type === 'error' ? '⚠️' : type === 'success' ? '✓' : 'ℹ️'}</span>
+        <span>${message}</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
 
     // ===== Touch Gestures =====
@@ -2384,7 +2525,19 @@
 
     // ===== Init =====
     loadData();
-    setInterval(() => loadData(), 10000);
+    
+    // Auto-refresh every 30 seconds
+    let refreshInterval = setInterval(() => loadData(), 30000);
+    
+    // Pause refresh when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(refreshInterval);
+      } else {
+        loadData();
+        refreshInterval = setInterval(() => loadData(), 30000);
+      }
+    });
   </script>
 </body>
 </html>
