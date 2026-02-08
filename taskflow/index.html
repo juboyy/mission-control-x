@@ -338,6 +338,101 @@
       cursor: pointer;
     }
 
+    /* ===== Horizontal Scroll ===== */
+    .scroll-container {
+      display: flex;
+      gap: var(--space-md);
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: var(--space-sm) var(--space-md);
+      margin: 0 calc(-1 * var(--space-md));
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    
+    .scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .scroll-card {
+      flex: 0 0 auto;
+      width: 160px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      scroll-snap-align: start;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.15s;
+    }
+    
+    .scroll-card:first-child {
+      margin-left: var(--space-md);
+    }
+    
+    .scroll-card:last-child {
+      margin-right: var(--space-md);
+    }
+    
+    .scroll-card:active {
+      transform: scale(0.97);
+      background: var(--bg-tertiary);
+    }
+    
+    .scroll-card.main {
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+    }
+    
+    .scroll-card-avatar {
+      width: 48px;
+      height: 48px;
+      background: var(--fill);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: var(--space-sm);
+    }
+    
+    .scroll-card.main .scroll-card-avatar {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .scroll-card-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .scroll-card-role {
+      font-size: 12px;
+      color: var(--label-secondary);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .scroll-card.main .scroll-card-role {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .scroll-card-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    
+    .scroll-card-stat-value {
+      font-weight: 600;
+      color: var(--teal);
+    }
+    
+    .scroll-card.main .scroll-card-stat-value {
+      color: #fff;
+    }
+
     .agent-row:active {
       background: var(--fill);
     }
@@ -987,9 +1082,14 @@
         </div>
       </div>
 
-      <!-- Agents Section -->
+      <!-- Agents Horizontal Scroll -->
       <div class="list-section">
         <div class="list-header">Agentes Ativos</div>
+        <div class="scroll-container" id="agentsScroll"></div>
+      </div>
+
+      <!-- Agents List (hidden, for drill-down) -->
+      <div class="list-section" style="display:none;">
         <div class="list-group" id="agentsList"></div>
       </div>
 
@@ -1272,6 +1372,37 @@
     }
 
     // ===== Render Functions =====
+    
+    // Render horizontal scroll cards for agents
+    function renderAgentsScroll(sessions, containerId) {
+      const container = document.getElementById(containerId);
+      
+      if (!sessions.length) {
+        container.innerHTML = '<div class="empty-state" style="padding:20px;text-align:center;color:var(--label-tertiary)">Nenhum agente ativo</div>';
+        return;
+      }
+
+      container.innerHTML = sessions.map((s) => {
+        const isMain = s.kind === 'main';
+        const state = getAgentState(s, cachedActivities);
+        return `
+          <div class="scroll-card ${isMain ? 'main' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+            <div class="scroll-card-avatar">${getEmoji(s.label)}</div>
+            <div class="scroll-card-name">${s.label || 'Agent'}</div>
+            <div class="scroll-card-role">${getRole(s.label)}</div>
+            <div class="scroll-card-stat">
+              <span>Custo</span>
+              <span class="scroll-card-stat-value">${money(s.cost)}</span>
+            </div>
+            <div class="scroll-card-stat" style="margin-top:4px;">
+              <span>Tokens</span>
+              <span class="scroll-card-stat-value">${fmt(s.totalTokens || 0)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
@@ -1396,7 +1527,8 @@
         document.getElementById('statTools').textContent = stats.totalToolCalls || 0;
         document.getElementById('statTokens').textContent = fmt(stats.totalTokens || 0);
 
-        // Agents
+        // Agents - Horizontal scroll + list
+        renderAgentsScroll(sessions, 'agentsScroll');
         renderAgents(sessions, 'agentsList', 4);
         renderAgents(sessions, 'allAgentsList');
         document.getElementById('agentsCount').textContent = sessions.length + ' ativos';
