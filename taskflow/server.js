@@ -11,7 +11,7 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 
 // ===== Configuration =====
-const VERSION = '2.7.1';
+const VERSION = '2.8.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
