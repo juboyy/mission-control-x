@@ -3705,98 +3705,127 @@
     }
 
     function renderAgents(sessions, containerId, limit) {
-      const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
 
-      if (!list.length) {
+      // Aggregate by crew member
+      const crewMembers = {
+        main: { emoji: '🌀', name: 'Imu', role: 'Orquestrador', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        zoro: { emoji: '⚔️', name: 'Zoro', role: 'Executor', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        robin: { emoji: '📚', name: 'Robin', role: 'Arqueóloga', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        franky: { emoji: '🔧', name: 'Franky', role: 'Engenheiro', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        chopper: { emoji: '🩺', name: 'Chopper', role: 'Médico', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        nami: { emoji: '🍊', name: 'Nami', role: 'Navegadora', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        usopp: { emoji: '🎯', name: 'Usopp', role: 'Atirador', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
+        sanji: { emoji: '🍳', name: 'Sanji', role: 'Cozinheiro', sessions: [], cost: 0, tokens: 0, status: 'inactive' }
+      };
+
+      // Aggregate sessions into crew members
+      sessions.forEach(s => {
+        const crew = s.parentCrew;
+        if (crew && crewMembers[crew]) {
+          crewMembers[crew].sessions.push(s);
+          crewMembers[crew].cost += s.cost || 0;
+          crewMembers[crew].tokens += s.totalTokens || 0;
+          // Update status (active > recent > idle > inactive)
+          const statusPriority = { active: 0, recent: 1, idle: 2, inactive: 3 };
+          if (statusPriority[s.status] < statusPriority[crewMembers[crew].status]) {
+            crewMembers[crew].status = s.status;
+          }
+        }
+      });
+
+      // Convert to array and sort by cost
+      const crewArray = Object.entries(crewMembers)
+        .map(([key, data]) => ({ key, ...data }))
+        .filter(c => c.sessions.length > 0 || c.key === 'main')
+        .sort((a, b) => b.cost - a.cost);
+
+      if (!crewArray.length) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
         return;
       }
 
-      // Group by parentCrew
-      const crewMembers = ['main', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'nami', 'usopp', 'cron'];
-      const grouped = {};
-      const ungrouped = [];
+      const displayList = limit ? crewArray.slice(0, limit) : crewArray;
 
-      list.forEach(s => {
-        const parent = s.parentCrew;
-        if (parent && crewMembers.includes(parent)) {
-          if (!grouped[parent]) grouped[parent] = [];
-          grouped[parent].push(s);
-        } else {
-          ungrouped.push(s);
-        }
-      });
+      container.innerHTML = displayList.map(crew => {
+        const statusColor = crew.status === 'active' ? 'var(--green)' :
+                           crew.status === 'recent' ? 'var(--blue)' :
+                           crew.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
+        const isMain = crew.key === 'main';
+        const sessionCount = crew.sessions.length;
 
-      // Sort crew by total cost
-      const sortedCrew = crewMembers.filter(c => grouped[c]?.length > 0)
-        .sort((a, b) => {
-          const aCost = grouped[a].reduce((sum, s) => sum + (s.cost || 0), 0);
-          const bCost = grouped[b].reduce((sum, s) => sum + (s.cost || 0), 0);
-          return bCost - aCost;
-        });
-
-      let html = '';
-
-      // Render grouped by crew
-      sortedCrew.forEach(crew => {
-        const members = grouped[crew];
-        const totalCost = members.reduce((sum, s) => sum + (s.cost || 0), 0);
-        const totalTokens = members.reduce((sum, s) => sum + (s.totalTokens || 0), 0);
-        const isActive = members.some(s => s.status === 'active' || s.status === 'recent');
-        const statusColor = isActive ? 'var(--green)' : 'var(--label-tertiary)';
-
-        html += `
-          <div class="crew-group">
-            <div class="crew-header" onclick="toggleCrewGroup('${crew}')">
-              <div class="crew-header-left">
-                <span class="crew-emoji">${emojis[crew] || '🤖'}</span>
-                <span class="crew-name">${crew === 'main' ? 'Imu (Orquestrador)' : crew.charAt(0).toUpperCase() + crew.slice(1)}</span>
-                <span class="crew-badge">${members.length}</span>
-              </div>
-              <div class="crew-header-right">
-                <span class="crew-cost">${money(totalCost)}</span>
-                <span class="crew-expand" id="expand-${crew}">▼</span>
-              </div>
+        return `
+          <div class="agent-row" 
+               onclick='openCrewSheet("${crew.key}", ${JSON.stringify(crew).replace(/'/g, "&#39;")})'
+               tabindex="0" role="button">
+            <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
+              ${crew.emoji}
+              <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
             </div>
-            <div class="crew-members" id="members-${crew}">
-        `;
-
-        members.forEach(s => {
-          const statusColor = s.status === 'active' ? 'var(--green)' :
-                             s.status === 'recent' ? 'var(--blue)' :
-                             s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
-          html += `
-              <div class="agent-row sub-agent" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
-                <div class="agent-avatar" style="position:relative;width:32px;height:32px;font-size:14px;">
-                  <span style="position:absolute;bottom:0;right:0;width:8px;height:8px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
-                </div>
-                <div class="agent-info">
-                  <div class="agent-name" style="font-size:13px;">${s.label || 'Session'}</div>
-                  <div class="agent-role" style="font-size:11px;">${s.status} • ${fmt(s.totalTokens || 0)} tok</div>
-                </div>
-                <div class="agent-stats">
-                  <div class="agent-cost" style="font-size:13px;">${money(s.cost)}</div>
-                </div>
+            <div class="agent-info">
+              <div class="agent-name">
+                ${crew.name}
+                <span class="agent-badge crew">CREW</span>
+                ${sessionCount > 1 ? `<span class="agent-badge solo">${sessionCount}</span>` : ''}
               </div>
-          `;
-        });
-
-        html += `
+              <div class="agent-role">${crew.role}</div>
             </div>
+            <div class="agent-stats">
+              <div class="agent-cost">${money(crew.cost)}</div>
+              <div class="agent-tokens">${fmt(crew.tokens)} tok</div>
+            </div>
+            <span class="agent-chevron">›</span>
           </div>
         `;
-      });
+      }).join('');
+    }
 
-      // Render ungrouped
-      ungrouped.forEach(s => {
-        const statusColor = s.status === 'active' ? 'var(--green)' :
-                           s.status === 'recent' ? 'var(--blue)' :
-                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
-        html += renderAgentRow(s, statusColor);
-      });
-
-      container.innerHTML = html;
+    function openCrewSheet(crewKey, crewData) {
+      // If only one session, open that session directly
+      if (crewData.sessions.length === 1) {
+        openAgentSheet(crewData.sessions[0]);
+        return;
+      }
+      
+      // Otherwise show crew detail with list of sessions
+      document.getElementById('agentSheetTitle').textContent = crewData.name;
+      document.getElementById('agentSheetContent').innerHTML = `
+        <div class="sheet-section">
+          <div class="detail-avatar">
+            <div class="detail-avatar-icon">${crewData.emoji}</div>
+            <div class="detail-avatar-name">${crewData.name}</div>
+            <div class="detail-avatar-role">${crewData.role}</div>
+          </div>
+        </div>
+        <div class="sheet-section">
+          <div class="detail-row">
+            <span class="detail-label">Custo Total</span>
+            <span class="detail-value" style="color:var(--teal)">${money(crewData.cost)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Tokens Total</span>
+            <span class="detail-value">${fmt(crewData.tokens)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Sessões</span>
+            <span class="detail-value">${crewData.sessions.length}</span>
+          </div>
+        </div>
+        <div class="sheet-section">
+          <div class="section-header">Sessões</div>
+          ${crewData.sessions.map(s => `
+            <div class="agent-row sub-agent" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})' style="padding:12px;">
+              <div class="agent-info" style="flex:1;">
+                <div class="agent-name" style="font-size:14px;">${s.label}</div>
+                <div class="agent-role" style="font-size:12px;">${s.status} • ${fmt(s.totalTokens || 0)} tok</div>
+              </div>
+              <div class="agent-cost" style="font-size:14px;">${money(s.cost)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      document.getElementById('agentSheet').classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
 
     function renderAgentRow(s, statusColor) {
