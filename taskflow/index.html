@@ -1146,7 +1146,12 @@
 
     .view.active {
       display: block;
-      animation: fadeIn 0.25s ease;
+      animation: slideIn 0.2s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeIn {
@@ -1732,6 +1737,20 @@
       return text.replace(urlRegex, '<a href="$1" target="_blank" style="color:var(--blue);text-decoration:underline;word-break:break-all;">$1</a>');
     }
 
+    // Fetch with retry and exponential backoff
+    async function fetchWithRetry(url, retries = 3) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        } catch (e) {
+          if (i === retries - 1) throw e;
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+        }
+      }
+    }
+
     const emojis = { main:'🌀', nami:'🍊', robin:'📚', franky:'🔧', zoro:'⚔️', sanji:'🍳', chopper:'🩺', luffy:'👒', usopp:'🎯', brook:'🎸', cron:'⏰' };
     const roles = { main:'Orquestrador', nami:'Navegadora', robin:'Arqueóloga', franky:'Engenheiro', zoro:'Executor', sanji:'Provedor', chopper:'Médico', cron:'Scheduler' };
     const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊', canvas:'🎨', nodes:'📱' };
@@ -1854,7 +1873,7 @@
               <div class="activity-content">
                 <div class="activity-header">
                   <span class="activity-title">${a.title || 'Atividade'}</span>
-                  <span class="activity-time">${ago(a.timestamp)}</span>
+                  <span class="activity-time" data-timestamp="${a.timestamp}">${ago(a.timestamp)}</span>
                 </div>
                 <div class="activity-desc">${a.description || ''}</div>
               </div>
@@ -2168,7 +2187,7 @@
             <div class="activity-content">
               <div class="activity-header">
                 <span class="activity-title">${a.title || 'Atividade'}</span>
-                <span class="activity-time">${ago(a.timestamp)}</span>
+                <span class="activity-time" data-timestamp="${a.timestamp}">${ago(a.timestamp)}</span>
               </div>
               <div class="activity-desc">${a.description || ''}</div>
               <div class="activity-tags">
@@ -2551,9 +2570,9 @@
 
       try {
         const [stats, sessions, activities, health] = await Promise.all([
-          fetch('/api/stats').then(r => r.json()),
-          fetch('/api/sessions').then(r => r.json()),
-          fetch('/api/activities?limit=50').then(r => r.json()),
+          fetchWithRetry('/api/stats'),
+          fetchWithRetry('/api/sessions'),
+          fetchWithRetry('/api/activities?limit=50'),
           fetch('/api/health').then(r => r.json()).catch(() => ({}))
         ]);
 
@@ -2690,6 +2709,14 @@
     
     // Auto-refresh every 30 seconds
     let refreshInterval = setInterval(() => loadData(), 30000);
+    
+    // Update timestamps every 60 seconds
+    setInterval(() => {
+      document.querySelectorAll('.activity-time').forEach(el => {
+        const ts = el.dataset.timestamp;
+        if (ts) el.textContent = ago(ts);
+      });
+    }, 60000);
     
     // Pause refresh when tab is hidden
     document.addEventListener('visibilitychange', () => {
