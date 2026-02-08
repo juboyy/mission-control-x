@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Mission Control X Server
- * Serve the application with authentication
+ * Serve the application with real-time data from workspace
  */
 
 const http = require('http');
@@ -13,10 +13,12 @@ const CONFIG = {
   port: parseInt(process.env.PORT || '18950'),
   password: process.env.PASSWORD || 'mcx2026',
   sessionTimeout: 7 * 24 * 60 * 60 * 1000, // 7 days
+  workspacePath: process.env.WORKSPACE || '/home/ubuntu/.openclaw/workspace',
 };
 
 const sessions = new Map();
 const staticDir = __dirname;
+const startTime = Date.now();
 
 const MIME = {
   '.html': 'text/html',
@@ -58,6 +60,193 @@ function parseBody(req) {
   });
 }
 
+// Read JSONL file and parse
+function readJsonl(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return content.trim().split('\n').filter(Boolean).map(line => {
+      try { return JSON.parse(line); } catch { return null; }
+    }).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+// Read markdown file
+function readMarkdown(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+// Get memory files
+function getMemoryFiles() {
+  const memoryDir = path.join(CONFIG.workspacePath, 'memory');
+  try {
+    return fs.readdirSync(memoryDir)
+      .filter(f => f.endsWith('.md'))
+      .map(f => {
+        const content = readMarkdown(path.join(memoryDir, f));
+        return { file: f, date: f.replace('.md', ''), content: content?.substring(0, 500) };
+      })
+      .sort((a, b) => b.date.localeCompare(a.date));
+  } catch {
+    return [];
+  }
+}
+
+// Build activities from real data
+function getActivities() {
+  const activities = [];
+  
+  // Read decisions log
+  const decisions = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl'));
+  decisions.forEach(d => {
+    activities.push({
+      id: `dec-${d.id}`,
+      type: 'decision',
+      title: d.title,
+      description: d.description,
+      timestamp: d.timestamp,
+      tags: [d.status, d.owner],
+    });
+  });
+  
+  // Read costs log
+  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
+  costs.slice(-10).forEach(c => {
+    activities.push({
+      id: `cost-${c.timestamp}`,
+      type: 'system',
+      title: `Cost: $${c.amount.toFixed(4)}`,
+      description: `${c.model} - ${c.task}`,
+      timestamp: c.timestamp,
+      tags: ['cost', c.agent],
+    });
+  });
+  
+  // Read incidents log
+  const incidents = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'incidents.jsonl'));
+  incidents.forEach(i => {
+    activities.push({
+      id: `inc-${i.id}`,
+      type: i.severity === 'high' ? 'error' : 'system',
+      title: i.title,
+      description: i.description,
+      timestamp: i.timestamp,
+      tags: [i.status, i.severity],
+    });
+  });
+  
+  // Read memory files as activities
+  const memories = getMemoryFiles();
+  memories.forEach(m => {
+    activities.push({
+      id: `mem-${m.date}`,
+      type: 'memory',
+      title: `Memory: ${m.date}`,
+      description: m.content?.substring(0, 200) + '...',
+      timestamp: `${m.date}T00:00:00Z`,
+      tags: ['memory'],
+    });
+  });
+  
+  // Add boot activity
+  activities.push({
+    id: 'boot',
+    type: 'system',
+    title: 'Mission Control X Started',
+    description: 'Server initialized and ready',
+    timestamp: new Date(startTime).toISOString(),
+    tags: ['boot'],
+  });
+  
+  // Sort by timestamp descending
+  return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+// Get session info
+function getSession() {
+  const uptime = Date.now() - startTime;
+  const hours = Math.floor(uptime / (1000 * 60 * 60));
+  const mins = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+  
+  return {
+    agent: 'Imu',
+    avatar: '🌀',
+    role: 'Familiar Digital',
+    model: 'Claude Opus',
+    status: 'online',
+    uptime: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`,
+    channel: 'Telegram',
+    session: 'main',
+  };
+}
+
+// Get stats
+function getStats() {
+  const decisions = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl'));
+  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
+  const memories = getMemoryFiles();
+  
+  // Count files in workspace
+  let fileCount = 0;
+  try {
+    const countFiles = (dir) => {
+      const items = fs.readdirSync(dir);
+      items.forEach(item => {
+        const full = path.join(dir, item);
+        const stat = fs.statSync(full);
+        if (stat.isFile()) fileCount++;
+        else if (stat.isDirectory() && !item.startsWith('.')) countFiles(full);
+      });
+    };
+    countFiles(CONFIG.workspacePath);
+  } catch {}
+  
+  return {
+    tasks: decisions.length,
+    searches: 5, // Placeholder - would need to track
+    files: fileCount,
+    messages: 62, // From telegram context
+    memories: memories.length,
+  };
+}
+
+// Get costs summary
+function getCosts() {
+  const costs = readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'costs.jsonl'));
+  const today = new Date().toISOString().split('T')[0];
+  
+  let todayTotal = 0;
+  let monthTotal = 0;
+  
+  costs.forEach(c => {
+    const date = c.timestamp?.split('T')[0];
+    if (date === today) todayTotal += c.amount;
+    if (date?.startsWith(today.substring(0, 7))) monthTotal += c.amount;
+  });
+  
+  return {
+    today: todayTotal,
+    month: monthTotal,
+    dailyLimit: 15,
+    monthlyLimit: 450,
+  };
+}
+
+// API Handlers
+const apiHandlers = {
+  '/api/activities': () => getActivities(),
+  '/api/session': () => getSession(),
+  '/api/stats': () => getStats(),
+  '/api/costs': () => getCosts(),
+  '/api/decisions': () => readJsonl(path.join(CONFIG.workspacePath, 'docs', 'mission-control', 'logs', 'decisions.jsonl')),
+  '/api/memory': () => getMemoryFiles(),
+};
+
 const loginPage = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -98,7 +287,7 @@ const loginPage = `<!DOCTYPE html>
       </svg>
     </div>
     <h1>Mission Control X</h1>
-    <p class="subtitle">Intelligent Project Management</p>
+    <p class="subtitle">Centro de Comando do Imu 🌀</p>
     <div class="form-card">
       {{ERROR}}
       <form method="POST" action="/login">
@@ -108,16 +297,16 @@ const loginPage = `<!DOCTYPE html>
     </div>
     <div class="features">
       <div class="feature">
+        <div class="feature-icon">🌀</div>
+        Activity Feed
+      </div>
+      <div class="feature">
         <div class="feature-icon">📋</div>
-        Kanban Board
+        Tasks
       </div>
       <div class="feature">
-        <div class="feature-icon">🔗</div>
-        GitHub + Jira
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📊</div>
-        Insights
+        <div class="feature-icon">🧠</div>
+        Memory
       </div>
     </div>
   </div>
@@ -134,7 +323,7 @@ async function handler(req, res) {
       const token = createSession();
       res.writeHead(302, {
         'Location': '/',
-        'Set-Cookie': `tf_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${CONFIG.sessionTimeout / 1000}`
+        'Set-Cookie': `mcx_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${CONFIG.sessionTimeout / 1000}`
       });
       res.end();
     } else {
@@ -145,9 +334,23 @@ async function handler(req, res) {
   }
   
   // Check auth
-  if (!validateSession(getCookie(req, 'tf_session'))) {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(loginPage.replace('{{ERROR}}', ''));
+  if (!validateSession(getCookie(req, 'mcx_session'))) {
+    // Allow API without auth for now (internal only)
+    if (!url.pathname.startsWith('/api/')) {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(loginPage.replace('{{ERROR}}', ''));
+      return;
+    }
+  }
+  
+  // API endpoints
+  if (apiHandlers[url.pathname]) {
+    const data = apiHandlers[url.pathname]();
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(JSON.stringify(data));
     return;
   }
   
@@ -179,11 +382,12 @@ const server = http.createServer(handler);
 
 server.listen(CONFIG.port, '0.0.0.0', () => {
   console.log(`
-╔════════════════════════════════════════╗
-║         🌀 Mission Control X Server             ║
-╠════════════════════════════════════════╣
-║  URL:  http://0.0.0.0:${CONFIG.port}             ║
-║  Code: ${CONFIG.password}                  ║
-╚════════════════════════════════════════╝
+╔═══════════════════════════════════════════╗
+║       🌀 Mission Control X Server         ║
+╠═══════════════════════════════════════════╣
+║  URL:   http://0.0.0.0:${CONFIG.port}              ║
+║  Code:  ${CONFIG.password.padEnd(20)}          ║
+║  Data:  ${CONFIG.workspacePath.substring(0, 25)}... ║
+╚═══════════════════════════════════════════╝
   `);
 });

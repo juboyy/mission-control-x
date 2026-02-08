@@ -1,0 +1,5 @@
+{"id":"DEC-001","timestamp":"2026-02-08T03:00:00Z","title":"Bootstrap Imu Identity","description":"Criação da identidade do Imu como familiar digital","status":"approved","owner":"João","impact":"high"}
+{"id":"DEC-002","timestamp":"2026-02-08T03:20:00Z","title":"Mission Control Architecture","description":"Estrutura multi-agente baseada em Chapéus de Palha","status":"approved","owner":"Imu","impact":"high"}
+{"id":"DEC-003","timestamp":"2026-02-08T03:30:00Z","title":"Budget Update $5→$15/day","description":"Aumento do orçamento diário para suportar Opus como default","status":"approved","owner":"João","impact":"medium"}
+{"id":"DEC-004","timestamp":"2026-02-08T03:50:00Z","title":"TaskFlow → Mission Control X","description":"Rebrand do sistema de tarefas para centro de comando visual","status":"approved","owner":"João","impact":"medium"}
+{"id":"DEC-005","timestamp":"2026-02-08T03:55:00Z","title":"Activity Feed Integration","description":"Conectar MCX com dados reais do workspace","status":"in-progress","owner":"Imu","impact":"high"}

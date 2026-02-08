@@ -1,0 +1,1 @@
+{"id":"INC-001","timestamp":"2026-02-08T03:45:00Z","title":"Cloudflare tunnel temporary URLs","description":"URLs mudam ao reiniciar - considerar tunnel permanente","status":"open","severity":"low"}
