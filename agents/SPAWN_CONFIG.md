@@ -1,45 +1,46 @@
 # Configuração de Spawn de Sub-Agentes
 
-## Modelo Padrão para Sub-Agentes
+## Modelo Preferido: Opus Thinking
 
-Usar **claude-sonnet-4-5** (sem thinking) para sub-agentes porque:
-- Mais estável em sessões isoladas
-- Sem problemas de "thinking.signature"
-- Custo menor
-- Velocidade maior
+Usar **claude-opus-4-5-thinking** para sub-agentes porque:
+- Raciocínio profundo para tarefas complexas
+- Melhor qualidade de código e documentação
+- Capacidade de análise detalhada
 
 ## Padrão de Spawn
 
 ```javascript
 sessions_spawn({
   label: "zoro-impl",
-  model: "claude-sonnet-4-5",  // Sem thinking!
+  model: "claude-opus-4-5-thinking",
+  thinking: "medium",  // low, medium, high
   task: "...",
   runTimeoutSeconds: 600
 })
 ```
 
-## Quando Usar Thinking
+## Níveis de Thinking
 
-Reservar thinking para:
-- Sessão principal (Imu)
-- Tarefas de arquitetura complexa
-- Decisões críticas
-
-## Labels e Modelos
-
-| Agente | Label | Modelo Recomendado |
-|--------|-------|-------------------|
-| ⚔️ Zoro | zoro-impl | claude-sonnet-4-5 |
-| 📚 Robin | robin-research | claude-sonnet-4-5 |
-| 🔧 Franky | franky-infra | claude-sonnet-4-5 |
-| 🩺 Chopper | chopper-debug | claude-sonnet-4-5 |
-| 🍊 Nami | nami-ux | claude-sonnet-4-5 |
-| 🎯 Usopp | usopp-comm | claude-sonnet-4-5 |
-| 🍳 Sanji | sanji-api | claude-sonnet-4-5 |
+| Nível | Uso |
+|-------|-----|
+| `low` | Tarefas simples, edições rápidas |
+| `medium` | Implementação, documentação |
+| `high` | Arquitetura, decisões complexas |
 
 ## Fallback
 
-Se sonnet falhar, tentar:
-1. gemini-2.5-pro
-2. claude-haiku (para tarefas simples)
+Se opus thinking falhar (erro de API), usar:
+1. `claude-sonnet-4-5` (estável, sem thinking)
+2. `gemini-2.5-pro` (alternativo)
+
+## Labels e Uso
+
+| Agente | Label | Thinking Level |
+|--------|-------|----------------|
+| ⚔️ Zoro | zoro-impl | medium |
+| 📚 Robin | robin-research | high |
+| 🔧 Franky | franky-infra | medium |
+| 🩺 Chopper | chopper-debug | high |
+| 🍊 Nami | nami-ux | medium |
+| 🎯 Usopp | usopp-comm | low |
+| 🍳 Sanji | sanji-api | medium |
