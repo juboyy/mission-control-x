@@ -1001,6 +1001,84 @@ const routes = {
     const activities = await activityRepo.findRecent(100);
     const suggestions = userDataRepo.getSuggestedBookmarks(activities);
     return { success: true, suggestions, count: suggestions.length };
+  },
+
+  // New endpoints v2.7.0
+  'GET /api/summary': async () => {
+    const [stats, sessions, activities] = await Promise.all([
+      statsService.getStats(),
+      sessionRepo.findAll(),
+      activityRepo.findRecent(5)
+    ]);
+
+    const activeAgents = sessions.filter(s => s.status === 'active').length;
+    const topAgents = [...sessions]
+      .sort((a, b) => (b.cost || 0) - (a.cost || 0))
+      .slice(0, 3)
+      .map(s => ({ label: s.label, cost: s.cost }));
+
+    return {
+      success: true,
+      summary: {
+        totalCost: stats.totalCost,
+        totalTokens: stats.totalTokens,
+        activeAgents,
+        totalAgents: sessions.length,
+        topAgents,
+        recentActivities: activities.map(a => ({
+          type: a.type,
+          tool: a.tool,
+          status: a.status,
+          time: a.timestamp
+        }))
+      }
+    };
+  },
+
+  'GET /api/crew': async () => {
+    const sessions = await sessionRepo.findAll();
+    const CORE_CREW = ['main', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'nami', 'usopp', 'brook', 'jinbe'];
+    
+    const crew = sessions.filter(s => {
+      const label = (s.label || '').toLowerCase();
+      return CORE_CREW.some(c => label.includes(c));
+    });
+
+    return {
+      success: true,
+      crew: crew.map(s => ({
+        label: s.label,
+        status: s.status,
+        lastActive: s.lastActive,
+        cost: s.cost,
+        tokens: s.tokens
+      })),
+      count: crew.length
+    };
+  },
+
+  'GET /api/timeline': async (req, res, query) => {
+    const limit = parseInt(query.limit) || 50;
+    const activities = await activityRepo.findRecent(limit);
+    
+    // Group by hour
+    const byHour = {};
+    activities.forEach(a => {
+      const hour = new Date(a.timestamp).toISOString().slice(0, 13) + ':00';
+      if (!byHour[hour]) byHour[hour] = [];
+      byHour[hour].push({
+        type: a.type,
+        tool: a.tool,
+        status: a.status,
+        label: a.sessionLabel,
+        message: a.type === 'user' ? a.content?.slice(0, 100) : null
+      });
+    });
+
+    return {
+      success: true,
+      timeline: Object.entries(byHour).map(([hour, items]) => ({ hour, items, count: items.length }))
+    };
   }
 };
 

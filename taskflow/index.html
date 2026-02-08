@@ -1465,6 +1465,18 @@
     /* Scrollbar hidden on mobile */
     ::-webkit-scrollbar { display: none; }
 
+    /* Desktop-only elements: hidden by default (mobile-first) */
+    .desktop-only {
+      display: none;
+    }
+    
+    /* Desktop columns: stack on mobile */
+    .desktop-columns {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
     /* ===== DESKTOP ENHANCEMENTS ===== */
     
     /* === Tablet (768px+) === */
@@ -1730,12 +1742,14 @@
         margin-top: var(--space-lg);
       }
 
-      /* Desktop 2-column layout */
+      /* Desktop 2-column layout - enhanced */
       .desktop-columns {
-        display: block;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
       }
       .desktop-only {
-        display: none;
+        display: block !important;
       }
 
       /* Grid layout for agents + activities */
