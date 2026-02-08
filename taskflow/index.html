@@ -1139,6 +1139,24 @@
       font-size: 10px;
       font-weight: 500;
       transition: color 0.2s;
+      position: relative;
+    }
+
+    .tab-badge {
+      position: absolute;
+      top: 2px;
+      right: calc(50% - 20px);
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      background: var(--red);
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .tab-item.active {
@@ -1688,6 +1706,7 @@
       <div class="tab-item" data-view="agents">
         <span class="tab-icon">🤖</span>
         <span>Agentes</span>
+        <span class="tab-badge" id="agentsBadge" style="display:none;"></span>
       </div>
       <div class="tab-item" data-view="tools">
         <span class="tab-icon">🔧</span>
@@ -1696,6 +1715,7 @@
       <div class="tab-item" data-view="activity">
         <span class="tab-icon">📡</span>
         <span>Atividade</span>
+        <span class="tab-badge" id="activityBadge" style="display:none;"></span>
       </div>
     </div>
   </nav>
@@ -2653,6 +2673,30 @@
             const h = Math.floor(health.uptime / 3600);
             const m = Math.floor((health.uptime % 3600) / 60);
             uptimeEl.textContent = h > 0 ? `${h}h${m}m` : `${m}m`;
+          }
+        }
+
+        // Update tab badges
+        const activeAgents = sessions.filter(s => s.status === 'active').length;
+        const agentsBadge = document.getElementById('agentsBadge');
+        if (agentsBadge) {
+          if (activeAgents > 0) {
+            agentsBadge.textContent = activeAgents;
+            agentsBadge.style.display = 'flex';
+            agentsBadge.style.background = 'var(--green)';
+          } else {
+            agentsBadge.style.display = 'none';
+          }
+        }
+
+        const failedActivities = activities.filter(a => getActivityStatus(a) === 'failed').length;
+        const activityBadge = document.getElementById('activityBadge');
+        if (activityBadge) {
+          if (failedActivities > 0) {
+            activityBadge.textContent = failedActivities;
+            activityBadge.style.display = 'flex';
+          } else {
+            activityBadge.style.display = 'none';
           }
         }
 
