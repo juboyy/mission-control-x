@@ -1,0 +1,18 @@
+{
+  "notes": {
+    "test123": [
+      {
+        "id": "mldar0t7",
+        "text": "Esta é uma nota de teste do Sanji 🍳",
+        "createdAt": "2026-02-08T05:22:36.379Z"
+      }
+    ]
+  },
+  "statuses": {
+    "test123": {
+      "status": "reviewed",
+      "updatedAt": "2026-02-08T05:22:39.597Z"
+    }
+  },
+  "bookmarks": []
+}

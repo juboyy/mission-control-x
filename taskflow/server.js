@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
 const LABELS_FILE = path.join(__dirname, 'data', 'session-labels.json');
+const USER_DATA_FILE = path.join(__dirname, 'data', 'user-data.json');
 const STATIC_DIR = __dirname;
 const CACHE_TTL = 10000; // 10 seconds
 
@@ -25,6 +26,144 @@ try {
 } catch (e) {
   console.warn('Could not load session labels:', e.message);
 }
+
+// ===== User Data Repository =====
+class UserDataRepository {
+  constructor(filePath) {
+    this.filePath = filePath;
+    this.data = this.load();
+  }
+
+  load() {
+    try {
+      if (fs.existsSync(this.filePath)) {
+        return JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+      }
+    } catch (e) {
+      console.warn('Could not load user data:', e.message);
+    }
+    return { notes: {}, statuses: {}, bookmarks: [] };
+  }
+
+  save() {
+    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2));
+  }
+
+  // Notes
+  addNote(activityId, note) {
+    if (!this.data.notes[activityId]) {
+      this.data.notes[activityId] = [];
+    }
+    const noteEntry = {
+      id: Date.now().toString(36),
+      text: note,
+      createdAt: new Date().toISOString()
+    };
+    this.data.notes[activityId].push(noteEntry);
+    this.save();
+    return noteEntry;
+  }
+
+  getNotes(activityId) {
+    return this.data.notes[activityId] || [];
+  }
+
+  // Statuses
+  setStatus(activityId, status) {
+    this.data.statuses[activityId] = {
+      status,
+      updatedAt: new Date().toISOString()
+    };
+    this.save();
+    return this.data.statuses[activityId];
+  }
+
+  getStatus(activityId) {
+    return this.data.statuses[activityId] || null;
+  }
+
+  // Bookmarks
+  addBookmark(bookmark) {
+    const existing = this.data.bookmarks.find(b => b.activityId === bookmark.activityId);
+    if (existing) return existing;
+
+    const entry = {
+      id: Date.now().toString(36),
+      activityId: bookmark.activityId,
+      title: bookmark.title || 'Untitled',
+      reason: bookmark.reason || 'manual',
+      createdAt: new Date().toISOString()
+    };
+    this.data.bookmarks.push(entry);
+    this.save();
+    return entry;
+  }
+
+  getBookmarks() {
+    return this.data.bookmarks;
+  }
+
+  removeBookmark(id) {
+    const index = this.data.bookmarks.findIndex(b => b.id === id);
+    if (index === -1) return false;
+    this.data.bookmarks.splice(index, 1);
+    this.save();
+    return true;
+  }
+
+  // Inteligência: detectar atividades importantes
+  analyzeActivity(activity) {
+    const importance = { score: 0, reasons: [] };
+
+    // Alto custo (> $0.10)
+    if (activity.cost > 0.10) {
+      importance.score += 3;
+      importance.reasons.push('high-cost');
+    }
+
+    // Muitos tokens (> 10k)
+    if (activity.tokens > 10000) {
+      importance.score += 2;
+      importance.reasons.push('high-tokens');
+    }
+
+    // Erro detectado
+    if (activity.description?.toLowerCase().includes('error') ||
+        activity.description?.toLowerCase().includes('failed') ||
+        activity.description?.toLowerCase().includes('exception')) {
+      importance.score += 3;
+      importance.reasons.push('error-detected');
+    }
+
+    // Tool call importante
+    const importantTools = ['browser', 'exec', 'message', 'nodes'];
+    if (activity.tags?.some(t => importantTools.includes(t))) {
+      importance.score += 1;
+      importance.reasons.push('important-tool');
+    }
+
+    return {
+      ...importance,
+      shouldAutoBookmark: importance.score >= 3
+    };
+  }
+
+  // Sugerir bookmarks automáticos
+  getSuggestedBookmarks(activities) {
+    return activities
+      .map(a => ({ activity: a, analysis: this.analyzeActivity(a) }))
+      .filter(({ analysis }) => analysis.shouldAutoBookmark)
+      .map(({ activity, analysis }) => ({
+        activityId: activity.id,
+        title: activity.title,
+        description: activity.description?.slice(0, 100),
+        reasons: analysis.reasons,
+        score: analysis.score
+      }));
+  }
+}
+
+const userDataRepo = new UserDataRepository(USER_DATA_FILE);
 
 // ===== Cache Layer =====
 const cache = new Map();
@@ -594,8 +733,65 @@ const routes = {
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
     };
+  },
+
+  // ===== User Data APIs (CRUD) =====
+  
+  // POST /api/notes - Adicionar nota a uma atividade
+  'POST /api/notes': async (req, res) => {
+    const body = await parseBody(req);
+    if (!body.activityId || !body.text) {
+      throw new ApiError(400, 'activityId and text are required');
+    }
+    const note = userDataRepo.addNote(body.activityId, body.text);
+    return { success: true, note, activityId: body.activityId };
+  },
+
+  // GET /api/notes/:activityId - Listar notas de uma atividade
+  'GET /api/notes/:activityId': async (req, res, query, params) => {
+    const notes = userDataRepo.getNotes(params.activityId);
+    return { success: true, notes, activityId: params.activityId };
+  },
+
+  // GET /api/bookmarks - Listar favoritos
+  'GET /api/bookmarks': async () => {
+    const bookmarks = userDataRepo.getBookmarks();
+    return { success: true, bookmarks, count: bookmarks.length };
+  },
+
+  // POST /api/bookmarks - Adicionar favorito
+  'POST /api/bookmarks': async (req, res) => {
+    const body = await parseBody(req);
+    if (!body.activityId) {
+      throw new ApiError(400, 'activityId is required');
+    }
+    const bookmark = userDataRepo.addBookmark(body);
+    return { success: true, bookmark };
+  },
+
+  // GET /api/bookmarks/suggestions - Sugestões inteligentes
+  'GET /api/bookmarks/suggestions': async () => {
+    const activities = await activityRepo.findRecent(100);
+    const suggestions = userDataRepo.getSuggestedBookmarks(activities);
+    return { success: true, suggestions, count: suggestions.length };
   }
 };
+
+// ===== Body Parser Helper =====
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(new ApiError(400, 'Invalid JSON body'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
 
 // ===== Dynamic Route Matching =====
 function matchRoute(method, pathname) {
@@ -608,7 +804,10 @@ function matchRoute(method, pathname) {
   // Pattern matching for :id params
   const patterns = {
     'GET /api/sessions/:id/activities': /^\/api\/sessions\/([^/]+)\/activities$/,
-    'GET /api/activities/:id': /^\/api\/activities\/([^/]+)$/
+    'GET /api/activities/:id': /^\/api\/activities\/([^/]+)$/,
+    'GET /api/notes/:activityId': /^\/api\/notes\/([^/]+)$/,
+    'PATCH /api/activities/:id/status': /^\/api\/activities\/([^/]+)\/status$/,
+    'DELETE /api/bookmarks/:id': /^\/api\/bookmarks\/([^/]+)$/
   };
 
   for (const [routeKey, regex] of Object.entries(patterns)) {
@@ -647,6 +846,34 @@ const dynamicRoutes = {
     }
     
     return activity;
+  },
+
+  // GET /api/notes/:activityId
+  'GET /api/notes/:activityId': async (req, res, query, params) => {
+    const notes = userDataRepo.getNotes(params.id);
+    return { success: true, notes, activityId: params.id };
+  },
+
+  // PATCH /api/activities/:id/status - Atualizar status
+  'PATCH /api/activities/:id/status': async (req, res, query, params) => {
+    const body = await parseBody(req);
+    const validStatuses = ['reviewed', 'flagged', 'archived', 'pending'];
+    
+    if (!body.status || !validStatuses.includes(body.status)) {
+      throw new ApiError(400, `status must be one of: ${validStatuses.join(', ')}`);
+    }
+    
+    const result = userDataRepo.setStatus(params.id, body.status);
+    return { success: true, activityId: params.id, ...result };
+  },
+
+  // DELETE /api/bookmarks/:id - Remover favorito
+  'DELETE /api/bookmarks/:id': async (req, res, query, params) => {
+    const removed = userDataRepo.removeBookmark(params.id);
+    if (!removed) {
+      throw new ApiError(404, 'Bookmark not found');
+    }
+    return { success: true, deleted: params.id };
   }
 };
 
@@ -658,7 +885,7 @@ const server = http.createServer(async (req, res) => {
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (method === 'OPTIONS') {
@@ -721,13 +948,16 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
-║       🌀 Mission Control X v2.2           ║
+║       🌀 Mission Control X v2.3           ║
 ╠═══════════════════════════════════════════╣
 ║  URL:   http://0.0.0.0:${PORT}              ║
 ║  API:   /api/stats, /api/sessions         ║
 ║         /api/sessions/:id/activities      ║
 ║         /api/activities, /api/activities/:id ║
 ║         /api/health                       ║
+║  CRUD:  /api/notes, /api/bookmarks        ║
+║         /api/activities/:id/status        ║
+║         /api/bookmarks/suggestions        ║
 ║  Data:  Real-time OpenClaw sessions       ║
 ╚═══════════════════════════════════════════╝
   `);
