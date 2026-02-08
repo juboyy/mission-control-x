@@ -2653,6 +2653,27 @@
         refreshInterval = setInterval(() => loadData(), 30000);
       }
     });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Escape closes sheets
+      if (e.key === 'Escape') {
+        if (document.getElementById('activitySheet').classList.contains('active')) {
+          closeActivitySheet();
+        } else if (document.getElementById('agentSheet').classList.contains('active')) {
+          closeAgentSheet();
+        }
+      }
+      // R to refresh
+      if (e.key === 'r' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
+        loadData(true);
+      }
+      // 1-4 for tabs
+      if (e.key >= '1' && e.key <= '4' && document.activeElement.tagName !== 'INPUT') {
+        const tabs = ['overview', 'agents', 'tools', 'activity'];
+        switchView(tabs[parseInt(e.key) - 1]);
+      }
+    });
   </script>
 </body>
 </html>
