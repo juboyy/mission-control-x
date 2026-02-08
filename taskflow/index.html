@@ -2206,7 +2206,8 @@
         // Activity
         renderActivity(activities, 'activityList', 5);
         renderTimeline(activities);  // New timeline view
-        document.getElementById('activityCount')?.textContent = activities.length + ' eventos';
+        const activityCountEl = document.getElementById('activityCount');
+        if (activityCountEl) activityCountEl.textContent = activities.length + ' eventos';
 
         // Tools
         renderTools(activities);
