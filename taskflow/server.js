@@ -13,7 +13,7 @@ const os = require('os');
 const crypto = require('crypto');
 
 // ===== Configuration =====
-const VERSION = '2.10.0';
+const VERSION = '2.11.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -168,6 +168,32 @@ try {
   }
 } catch (e) {
   logger.warn('Could not load session labels', { error: e.message });
+}
+
+// Load OpenClaw sessions.json for label mapping
+const OPENCLAW_SESSIONS_FILE = path.join(os.homedir(), '.openclaw/agents/main/sessions/sessions.json');
+let openclawSessions = {};
+function loadOpenclawSessions() {
+  try {
+    if (fs.existsSync(OPENCLAW_SESSIONS_FILE)) {
+      openclawSessions = JSON.parse(fs.readFileSync(OPENCLAW_SESSIONS_FILE, 'utf8'));
+    }
+  } catch (e) {
+    logger.warn('Could not load openclaw sessions', { error: e.message });
+  }
+}
+loadOpenclawSessions();
+// Refresh every 30s
+setInterval(loadOpenclawSessions, 30000);
+
+// Get label from OpenClaw sessions
+function getLabelFromOpenclaw(sessionId) {
+  for (const [key, value] of Object.entries(openclawSessions)) {
+    if (value.sessionId === sessionId && value.label) {
+      return value.label;
+    }
+  }
+  return null;
 }
 
 // ===== User Data Repository =====
@@ -495,15 +521,23 @@ class SessionRepository {
       } catch (e) {}
     }
 
-    // Fallback label - use mapping or short ID
+    // Fallback label - use OpenClaw sessions.json, then local mapping, then short ID
     if (!label) {
       const sessionId = file.replace('.jsonl', '');
-      const mapped = sessionLabels[sessionId];
-      if (mapped) {
-        label = mapped.label;
-        kind = mapped.kind || kind;
+      
+      // Try OpenClaw sessions.json first
+      const openclawLabel = getLabelFromOpenclaw(sessionId);
+      if (openclawLabel) {
+        label = openclawLabel;
       } else {
-        label = 'session-' + sessionId.slice(0, 8);
+        // Try local mapping
+        const mapped = sessionLabels[sessionId];
+        if (mapped) {
+          label = mapped.label;
+          kind = mapped.kind || kind;
+        } else {
+          label = 'session-' + sessionId.slice(0, 8);
+        }
       }
     }
 
