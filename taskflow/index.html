@@ -1489,6 +1489,7 @@
         </div>
         <div class="hero-meta">
           <span id="costPercent">0% do budget</span>
+          <span onclick="exportData()" style="cursor:pointer;">📥 Export</span>
           <span>$15.00/dia</span>
         </div>
       </div>
@@ -1959,6 +1960,31 @@
       
       renderAgents(filtered, 'allAgentsList');
       document.getElementById('agentsCount').textContent = filtered.length + ' encontrados';
+    }
+
+    // Export data as JSON
+    function exportData() {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        sessions: cachedSessions,
+        activities: cachedActivities,
+        summary: {
+          totalCost: cachedSessions.reduce((sum, s) => sum + (s.cost || 0), 0),
+          totalTokens: cachedSessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0),
+          sessionCount: cachedSessions.length,
+          activityCount: cachedActivities.length
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mcx-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Dados exportados!', 'success');
     }
 
     // Render horizontal scroll cards for agents
