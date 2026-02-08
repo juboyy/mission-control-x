@@ -12,8 +12,19 @@ const url = require('url');
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
+const LABELS_FILE = path.join(__dirname, 'data', 'session-labels.json');
 const STATIC_DIR = __dirname;
 const CACHE_TTL = 10000; // 10 seconds
+
+// Load session labels mapping
+let sessionLabels = {};
+try {
+  if (fs.existsSync(LABELS_FILE)) {
+    sessionLabels = JSON.parse(fs.readFileSync(LABELS_FILE, 'utf8'));
+  }
+} catch (e) {
+  console.warn('Could not load session labels:', e.message);
+}
 
 // ===== Cache Layer =====
 const cache = new Map();
@@ -65,32 +76,11 @@ class SessionRepository {
     if (cached) return cached;
 
     try {
-      // Try stats file first (pre-computed)
-      if (fs.existsSync(this.statsFile)) {
-        const data = JSON.parse(fs.readFileSync(this.statsFile, 'utf8'));
-        const sessions = (data.sessions || []).map(s => ({
-          key: `session:${s.id}`,
-          sessionId: s.id,
-          label: s.label || 'agent',
-          kind: s.label === 'main' ? 'main' : 'agent',
-          channel: 'telegram',
-          model: 'claude-opus-4-5-thinking',
-          inputTokens: s.tokensIn || 0,
-          outputTokens: s.tokensOut || 0,
-          totalTokens: (s.tokensIn || 0) + (s.tokensOut || 0),
-          cost: s.costUSD || 0,
-          messageCount: s.messageCount || 0,
-          toolCalls: s.toolCalls || 0,
-          updatedAt: s.lastActivity
-        }));
-        setCache('sessions:all', sessions);
-        return sessions;
-      }
-
-      // Fallback: read from transcripts
+      // Always read from transcripts for accurate data
       if (!fs.existsSync(this.sessionsDir)) return [];
       
-      const files = fs.readdirSync(this.sessionsDir).filter(f => f.endsWith('.jsonl'));
+      const files = fs.readdirSync(this.sessionsDir)
+        .filter(f => f.endsWith('.jsonl') && !f.includes('deleted'));
       const sessions = [];
 
       for (const file of files) {
@@ -117,20 +107,64 @@ class SessionRepository {
     
     let totalIn = 0, totalOut = 0, messageCount = 0, toolCalls = 0;
     let lastTimestamp = null;
-    let label = 'agent';
+    let label = null;
+    let kind = 'agent';
 
     for (const line of lines) {
       try {
         const entry = JSON.parse(line);
-        if (entry.usage) {
-          totalIn += entry.usage.inputTokens || 0;
-          totalOut += entry.usage.outputTokens || 0;
+        
+        // Extract label from session metadata
+        if (entry.type === 'session' && entry.label) {
+          label = entry.label;
         }
-        if (entry.role === 'user' || entry.role === 'assistant') messageCount++;
-        if (entry.role === 'tool_calls') toolCalls += (entry.content?.length || 1);
+        if (entry.type === 'session' && entry.kind) {
+          kind = entry.kind;
+        }
+        
+        // Count messages from message entries
+        if (entry.type === 'message' && entry.message) {
+          const msg = entry.message;
+          if (msg.role === 'user' || msg.role === 'assistant') {
+            messageCount++;
+          }
+          
+          // Count toolCalls inside content array
+          if (Array.isArray(msg.content)) {
+            for (const item of msg.content) {
+              if (item.type === 'toolCall') {
+                toolCalls++;
+              }
+            }
+          }
+          
+          // Extract usage from message
+          if (msg.usage) {
+            totalIn += msg.usage.input || msg.usage.inputTokens || 0;
+            totalOut += msg.usage.output || msg.usage.outputTokens || 0;
+          }
+        }
+        
+        // Also check usage at entry level
+        if (entry.usage) {
+          totalIn += entry.usage.input || entry.usage.inputTokens || 0;
+          totalOut += entry.usage.output || entry.usage.outputTokens || 0;
+        }
+        
         if (entry.timestamp) lastTimestamp = entry.timestamp;
-        if (entry.label) label = entry.label;
       } catch (e) {}
+    }
+
+    // Fallback label - use mapping or short ID
+    if (!label) {
+      const sessionId = file.replace('.jsonl', '');
+      const mapped = sessionLabels[sessionId];
+      if (mapped) {
+        label = mapped.label;
+        kind = mapped.kind || kind;
+      } else {
+        label = 'session-' + sessionId.slice(0, 8);
+      }
     }
 
     const inputCost = (totalIn / 1000) * 0.015;
@@ -140,7 +174,7 @@ class SessionRepository {
       key: `session:${file.replace('.jsonl', '')}`,
       sessionId: file.replace('.jsonl', ''),
       label,
-      kind: label === 'main' ? 'main' : 'agent',
+      kind,
       channel: 'telegram',
       model: 'claude-opus-4-5-thinking',
       inputTokens: totalIn,
@@ -382,18 +416,21 @@ class StatsService {
     if (cached) return cached;
 
     const sessions = await this.sessionRepo.findAll();
-    const activities = await this.activityRepo.findRecent(100);
+
+    // Calculate totals from sessions (more accurate)
+    const totalMessages = sessions.reduce((sum, s) => sum + (s.messageCount || 0), 0);
+    const totalToolCalls = sessions.reduce((sum, s) => sum + (s.toolCalls || 0), 0);
 
     const stats = {
       totalTokens: sessions.reduce((sum, s) => sum + s.totalTokens, 0),
       totalCost: sessions.reduce((sum, s) => sum + s.cost, 0),
       sessionCount: sessions.length,
       totalMessages: {
-        user: activities.filter(a => a.type === 'user').length,
-        assistant: activities.filter(a => a.type === 'assistant').length,
-        tool: activities.filter(a => a.type === 'tool').length
+        user: Math.floor(totalMessages / 2),
+        assistant: Math.ceil(totalMessages / 2),
+        tool: totalToolCalls
       },
-      totalToolCalls: activities.filter(a => a.type === 'tool').length,
+      totalToolCalls,
       modelUsage: this.countModels(sessions),
       agentUsage: this.countAgents(sessions),
       budget: {

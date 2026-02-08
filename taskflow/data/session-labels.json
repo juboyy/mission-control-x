@@ -1,0 +1,13 @@
+{
+  "a9e6e611-8273-442d-b9cb-d46a1cf0c7a1": {"label": "main", "kind": "main"},
+  "accceb3e-7e90-469c-9ef4-2e0d4ec33b83": {"label": "zoro-implement", "kind": "subagent"},
+  "af183e7d-c744-4e33-9fe1-58df6dc99dd8": {"label": "sanji-api", "kind": "subagent"},
+  "0073fddb-9e37-468b-9701-2d78a8cd5d1c": {"label": "franky-infra", "kind": "subagent"},
+  "742d4f42-9862-4b6b-bef9-42d2ef481d78": {"label": "chopper-agent-skills", "kind": "subagent"},
+  "66a2cc64-b305-408e-a20b-84cc677781fb": {"label": "nami-ux", "kind": "subagent"},
+  "9a06b3e4-d812-4491-bf2b-a613813be7a5": {"label": "robin-analysis", "kind": "subagent"},
+  "696664f6-a4a8-4612-8d9a-c411903a4c72": {"label": "franky-mcx-rebuild", "kind": "subagent"},
+  "7b094e63-a9f8-4fd1-bbe5-48d1415848a0": {"label": "robin-transcript-sync", "kind": "subagent"},
+  "64aeb44b-1f35-4403-8262-1d340e60d740": {"label": "nami-gemini-test", "kind": "subagent"},
+  "5d8c86ae-7d0b-4bfb-a447-6e867de677ea": {"label": "tech-news-daily", "kind": "cron"}
+}
