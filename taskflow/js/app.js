@@ -12,6 +12,7 @@ const App = {
     // Initialize modules
     Kanban.init();
     Integrations.init();
+    Activity.init();
     
     // Render other views
     this.renderInsights();
@@ -202,6 +203,7 @@ const App = {
         insights: 'Insights',
         velocity: 'Velocity',
         integrations: 'Integrations',
+        activity: 'Activity Feed',
       };
       
       document.getElementById('pageTitle').textContent = titles[viewId] || viewId;

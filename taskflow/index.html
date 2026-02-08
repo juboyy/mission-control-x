@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/kanban.css">
+  <link rel="stylesheet" href="css/activity.css">
   <link rel="stylesheet" href="css/responsive.css">
   
   <!-- PWA -->
@@ -125,6 +126,11 @@
           <a href="#" class="nav-item" data-view="velocity">
             <svg class="nav-icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             <span>Velocity</span>
+          </a>
+          <a href="#" class="nav-item" data-view="activity">
+            <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Activity Feed</span>
+            <span class="nav-badge">Live</span>
           </a>
         </div>
       </nav>
@@ -296,6 +302,18 @@
           </div>
         </div>
       </section>
+
+      <!-- Activity Feed View -->
+      <section class="view" id="view-activity">
+        <!-- Session Info -->
+        <div id="sessionInfo"></div>
+        
+        <!-- Stats Row -->
+        <div class="stats-row" id="activityStats"></div>
+        
+        <!-- Activity Feed -->
+        <div class="activity-feed" id="activityFeed"></div>
+      </section>
     </main>
 
     <!-- Task Detail Modal -->
@@ -380,6 +398,7 @@
   <script src="js/store.js"></script>
   <script src="js/kanban.js"></script>
   <script src="js/integrations.js"></script>
+  <script src="js/activity.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
