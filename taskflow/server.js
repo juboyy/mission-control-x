@@ -7,9 +7,11 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const zlib = require('zlib');
+const crypto = require('crypto');
 
 // ===== Configuration =====
-const VERSION = '2.6.0';
+const VERSION = '2.7.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -18,6 +20,144 @@ const USER_DATA_FILE = path.join(__dirname, 'data', 'user-data.json');
 const STATIC_DIR = __dirname;
 const CACHE_TTL = 10000; // 10 seconds
 
+// CORS configuration
+const CORS_CONFIG = {
+  allowedOrigins: process.env.CORS_ORIGINS 
+    ? process.env.CORS_ORIGINS.split(',') 
+    : ['*'],
+  allowedMethods: 'GET, POST, PATCH, DELETE, OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization, X-Request-ID'
+};
+
+// Rate limiting configuration
+const RATE_LIMIT = {
+  windowMs: 60000, // 1 minute
+  maxRequests: 100
+};
+
+// ===== Structured Logger =====
+const LogLevel = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
+const currentLogLevel = LogLevel[process.env.LOG_LEVEL?.toUpperCase()] ?? LogLevel.INFO;
+
+function log(level, message, meta = {}) {
+  if (LogLevel[level] < currentLogLevel) return;
+  
+  const entry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...meta
+  };
+  console.log(JSON.stringify(entry));
+}
+
+const logger = {
+  debug: (msg, meta) => log('DEBUG', msg, meta),
+  info: (msg, meta) => log('INFO', msg, meta),
+  warn: (msg, meta) => log('WARN', msg, meta),
+  error: (msg, meta) => log('ERROR', msg, meta)
+};
+
+// ===== Metrics Collector =====
+const metrics = {
+  startTime: Date.now(),
+  requests: { total: 0, byMethod: {}, byRoute: {}, byStatus: {} },
+  cache: { hits: 0, misses: 0 },
+  errors: { total: 0, byType: {} },
+  
+  recordRequest(method, route, statusCode, durationMs) {
+    this.requests.total++;
+    this.requests.byMethod[method] = (this.requests.byMethod[method] || 0) + 1;
+    this.requests.byRoute[route] = (this.requests.byRoute[route] || 0) + 1;
+    this.requests.byStatus[statusCode] = (this.requests.byStatus[statusCode] || 0) + 1;
+  },
+  
+  recordCacheHit() { this.cache.hits++; },
+  recordCacheMiss() { this.cache.misses++; },
+  
+  recordError(type) {
+    this.errors.total++;
+    this.errors.byType[type] = (this.errors.byType[type] || 0) + 1;
+  },
+  
+  getSnapshot() {
+    const uptime = Math.floor((Date.now() - this.startTime) / 1000);
+    return {
+      uptime,
+      uptimeHuman: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s`,
+      requests: this.requests,
+      cache: {
+        ...this.cache,
+        hitRate: this.cache.hits + this.cache.misses > 0 
+          ? ((this.cache.hits / (this.cache.hits + this.cache.misses)) * 100).toFixed(2) + '%'
+          : 'N/A'
+      },
+      errors: this.errors,
+      memory: {
+        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+      }
+    };
+  }
+};
+
+// ===== Rate Limiter =====
+const rateLimitStore = new Map();
+
+function rateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT.windowMs;
+  
+  // Clean old entries
+  let entry = rateLimitStore.get(ip);
+  if (!entry || entry.windowStart < windowStart) {
+    entry = { windowStart: now, count: 0 };
+    rateLimitStore.set(ip, entry);
+  }
+  
+  entry.count++;
+  
+  if (entry.count > RATE_LIMIT.maxRequests) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: entry.windowStart + RATE_LIMIT.windowMs
+    };
+  }
+  
+  return {
+    allowed: true,
+    remaining: RATE_LIMIT.maxRequests - entry.count,
+    resetAt: entry.windowStart + RATE_LIMIT.windowMs
+  };
+}
+
+// Clean rate limit store periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitStore.entries()) {
+    if (entry.windowStart < now - RATE_LIMIT.windowMs) {
+      rateLimitStore.delete(ip);
+    }
+  }
+}, 60000);
+
+// ===== Compression Helper =====
+function shouldCompress(data, req) {
+  if (data.length < 1024) return false;
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  return acceptEncoding.includes('gzip');
+}
+
+function compressResponse(data, callback) {
+  zlib.gzip(data, callback);
+}
+
+// ===== ETag Generator =====
+function generateETag(content) {
+  return '"' + crypto.createHash('md5').update(content).digest('hex').slice(0, 16) + '"';
+}
+
 // Load session labels mapping
 let sessionLabels = {};
 try {
@@ -25,7 +165,7 @@ try {
     sessionLabels = JSON.parse(fs.readFileSync(LABELS_FILE, 'utf8'));
   }
 } catch (e) {
-  console.warn('Could not load session labels:', e.message);
+  logger.warn('Could not load session labels', { error: e.message });
 }
 
 // ===== User Data Repository =====
@@ -41,7 +181,7 @@ class UserDataRepository {
         return JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
       }
     } catch (e) {
-      console.warn('Could not load user data:', e.message);
+      logger.warn('Could not load user data', { error: e.message });
     }
     return { notes: {}, statuses: {}, bookmarks: [] };
   }
@@ -171,11 +311,16 @@ const cache = new Map();
 
 function getCached(key) {
   const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expires) {
-    cache.delete(key);
+  if (!entry) {
+    metrics.recordCacheMiss();
     return null;
   }
+  if (Date.now() > entry.expires) {
+    cache.delete(key);
+    metrics.recordCacheMiss();
+    return null;
+  }
+  metrics.recordCacheHit();
   return entry.data;
 }
 
@@ -185,23 +330,76 @@ function setCache(key, data, ttl = CACHE_TTL) {
 
 // ===== Error Handling =====
 class ApiError extends Error {
-  constructor(statusCode, message) {
+  constructor(statusCode, message, details = null) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true;
+    this.details = details;
+    this.code = this.getErrorCode(statusCode);
+  }
+  
+  getErrorCode(statusCode) {
+    const codes = {
+      400: 'BAD_REQUEST',
+      401: 'UNAUTHORIZED',
+      403: 'FORBIDDEN',
+      404: 'NOT_FOUND',
+      409: 'CONFLICT',
+      422: 'UNPROCESSABLE_ENTITY',
+      429: 'RATE_LIMITED',
+      500: 'INTERNAL_ERROR'
+    };
+    return codes[statusCode] || 'UNKNOWN_ERROR';
+  }
+  
+  toJSON() {
+    return {
+      success: false,
+      error: {
+        code: this.code,
+        message: this.message,
+        details: this.details,
+        statusCode: this.statusCode
+      }
+    };
   }
 }
 
-function errorHandler(error, res) {
+function errorHandler(error, res, req) {
   const statusCode = error.statusCode || 500;
-  const message = error.isOperational ? error.message : 'Internal server error';
+  const isOperational = error.isOperational || false;
   
-  if (!error.isOperational) {
-    console.error('[ERROR]', error);
+  // Log error
+  if (!isOperational) {
+    logger.error('Unhandled error', { 
+      error: error.message, 
+      stack: error.stack,
+      path: req?.url,
+      method: req?.method
+    });
+    metrics.recordError('unhandled');
+  } else {
+    logger.warn('API error', { 
+      code: error.code,
+      message: error.message,
+      path: req?.url 
+    });
+    metrics.recordError(error.code || 'operational');
   }
   
+  const response = error instanceof ApiError 
+    ? error.toJSON()
+    : {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred',
+          statusCode: 500
+        }
+      };
+  
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: false, error: message }));
+  res.end(JSON.stringify(response));
 }
 
 // ===== Data Repository =====
@@ -236,8 +434,8 @@ class SessionRepository {
       setCache('sessions:all', sessions);
       return sessions;
     } catch (e) {
-      console.error('Session read error:', e);
-      throw new ApiError(500, 'Failed to read sessions');
+      logger.error('Session read error', { error: e.message });
+      throw new ApiError(500, 'Failed to read sessions', { cause: e.message });
     }
   }
 
@@ -380,8 +578,8 @@ class ActivityRepository {
       setCache(cacheKey, result);
       return result;
     } catch (e) {
-      console.error('Activity read error:', e);
-      throw new ApiError(500, 'Failed to read activities');
+      logger.error('Activity read error', { error: e.message });
+      throw new ApiError(500, 'Failed to read activities', { cause: e.message });
     }
   }
 
@@ -573,8 +771,8 @@ class ActivityRepository {
       setCache(cacheKey, result, CACHE_TTL / 2); // Cache mais curto
       return result;
     } catch (e) {
-      console.error('Session activities read error:', e);
-      throw new ApiError(500, 'Failed to read session activities');
+      logger.error('Session activities read error', { error: e.message, sessionId });
+      throw new ApiError(500, 'Failed to read session activities', { cause: e.message });
     }
   }
 
@@ -617,8 +815,8 @@ class ActivityRepository {
 
       return null;
     } catch (e) {
-      console.error('Activity find error:', e);
-      throw new ApiError(500, 'Failed to find activity');
+      logger.error('Activity find error', { error: e.message, activityId });
+      throw new ApiError(500, 'Failed to find activity', { cause: e.message });
     }
   }
 
@@ -723,6 +921,9 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
+// Static file ETags cache
+const staticEtags = new Map();
+
 // ===== API Routes =====
 const routes = {
   'GET /api/stats': async (req, res) => {
@@ -751,13 +952,23 @@ const routes = {
     };
   },
 
+  'GET /api/metrics': async () => {
+    return {
+      success: true,
+      version: VERSION,
+      ...metrics.getSnapshot()
+    };
+  },
+
   // ===== User Data APIs (CRUD) =====
   
   // POST /api/notes - Adicionar nota a uma atividade
   'POST /api/notes': async (req, res) => {
     const body = await parseBody(req);
     if (!body.activityId || !body.text) {
-      throw new ApiError(400, 'activityId and text are required');
+      throw new ApiError(400, 'activityId and text are required', {
+        missing: [!body.activityId && 'activityId', !body.text && 'text'].filter(Boolean)
+      });
     }
     const note = userDataRepo.addNote(body.activityId, body.text);
     return { success: true, note, activityId: body.activityId };
@@ -779,7 +990,7 @@ const routes = {
   'POST /api/bookmarks': async (req, res) => {
     const body = await parseBody(req);
     if (!body.activityId) {
-      throw new ApiError(400, 'activityId is required');
+      throw new ApiError(400, 'activityId is required', { missing: ['activityId'] });
     }
     const bookmark = userDataRepo.addBookmark(body);
     return { success: true, bookmark };
@@ -802,7 +1013,7 @@ function parseBody(req) {
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch (e) {
-        reject(new ApiError(400, 'Invalid JSON body'));
+        reject(new ApiError(400, 'Invalid JSON body', { parseError: e.message }));
       }
     });
     req.on('error', reject);
@@ -858,7 +1069,7 @@ const dynamicRoutes = {
     const activity = await activityRepo.findById(activityId);
     
     if (!activity) {
-      throw new ApiError(404, 'Activity not found');
+      throw new ApiError(404, 'Activity not found', { activityId });
     }
     
     return activity;
@@ -876,7 +1087,10 @@ const dynamicRoutes = {
     const validStatuses = ['reviewed', 'flagged', 'archived', 'pending'];
     
     if (!body.status || !validStatuses.includes(body.status)) {
-      throw new ApiError(400, `status must be one of: ${validStatuses.join(', ')}`);
+      throw new ApiError(400, `status must be one of: ${validStatuses.join(', ')}`, {
+        provided: body.status,
+        valid: validStatuses
+      });
     }
     
     const result = userDataRepo.setStatus(params.id, body.status);
@@ -887,7 +1101,7 @@ const dynamicRoutes = {
   'DELETE /api/bookmarks/:id': async (req, res, query, params) => {
     const removed = userDataRepo.removeBookmark(params.id);
     if (!removed) {
-      throw new ApiError(404, 'Bookmark not found');
+      throw new ApiError(404, 'Bookmark not found', { bookmarkId: params.id });
     }
     return { success: true, deleted: params.id };
   }
@@ -895,19 +1109,51 @@ const dynamicRoutes = {
 
 // ===== HTTP Server =====
 const server = http.createServer(async (req, res) => {
+  const startTime = Date.now();
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
+  
+  // Get client IP for rate limiting
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
+    || req.socket.remoteAddress 
+    || 'unknown';
 
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const origin = req.headers.origin || '*';
+  const allowedOrigin = CORS_CONFIG.allowedOrigins.includes('*') 
+    ? '*' 
+    : (CORS_CONFIG.allowedOrigins.includes(origin) ? origin : CORS_CONFIG.allowedOrigins[0]);
+  
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Methods', CORS_CONFIG.allowedMethods);
+  res.setHeader('Access-Control-Allow-Headers', CORS_CONFIG.allowedHeaders);
+  res.setHeader('Access-Control-Max-Age', '86400');
 
   if (method === 'OPTIONS') {
     res.writeHead(204);
     res.end();
     return;
+  }
+
+  // Rate limiting for API routes
+  if (pathname.startsWith('/api/')) {
+    const rateLimitResult = rateLimit(clientIp);
+    
+    res.setHeader('X-RateLimit-Limit', RATE_LIMIT.maxRequests);
+    res.setHeader('X-RateLimit-Remaining', rateLimitResult.remaining);
+    res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimitResult.resetAt / 1000));
+    
+    if (!rateLimitResult.allowed) {
+      logger.warn('Rate limit exceeded', { ip: clientIp, path: pathname });
+      const error = new ApiError(429, 'Too many requests. Please slow down.', {
+        retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)
+      });
+      res.setHeader('Retry-After', Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000));
+      errorHandler(error, res, req);
+      metrics.recordRequest(method, pathname, 429, Date.now() - startTime);
+      return;
+    }
   }
 
   // API routes
@@ -917,16 +1163,43 @@ const server = http.createServer(async (req, res) => {
     if (route) {
       try {
         const result = await route.handler(req, res, parsedUrl.query, route.params);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(result));
+        const jsonData = JSON.stringify(result);
+        const buffer = Buffer.from(jsonData);
+        
+        // Check if we should compress
+        if (shouldCompress(buffer, req)) {
+          compressResponse(buffer, (err, compressed) => {
+            if (err) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(jsonData);
+            } else {
+              res.writeHead(200, { 
+                'Content-Type': 'application/json',
+                'Content-Encoding': 'gzip',
+                'Content-Length': compressed.length
+              });
+              res.end(compressed);
+            }
+            metrics.recordRequest(method, pathname, 200, Date.now() - startTime);
+          });
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(jsonData);
+          metrics.recordRequest(method, pathname, 200, Date.now() - startTime);
+        }
       } catch (error) {
-        errorHandler(error, res);
+        errorHandler(error, res, req);
+        metrics.recordRequest(method, pathname, error.statusCode || 500, Date.now() - startTime);
       }
       return;
     }
 
     res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: false, error: 'Not found' }));
+    res.end(JSON.stringify({ 
+      success: false, 
+      error: { code: 'NOT_FOUND', message: 'Endpoint not found', path: pathname }
+    }));
+    metrics.recordRequest(method, pathname, 404, Date.now() - startTime);
     return;
   }
 
@@ -938,6 +1211,7 @@ const server = http.createServer(async (req, res) => {
   if (!fullPath.startsWith(STATIC_DIR)) {
     res.writeHead(403);
     res.end('Forbidden');
+    metrics.recordRequest(method, pathname, 403, Date.now() - startTime);
     return;
   }
 
@@ -945,42 +1219,93 @@ const server = http.createServer(async (req, res) => {
     const data = fs.readFileSync(fullPath);
     const ext = path.extname(fullPath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(data);
+    
+    // Generate/cache ETag
+    let etag = staticEtags.get(fullPath);
+    if (!etag) {
+      etag = generateETag(data);
+      staticEtags.set(fullPath, etag);
+    }
+    
+    // Check If-None-Match
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch === etag) {
+      res.writeHead(304);
+      res.end();
+      metrics.recordRequest(method, pathname, 304, Date.now() - startTime);
+      return;
+    }
+    
+    const headers = { 
+      'Content-Type': contentType,
+      'ETag': etag,
+      'Cache-Control': 'public, max-age=300'
+    };
+    
+    // Compress static files if beneficial
+    if (shouldCompress(data, req) && (ext === '.html' || ext === '.css' || ext === '.js' || ext === '.json')) {
+      compressResponse(data, (err, compressed) => {
+        if (err) {
+          res.writeHead(200, headers);
+          res.end(data);
+        } else {
+          res.writeHead(200, { 
+            ...headers,
+            'Content-Encoding': 'gzip',
+            'Content-Length': compressed.length
+          });
+          res.end(compressed);
+        }
+        metrics.recordRequest(method, pathname, 200, Date.now() - startTime);
+      });
+    } else {
+      res.writeHead(200, headers);
+      res.end(data);
+      metrics.recordRequest(method, pathname, 200, Date.now() - startTime);
+    }
   } catch (e) {
     // Fallback to index.html for SPA routing
     try {
       const indexData = fs.readFileSync(path.join(STATIC_DIR, 'index.html'));
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(indexData);
+      metrics.recordRequest(method, pathname, 200, Date.now() - startTime);
     } catch (e2) {
       res.writeHead(404);
       res.end('Not found');
+      metrics.recordRequest(method, pathname, 404, Date.now() - startTime);
     }
   }
 });
 
 // ===== Start Server =====
 server.listen(PORT, '0.0.0.0', () => {
+  logger.info('Server started', { version: VERSION, port: PORT });
   console.log(`
 ╔═══════════════════════════════════════════╗
-║       🌀 Mission Control X v2.3           ║
+║       🌀 Mission Control X v${VERSION}          ║
 ╠═══════════════════════════════════════════╣
 ║  URL:   http://0.0.0.0:${PORT}              ║
 ║  API:   /api/stats, /api/sessions         ║
 ║         /api/sessions/:id/activities      ║
 ║         /api/activities, /api/activities/:id ║
-║         /api/health                       ║
+║         /api/health, /api/metrics         ║
 ║  CRUD:  /api/notes, /api/bookmarks        ║
 ║         /api/activities/:id/status        ║
 ║         /api/bookmarks/suggestions        ║
 ║  Data:  Real-time OpenClaw sessions       ║
+║  New:   Logging, Rate Limit, Compression  ║
 ╚═══════════════════════════════════════════╝
   `);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Shutting down...');
+  logger.info('Shutting down gracefully');
   server.close(() => process.exit(0));
 });
+
+// Clear static ETags periodically (for development)
+setInterval(() => {
+  staticEtags.clear();
+}, 300000); // 5 minutes
