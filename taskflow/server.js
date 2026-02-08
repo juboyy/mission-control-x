@@ -233,24 +233,49 @@ class ActivityRepository {
   }
 
   mapActivity(entry, file) {
-    const sessionName = file.replace('.jsonl', '').split(':').pop();
-    const type = entry.role || 'system';
+    const sessionId = file.replace('.jsonl', '');
+    // Use label mapping
+    const mapped = sessionLabels[sessionId];
+    const sessionLabel = mapped ? mapped.label : 'session-' + sessionId.slice(0, 8);
+    
+    // Determine type from entry structure
+    let type = 'system';
+    let role = null;
+    
+    if (entry.type === 'message' && entry.message) {
+      role = entry.message.role;
+      type = role;
+      
+      // Check if it's a tool call
+      if (Array.isArray(entry.message.content)) {
+        for (const item of entry.message.content) {
+          if (item.type === 'toolCall') {
+            type = 'tool';
+            break;
+          }
+        }
+      }
+    }
+    
     const timestamp = entry.timestamp || new Date().toISOString();
 
     // Calculate cost from usage
-    const usage = entry.usage || {};
-    const inputCost = ((usage.inputTokens || 0) / 1000) * 0.015;
-    const outputCost = ((usage.outputTokens || 0) / 1000) * 0.075;
+    const usage = entry.message?.usage || entry.usage || {};
+    const inputTokens = usage.input || usage.inputTokens || 0;
+    const outputTokens = usage.output || usage.outputTokens || 0;
+    const inputCost = (inputTokens / 1000) * 0.015;
+    const outputCost = (outputTokens / 1000) * 0.075;
 
     return {
-      id: this.hash(JSON.stringify(entry) + timestamp),
-      type: type === 'tool_calls' ? 'tool' : type,
+      id: this.hash(sessionId + entry.id + timestamp),
+      type,
       icon: this.getIcon(type),
       title: this.getTitle(entry),
       description: this.getDescription(entry),
       timestamp,
-      session: sessionName,
-      tokens: (usage.inputTokens || 0) + (usage.outputTokens || 0),
+      session: sessionLabel,
+      sessionId,
+      tokens: inputTokens + outputTokens,
       cost: inputCost + outputCost,
       tags: this.getTags(entry)
     };
@@ -266,21 +291,63 @@ class ActivityRepository {
   }
 
   getIcon(type) {
-    const icons = { user: '👤', assistant: '🤖', tool_calls: '🔧', tool: '🔧', system: '⚙️' };
+    const icons = { user: '👤', assistant: '🤖', tool: '🔧', system: '⚙️' };
     return icons[type] || '📌';
   }
 
   getTitle(entry) {
-    if (entry.role === 'user') return 'User Message';
-    if (entry.role === 'assistant') return 'Assistant';
+    // Handle new format with entry.message
+    if (entry.type === 'message' && entry.message) {
+      const msg = entry.message;
+      if (msg.role === 'user') return 'Mensagem do Usuário';
+      if (msg.role === 'assistant') {
+        // Check for tool calls
+        if (Array.isArray(msg.content)) {
+          for (const item of msg.content) {
+            if (item.type === 'toolCall') {
+              return `Tool: ${item.name || 'unknown'}`;
+            }
+          }
+        }
+        return 'Resposta do Assistente';
+      }
+    }
+    
+    // Legacy format
+    if (entry.role === 'user') return 'Mensagem do Usuário';
+    if (entry.role === 'assistant') return 'Resposta do Assistente';
     if (entry.role === 'tool_calls') {
       const toolName = entry.content?.[0]?.function?.name || 'tool';
       return `Tool: ${toolName}`;
     }
-    return 'Activity';
+    
+    // Session info
+    if (entry.type === 'session') return 'Início da Sessão';
+    if (entry.type === 'model') return 'Configuração do Modelo';
+    
+    return 'Atividade';
   }
 
   getDescription(entry) {
+    // Handle new format
+    if (entry.type === 'message' && entry.message) {
+      const msg = entry.message;
+      if (Array.isArray(msg.content)) {
+        for (const item of msg.content) {
+          if (item.type === 'text' && item.text) {
+            return this.cleanText(item.text).slice(0, 200);
+          }
+          if (item.type === 'toolCall') {
+            const args = item.arguments || {};
+            // Show relevant arg preview
+            const preview = args.command || args.query || args.message || args.task || '';
+            return preview ? this.cleanText(preview).slice(0, 150) : `Executando ${item.name}...`;
+          }
+        }
+      }
+    }
+    
+    // Legacy format
     if (typeof entry.content === 'string') {
       // Extrair mais texto - limpar markdown e truncar
       const cleaned = entry.content
@@ -305,6 +372,16 @@ class ActivityRepository {
       return text.slice(0, 200);
     }
     return '';
+  }
+
+  cleanText(text) {
+    return (text || '')
+      .replace(/```[\s\S]*?```/g, '[code]')
+      .replace(/`[^`]+`/g, '[code]')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[#*_~]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // Buscar atividades por sessão
@@ -394,12 +471,25 @@ class ActivityRepository {
 
   getTags(entry) {
     const tags = [];
+    
+    // New format
+    if (entry.type === 'message' && entry.message && Array.isArray(entry.message.content)) {
+      for (const item of entry.message.content) {
+        if (item.type === 'toolCall') {
+          tags.push('tool');
+          if (item.name) tags.push(item.name);
+        }
+      }
+    }
+    
+    // Legacy format
     if (entry.role === 'tool_calls' && Array.isArray(entry.content)) {
       tags.push('tool');
       entry.content.forEach(c => {
         if (c.function?.name) tags.push(c.function.name);
       });
     }
+    
     return tags;
   }
 }
