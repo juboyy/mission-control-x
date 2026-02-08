@@ -12,15 +12,16 @@
   <style>
     /* ===== Apple HIG Design System ===== */
     :root {
-      /* Semantic Colors - Light */
-      --label: #000000;
-      --label-secondary: rgba(60, 60, 67, 0.6);
-      --label-tertiary: rgba(60, 60, 67, 0.3);
-      --bg-primary: #F2F2F7;
-      --bg-secondary: #FFFFFF;
-      --bg-tertiary: #F2F2F7;
-      --separator: rgba(60, 60, 67, 0.12);
-      --fill: rgba(120, 120, 128, 0.2);
+      /* Semantic Colors - Dark Mode */
+      --label: #FFFFFF;
+      --label-secondary: rgba(235, 235, 245, 0.6);
+      --label-tertiary: rgba(235, 235, 245, 0.3);
+      --bg-primary: #000000;
+      --bg-secondary: #1C1C1E;
+      --bg-tertiary: #2C2C2E;
+      --bg-grouped: #1C1C1E;
+      --separator: rgba(84, 84, 88, 0.65);
+      --fill: rgba(120, 120, 128, 0.32);
       
       /* System Colors */
       --blue: #007AFF;
@@ -29,6 +30,7 @@
       --red: #FF3B30;
       --purple: #AF52DE;
       --teal: #5AC8FA;
+      --yellow: #FFD60A;
       
       /* Spacing - 8pt grid */
       --space-xs: 4px;
@@ -46,33 +48,6 @@
       /* Safe areas */
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    /* Dark Mode */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --label: #FFFFFF;
-        --label-secondary: rgba(235, 235, 245, 0.6);
-        --label-tertiary: rgba(235, 235, 245, 0.3);
-        --bg-primary: #000000;
-        --bg-secondary: #1C1C1E;
-        --bg-tertiary: #2C2C2E;
-        --separator: rgba(84, 84, 88, 0.65);
-        --fill: rgba(120, 120, 128, 0.32);
-      }
-    }
-
-    /* Force dark mode for this app */
-    :root {
-      --label: #FFFFFF;
-      --label-secondary: rgba(235, 235, 245, 0.6);
-      --label-tertiary: rgba(235, 235, 245, 0.3);
-      --bg-primary: #000000;
-      --bg-secondary: #1C1C1E;
-      --bg-tertiary: #2C2C2E;
-      --bg-grouped: #1C1C1E;
-      --separator: rgba(84, 84, 88, 0.65);
-      --fill: rgba(120, 120, 128, 0.32);
     }
 
     * { 
@@ -360,6 +335,11 @@
       gap: var(--space-md);
       padding: var(--space-md);
       position: relative;
+      cursor: pointer;
+    }
+
+    .agent-row:active {
+      background: var(--fill);
     }
 
     .agent-row:not(:last-child)::after {
@@ -382,10 +362,43 @@
       justify-content: center;
       font-size: 22px;
       flex-shrink: 0;
+      position: relative;
     }
 
     .agent-avatar.main {
       background: linear-gradient(135deg, var(--blue), var(--purple));
+    }
+
+    /* State Indicators */
+    .state-indicator {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+    }
+
+    .state-indicator.idle {
+      background: var(--label-tertiary);
+    }
+
+    .state-indicator.working {
+      background: var(--green);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .state-indicator.error {
+      background: var(--red);
+    }
+
+    .state-indicator.waiting {
+      background: var(--orange);
     }
 
     .agent-info {
@@ -397,6 +410,32 @@
       font-size: 17px;
       font-weight: 500;
       letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .agent-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .agent-badge.supervisor {
+      background: rgba(175, 82, 222, 0.2);
+      color: var(--purple);
+    }
+
+    .agent-badge.worker {
+      background: rgba(0, 122, 255, 0.2);
+      color: var(--blue);
+    }
+
+    .agent-badge.solo {
+      background: rgba(52, 199, 89, 0.2);
+      color: var(--green);
     }
 
     .agent-role {
@@ -406,6 +445,10 @@
 
     .agent-stats {
       text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
     }
 
     .agent-cost {
@@ -421,12 +464,23 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .agent-chevron {
+      color: var(--label-tertiary);
+      font-size: 18px;
+      margin-left: var(--space-xs);
+    }
+
     /* ===== Activity Row ===== */
     .activity-row {
       display: flex;
       gap: var(--space-md);
       padding: var(--space-md);
       position: relative;
+      cursor: pointer;
+    }
+
+    .activity-row:active {
+      background: var(--fill);
     }
 
     .activity-row:not(:last-child)::after {
@@ -454,6 +508,7 @@
     .activity-icon.tool { background: rgba(0, 122, 255, 0.2); }
     .activity-icon.user { background: rgba(175, 82, 222, 0.2); }
     .activity-icon.assistant { background: rgba(52, 199, 89, 0.2); }
+    .activity-icon.error { background: rgba(255, 59, 48, 0.2); }
 
     .activity-content {
       flex: 1;
@@ -506,6 +561,12 @@
     .tag.accent {
       background: rgba(0, 122, 255, 0.2);
       color: var(--blue);
+    }
+
+    .activity-chevron {
+      color: var(--label-tertiary);
+      font-size: 16px;
+      align-self: center;
     }
 
     /* ===== Tool Chips ===== */
@@ -598,7 +659,7 @@
       to { opacity: 1; }
     }
 
-    /* ===== Modal Sheet ===== */
+    /* ===== Modal Sheets (Multi-level) ===== */
     .sheet {
       display: none;
       position: fixed;
@@ -610,11 +671,19 @@
       display: block;
     }
 
+    .sheet.level-2 {
+      z-index: 210;
+    }
+
     .sheet-backdrop {
       position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.5);
       animation: fadeIn 0.25s;
+    }
+
+    .sheet.level-2 .sheet-backdrop {
+      background: rgba(0, 0, 0, 0.3);
     }
 
     .sheet-content {
@@ -628,6 +697,11 @@
       padding-bottom: var(--safe-bottom);
       animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
       overflow-y: auto;
+    }
+
+    .sheet.level-2 .sheet-content {
+      max-height: 85vh;
+      background: var(--bg-tertiary);
     }
 
     @keyframes slideUp {
@@ -655,6 +729,14 @@
       font-weight: 600;
     }
 
+    .sheet-back {
+      font-size: 15px;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .sheet-close {
       font-size: 28px;
       color: var(--label-secondary);
@@ -666,11 +748,67 @@
       padding: 0 var(--space-md) var(--space-lg);
     }
 
-    /* Detail List */
+    /* ===== Detail Components ===== */
+    .detail-avatar {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+
+    .detail-avatar-icon {
+      font-size: 56px;
+      margin-bottom: var(--space-sm);
+    }
+
+    .detail-avatar-name {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .detail-avatar-role {
+      color: var(--label-secondary);
+      margin-top: 4px;
+    }
+
+    .detail-avatar-state {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .detail-avatar-state.idle {
+      background: rgba(142, 142, 147, 0.2);
+      color: var(--label-secondary);
+    }
+
+    .detail-avatar-state.working {
+      background: rgba(52, 199, 89, 0.2);
+      color: var(--green);
+    }
+
+    .detail-avatar-state.error {
+      background: rgba(255, 59, 48, 0.2);
+      color: var(--red);
+    }
+
+    .detail-avatar-state.waiting {
+      background: rgba(255, 149, 0, 0.2);
+      color: var(--orange);
+    }
+
     .detail-list {
       background: var(--bg-tertiary);
       border-radius: var(--radius-lg);
       overflow: hidden;
+      margin-bottom: var(--space-md);
+    }
+
+    .sheet.level-2 .detail-list {
+      background: var(--bg-secondary);
     }
 
     .detail-row {
@@ -691,6 +829,34 @@
     .detail-value {
       font-weight: 500;
       text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+
+    /* Section Headers in Sheets */
+    .sheet-section-header {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--label-secondary);
+      text-transform: uppercase;
+      letter-spacing: -0.08px;
+      margin: var(--space-md) 0 var(--space-sm);
+    }
+
+    /* Code Block */
+    .code-block {
+      background: var(--bg-primary);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--label-secondary);
+      max-height: 200px;
+      overflow-y: auto;
     }
 
     /* Empty State */
@@ -734,6 +900,19 @@
       animation: fadeIn 0.2s;
     }
 
+    /* State Dot Inline */
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .state-dot.idle { background: var(--label-tertiary); }
+    .state-dot.working { background: var(--green); animation: pulse 1s infinite; }
+    .state-dot.error { background: var(--red); }
+    .state-dot.waiting { background: var(--orange); }
+
     /* Scrollbar hidden */
     ::-webkit-scrollbar { display: none; }
   </style>
@@ -758,7 +937,7 @@
 
   <!-- Main Content -->
   <main>
-    <!-- Overview View -->
+    <!-- Overview View (L0) -->
     <div class="view active" id="view-overview">
       <h1 class="large-title">Overview</h1>
 
@@ -873,21 +1052,35 @@
     </div>
   </nav>
 
-  <!-- Agent Detail Sheet -->
+  <!-- L1: Agent Detail Sheet -->
   <div class="sheet" id="agentSheet">
-    <div class="sheet-backdrop" onclick="closeSheet()"></div>
+    <div class="sheet-backdrop" onclick="closeAgentSheet()"></div>
     <div class="sheet-content">
       <div class="sheet-handle"></div>
       <div class="sheet-header">
-        <span class="sheet-title" id="sheetTitle">Detalhes</span>
-        <span class="sheet-close" onclick="closeSheet()">×</span>
+        <span class="sheet-title" id="agentSheetTitle">Detalhes</span>
+        <span class="sheet-close" onclick="closeAgentSheet()">×</span>
       </div>
-      <div class="sheet-body" id="sheetBody"></div>
+      <div class="sheet-body" id="agentSheetBody"></div>
+    </div>
+  </div>
+
+  <!-- L2: Activity Detail Sheet -->
+  <div class="sheet level-2" id="activitySheet">
+    <div class="sheet-backdrop" onclick="closeActivitySheet()"></div>
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-back" onclick="closeActivitySheet()">‹ Voltar</span>
+        <span class="sheet-title" id="activitySheetTitle">Atividade</span>
+        <span class="sheet-close" onclick="closeAllSheets()">×</span>
+      </div>
+      <div class="sheet-body" id="activitySheetBody"></div>
     </div>
   </div>
 
   <script>
-    // Helpers
+    // ===== Helpers =====
     const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
     const money = n => '$' + (n || 0).toFixed(2);
     const ago = ts => {
@@ -898,16 +1091,55 @@
       if (s < 86400) return Math.floor(s/3600) + 'h';
       return Math.floor(s/86400) + 'd';
     };
+    const timeStr = ts => ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
 
     const emojis = { main:'🌀', nami:'🍊', robin:'📚', franky:'🔧', zoro:'⚔️', sanji:'🍳', chopper:'🩺', luffy:'👒', usopp:'🎯', brook:'🎸', cron:'⏰' };
     const roles = { main:'Orquestrador', nami:'Navegadora', robin:'Arqueóloga', franky:'Engenheiro', zoro:'Executor', sanji:'Provedor', chopper:'Médico', cron:'Scheduler' };
-    const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊' };
+    const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊', canvas:'🎨', nodes:'📱' };
+    const stateLabels = { idle: 'Idle', working: 'Trabalhando', error: 'Erro', waiting: 'Aguardando' };
 
     const getKey = label => (label || '').toLowerCase().split('-')[0].replace('cron:', '').trim();
     const getEmoji = label => emojis[getKey(label)] || '🤖';
     const getRole = label => roles[getKey(label)] || 'Agente';
 
-    // View switching
+    // Determine agent state based on activity
+    function getAgentState(agent, activities) {
+      const agentActivities = activities.filter(a => 
+        a.session && a.session.toLowerCase().includes(getKey(agent.label))
+      );
+      
+      if (!agentActivities.length) return 'idle';
+      
+      const latest = agentActivities[0];
+      const timeSince = (Date.now() - new Date(latest.timestamp)) / 1000;
+      
+      // Check for errors
+      if (latest.type === 'error' || (latest.tags && latest.tags.includes('error'))) {
+        return 'error';
+      }
+      
+      // If recent activity (< 30s), consider working
+      if (timeSince < 30) return 'working';
+      
+      // If waiting on tool
+      if (latest.type === 'tool' && timeSince < 120) return 'waiting';
+      
+      return 'idle';
+    }
+
+    // Get agent badge type
+    function getAgentBadge(agent, sessions) {
+      const label = getKey(agent.label);
+      if (label === 'main') return 'supervisor';
+      if (agent.kind === 'subagent') return 'worker';
+      return 'solo';
+    }
+
+    // ===== Data Storage =====
+    let cachedSessions = [];
+    let cachedActivities = [];
+
+    // ===== View switching =====
     let currentView = 'overview';
 
     function switchView(view) {
@@ -920,34 +1152,126 @@
       tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Sheet
+    // ===== Sheet Management =====
     let currentAgent = null;
+    let currentActivity = null;
 
-    function openSheet(agent) {
+    // L1: Open Agent Sheet
+    function openAgentSheet(agent) {
       currentAgent = agent;
-      document.getElementById('sheetTitle').textContent = agent.label || 'Agente';
-      document.getElementById('sheetBody').innerHTML = `
-        <div style="text-align:center;margin-bottom:24px;">
-          <div style="font-size:56px;margin-bottom:8px;">${getEmoji(agent.label)}</div>
-          <div style="font-size:22px;font-weight:600;">${agent.label || 'Agent'}</div>
-          <div style="color:var(--label-secondary);">${getRole(agent.label)}</div>
+      const state = getAgentState(agent, cachedActivities);
+      const badge = getAgentBadge(agent, cachedSessions);
+      
+      // Get activities for this agent
+      const agentActivities = cachedActivities.filter(a => 
+        a.session && a.session.toLowerCase().includes(getKey(agent.label))
+      ).slice(0, 10);
+
+      document.getElementById('agentSheetTitle').textContent = agent.label || 'Agente';
+      document.getElementById('agentSheetBody').innerHTML = `
+        <div class="detail-avatar">
+          <div class="detail-avatar-icon">${getEmoji(agent.label)}</div>
+          <div class="detail-avatar-name">${agent.label || 'Agent'}</div>
+          <div class="detail-avatar-role">${getRole(agent.label)}</div>
+          <div class="detail-avatar-state ${state}">
+            <span class="state-dot ${state}"></span>
+            ${stateLabels[state]}
+          </div>
         </div>
+        
         <div class="detail-list">
-          <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('-').slice(-2).join(' ')}</span></div>
+          <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('/').pop() || 'N/A'}</span></div>
           <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${agent.channel || 'N/A'}</span></div>
+          <div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-value"><span class="agent-badge ${badge}">${badge}</span></span></div>
           <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(agent.totalTokens || 0)}</span></div>
           <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(agent.cost)}</span></div>
           <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(agent.updatedAt)}</span></div>
+        </div>
+
+        <div class="sheet-section-header">Atividades Recentes</div>
+        <div class="list-group" id="agentActivitiesList">
+          ${agentActivities.length ? agentActivities.map(a => `
+            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+              <div class="activity-icon ${a.type}">${a.icon || toolIcons[a.tags?.[0]] || '📌'}</div>
+              <div class="activity-content">
+                <div class="activity-header">
+                  <span class="activity-title">${a.title || 'Atividade'}</span>
+                  <span class="activity-time">${ago(a.timestamp)}</span>
+                </div>
+                <div class="activity-desc">${a.description || ''}</div>
+              </div>
+              <span class="activity-chevron">›</span>
+            </div>
+          `).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem atividades</div></div>'}
         </div>
       `;
       document.getElementById('agentSheet').classList.add('active');
     }
 
-    function closeSheet() {
+    function closeAgentSheet() {
       document.getElementById('agentSheet').classList.remove('active');
+      currentAgent = null;
     }
 
-    // Render functions
+    // L2: Open Activity Sheet
+    function openActivitySheet(activity) {
+      currentActivity = activity;
+      
+      const tags = activity.tags || [];
+      const toolName = tags.find(t => t !== 'tool' && toolIcons[t]) || tags[0] || 'unknown';
+      
+      document.getElementById('activitySheetTitle').textContent = activity.title || 'Atividade';
+      document.getElementById('activitySheetBody').innerHTML = `
+        <div class="detail-avatar">
+          <div class="detail-avatar-icon">${activity.icon || toolIcons[toolName] || '📌'}</div>
+          <div class="detail-avatar-name">${activity.title || 'Tool Call'}</div>
+          <div class="detail-avatar-role">${activity.type || 'activity'}</div>
+        </div>
+
+        <div class="detail-list">
+          <div class="detail-row"><span class="detail-label">Sessão</span><span class="detail-value">${activity.session || 'N/A'}</span></div>
+          <div class="detail-row"><span class="detail-label">Horário</span><span class="detail-value">${timeStr(activity.timestamp)}</span></div>
+          <div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-value">${activity.type || 'N/A'}</span></div>
+          ${activity.duration ? `<div class="detail-row"><span class="detail-label">Duração</span><span class="detail-value">${activity.duration}ms</span></div>` : ''}
+          ${activity.cost ? `<div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(activity.cost)}</span></div>` : ''}
+        </div>
+
+        <div class="sheet-section-header">Descrição Completa</div>
+        <div class="detail-list">
+          <div style="padding: var(--space-md); font-size: 15px; line-height: 1.5; color: var(--label-secondary);">
+            ${activity.description || 'Sem descrição disponível.'}
+          </div>
+        </div>
+
+        <div class="sheet-section-header">Tags</div>
+        <div class="activity-tags" style="padding: 0 0 var(--space-md);">
+          ${tags.map(t => `<span class="tag${t === toolName ? ' accent' : ''}">${t}</span>`).join('') || '<span class="tag">none</span>'}
+        </div>
+
+        ${activity.input ? `
+          <div class="sheet-section-header">Input</div>
+          <div class="code-block">${typeof activity.input === 'object' ? JSON.stringify(activity.input, null, 2) : activity.input}</div>
+        ` : ''}
+
+        ${activity.output ? `
+          <div class="sheet-section-header">Output</div>
+          <div class="code-block">${typeof activity.output === 'object' ? JSON.stringify(activity.output, null, 2) : String(activity.output).substring(0, 500)}${String(activity.output).length > 500 ? '...' : ''}</div>
+        ` : ''}
+      `;
+      document.getElementById('activitySheet').classList.add('active');
+    }
+
+    function closeActivitySheet() {
+      document.getElementById('activitySheet').classList.remove('active');
+      currentActivity = null;
+    }
+
+    function closeAllSheets() {
+      closeActivitySheet();
+      closeAgentSheet();
+    }
+
+    // ===== Render Functions =====
     function renderAgents(sessions, containerId, limit) {
       const list = limit ? sessions.slice(0, limit) : sessions;
       const container = document.getElementById(containerId);
@@ -957,19 +1281,28 @@
         return;
       }
 
-      container.innerHTML = list.map((s, i) => {
+      container.innerHTML = list.map((s) => {
         const isMain = s.kind === 'main';
+        const state = getAgentState(s, cachedActivities);
+        const badge = getAgentBadge(s, sessions);
         return `
-          <div class="agent-row" onclick='openSheet(${JSON.stringify(s)})'>
-            <div class="agent-avatar ${isMain ? 'main' : ''}">${getEmoji(s.label)}</div>
+          <div class="agent-row" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+            <div class="agent-avatar ${isMain ? 'main' : ''}">
+              ${getEmoji(s.label)}
+              <span class="state-indicator ${state}"></span>
+            </div>
             <div class="agent-info">
-              <div class="agent-name">${s.label || 'Agent'}</div>
+              <div class="agent-name">
+                ${s.label || 'Agent'}
+                <span class="agent-badge ${badge}">${badge}</span>
+              </div>
               <div class="agent-role">${getRole(s.label)}</div>
             </div>
             <div class="agent-stats">
               <div class="agent-cost">${money(s.cost)}</div>
               <div class="agent-tokens">${fmt(s.totalTokens || 0)} tok</div>
             </div>
+            <span class="agent-chevron">›</span>
           </div>
         `;
       }).join('');
@@ -984,22 +1317,26 @@
         return;
       }
 
-      container.innerHTML = list.map(a => `
-        <div class="activity-row">
-          <div class="activity-icon ${a.type}">${a.icon || '📌'}</div>
-          <div class="activity-content">
-            <div class="activity-header">
-              <span class="activity-title">${a.title || 'Atividade'}</span>
-              <span class="activity-time">${ago(a.timestamp)}</span>
+      container.innerHTML = list.map(a => {
+        const toolName = (a.tags || []).find(t => t !== 'tool' && toolIcons[t]) || a.tags?.[0];
+        return `
+          <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+            <div class="activity-icon ${a.type}">${a.icon || toolIcons[toolName] || '📌'}</div>
+            <div class="activity-content">
+              <div class="activity-header">
+                <span class="activity-title">${a.title || 'Atividade'}</span>
+                <span class="activity-time">${ago(a.timestamp)}</span>
+              </div>
+              <div class="activity-desc">${a.description || ''}</div>
+              <div class="activity-tags">
+                ${a.session ? `<span class="tag accent">${a.session}</span>` : ''}
+                ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
+              </div>
             </div>
-            <div class="activity-desc">${a.description || ''}</div>
-            <div class="activity-tags">
-              ${a.session ? `<span class="tag accent">${a.session}</span>` : ''}
-              ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
-            </div>
+            <span class="activity-chevron">›</span>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderTools(activities) {
@@ -1028,7 +1365,7 @@
       `).join('');
     }
 
-    // Load data
+    // ===== Load Data =====
     async function loadData(showIndicator = false) {
       if (showIndicator) {
         document.getElementById('refreshIndicator').classList.add('active');
@@ -1040,6 +1377,10 @@
           fetch('/api/sessions').then(r => r.json()),
           fetch('/api/activities?limit=50').then(r => r.json())
         ]);
+
+        // Cache data for drill-down
+        cachedSessions = sessions;
+        cachedActivities = activities;
 
         // Hero
         const cost = stats.totalCost || 0;
@@ -1080,6 +1421,7 @@
       }, 500);
     }
 
+    // ===== Touch Gestures =====
     // Pull to refresh
     let touchStartY = 0;
     document.addEventListener('touchstart', e => {
@@ -1092,16 +1434,24 @@
       touchStartY = 0;
     });
 
-    // Swipe to close sheet
+    // Swipe to close sheets
     let sheetTouchStart = 0;
-    document.querySelector('.sheet-content')?.addEventListener('touchstart', e => {
+    
+    document.querySelector('#agentSheet .sheet-content')?.addEventListener('touchstart', e => {
       sheetTouchStart = e.touches[0].clientY;
     });
-    document.querySelector('.sheet-content')?.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeSheet();
+    document.querySelector('#agentSheet .sheet-content')?.addEventListener('touchend', e => {
+      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeAgentSheet();
     });
 
-    // Init
+    document.querySelector('#activitySheet .sheet-content')?.addEventListener('touchstart', e => {
+      sheetTouchStart = e.touches[0].clientY;
+    });
+    document.querySelector('#activitySheet .sheet-content')?.addEventListener('touchend', e => {
+      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeActivitySheet();
+    });
+
+    // ===== Init =====
     loadData();
     setInterval(() => loadData(), 10000);
   </script>

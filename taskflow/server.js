@@ -248,12 +248,114 @@ class ActivityRepository {
 
   getDescription(entry) {
     if (typeof entry.content === 'string') {
-      return entry.content.slice(0, 150);
+      // Extrair mais texto - limpar markdown e truncar
+      const cleaned = entry.content
+        .replace(/```[\s\S]*?```/g, '[code]')  // Remover blocos de código
+        .replace(/`[^`]+`/g, '[code]')          // Remover inline code
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links -> texto
+        .replace(/[#*_~]/g, '')                  // Remover markdown
+        .replace(/\s+/g, ' ')                    // Normalizar espaços
+        .trim();
+      return cleaned.slice(0, 250);
     }
     if (entry.role === 'tool_calls' && Array.isArray(entry.content)) {
-      return `Executing ${entry.content.length} tool(s)...`;
+      const tools = entry.content
+        .map(c => c.function?.name || 'tool')
+        .join(', ');
+      return `Executando: ${tools}`;
+    }
+    if (entry.role === 'tool_result' && entry.content) {
+      const text = typeof entry.content === 'string' 
+        ? entry.content 
+        : JSON.stringify(entry.content);
+      return text.slice(0, 200);
     }
     return '';
+  }
+
+  // Buscar atividades por sessão
+  async findBySession(sessionId, limit = 100) {
+    const cacheKey = `activities:session:${sessionId}:${limit}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // Procurar arquivo da sessão
+      const files = fs.readdirSync(this.sessionsDir)
+        .filter(f => f.endsWith('.jsonl') && f.includes(sessionId));
+      
+      if (files.length === 0) {
+        return [];
+      }
+
+      const activities = [];
+      for (const file of files) {
+        const lines = fs.readFileSync(path.join(this.sessionsDir, file), 'utf8')
+          .split('\n')
+          .filter(Boolean);
+
+        for (let i = 0; i < lines.length; i++) {
+          try {
+            const entry = JSON.parse(lines[i]);
+            const activity = this.mapActivity(entry, file);
+            activity.index = i;
+            activity.sessionId = sessionId;
+            activities.push(activity);
+          } catch (e) {}
+        }
+      }
+
+      const result = activities.slice(-limit);
+      setCache(cacheKey, result, CACHE_TTL / 2); // Cache mais curto
+      return result;
+    } catch (e) {
+      console.error('Session activities read error:', e);
+      throw new ApiError(500, 'Failed to read session activities');
+    }
+  }
+
+  // Buscar atividade por ID
+  async findById(activityId) {
+    const cacheKey = `activity:${activityId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // Buscar em todos os arquivos recentes
+      const files = fs.readdirSync(this.sessionsDir)
+        .filter(f => f.endsWith('.jsonl') && !f.includes('deleted'))
+        .slice(0, 20);
+
+      for (const file of files) {
+        const lines = fs.readFileSync(path.join(this.sessionsDir, file), 'utf8')
+          .split('\n')
+          .filter(Boolean);
+
+        for (let i = 0; i < lines.length; i++) {
+          try {
+            const entry = JSON.parse(lines[i]);
+            const activity = this.mapActivity(entry, file);
+            
+            if (activity.id === activityId) {
+              // Adicionar dados completos
+              activity.rawContent = entry.content;
+              activity.usage = entry.usage || null;
+              activity.index = i;
+              activity.sessionFile = file;
+              activity.sessionId = file.replace('.jsonl', '');
+              
+              setCache(cacheKey, activity, CACHE_TTL);
+              return activity;
+            }
+          } catch (e) {}
+        }
+      }
+
+      return null;
+    } catch (e) {
+      console.error('Activity find error:', e);
+      throw new ApiError(500, 'Failed to find activity');
+    }
   }
 
   getTags(entry) {
@@ -354,7 +456,7 @@ const routes = {
   },
 
   'GET /api/activities': async (req, res, query) => {
-    const limit = parseInt(query.limit) || 50;
+    const limit = Math.min(Math.max(parseInt(query.limit) || 50, 1), 500);
     const activities = await activityRepo.findRecent(limit);
     return activities;
   },
@@ -365,6 +467,59 @@ const routes = {
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
     };
+  }
+};
+
+// ===== Dynamic Route Matching =====
+function matchRoute(method, pathname) {
+  // Exact match first
+  const exactKey = `${method} ${pathname}`;
+  if (routes[exactKey]) {
+    return { handler: routes[exactKey], params: {} };
+  }
+
+  // Pattern matching for :id params
+  const patterns = {
+    'GET /api/sessions/:id/activities': /^\/api\/sessions\/([^/]+)\/activities$/,
+    'GET /api/activities/:id': /^\/api\/activities\/([^/]+)$/
+  };
+
+  for (const [routeKey, regex] of Object.entries(patterns)) {
+    const match = pathname.match(regex);
+    if (match && routeKey.startsWith(method)) {
+      return { 
+        handler: dynamicRoutes[routeKey], 
+        params: { id: decodeURIComponent(match[1]) }
+      };
+    }
+  }
+
+  return null;
+}
+
+// ===== Dynamic Routes (with :id params) =====
+const dynamicRoutes = {
+  'GET /api/sessions/:id/activities': async (req, res, query, params) => {
+    const sessionId = params.id;
+    const limit = Math.min(Math.max(parseInt(query.limit) || 100, 1), 500);
+    const activities = await activityRepo.findBySession(sessionId, limit);
+    
+    return {
+      sessionId,
+      count: activities.length,
+      activities
+    };
+  },
+
+  'GET /api/activities/:id': async (req, res, query, params) => {
+    const activityId = params.id;
+    const activity = await activityRepo.findById(activityId);
+    
+    if (!activity) {
+      throw new ApiError(404, 'Activity not found');
+    }
+    
+    return activity;
   }
 };
 
@@ -387,12 +542,11 @@ const server = http.createServer(async (req, res) => {
 
   // API routes
   if (pathname.startsWith('/api/')) {
-    const routeKey = `${method} ${pathname.split('?')[0]}`;
-    const handler = routes[routeKey];
+    const route = matchRoute(method, pathname);
 
-    if (handler) {
+    if (route) {
       try {
-        const result = await handler(req, res, parsedUrl.query);
+        const result = await route.handler(req, res, parsedUrl.query, route.params);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
       } catch (error) {
@@ -440,11 +594,13 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
-║       🌀 Mission Control X v2.1           ║
+║       🌀 Mission Control X v2.2           ║
 ╠═══════════════════════════════════════════╣
 ║  URL:   http://0.0.0.0:${PORT}              ║
 ║  API:   /api/stats, /api/sessions         ║
-║        /api/activities, /api/health       ║
+║         /api/sessions/:id/activities      ║
+║         /api/activities, /api/activities/:id ║
+║         /api/health                       ║
 ║  Data:  Real-time OpenClaw sessions       ║
 ╚═══════════════════════════════════════════╝
   `);
