@@ -1560,30 +1560,30 @@
                oninput="filterAgentsList(this.value)">
       </div>
       
-      <!-- Quick Stats -->
+      <!-- Quick Stats - Clickable to filter -->
       <div class="stats-grid" style="margin-bottom:var(--space-lg);">
-        <div class="stat-card">
+        <div class="stat-card" onclick="filterAgentsByType('crew')" style="cursor:pointer;">
           <div class="stat-header">
             <span class="stat-icon">👒</span>
             <span class="stat-label">Crew</span>
           </div>
           <div class="stat-value" id="crewCount">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="filterAgentsByType('active')" style="cursor:pointer;">
           <div class="stat-header">
             <span class="stat-icon">🟢</span>
             <span class="stat-label">Ativos</span>
           </div>
           <div class="stat-value" id="activeCount">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="filterAgentsByType('inactive')" style="cursor:pointer;">
           <div class="stat-header">
             <span class="stat-icon">💤</span>
             <span class="stat-label">Inativos</span>
           </div>
           <div class="stat-value" id="inactiveCount">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="filterAgentsByType('all')" style="cursor:pointer;">
           <div class="stat-header">
             <span class="stat-icon">💰</span>
             <span class="stat-label">Total</span>
@@ -1974,6 +1974,28 @@
       
       renderAgents(filtered, 'allAgentsList');
       document.getElementById('agentsCount').textContent = filtered.length + ' encontrados';
+    }
+
+    // Filter agents by type (crew/active/inactive/all)
+    function filterAgentsByType(type) {
+      let filtered = cachedSessions;
+      let label = 'todos';
+      
+      if (type === 'crew') {
+        filtered = cachedSessions.filter(s => isCoreCrew(s.label));
+        label = 'crew';
+      } else if (type === 'active') {
+        filtered = cachedSessions.filter(s => s.status !== 'inactive');
+        label = 'ativos';
+      } else if (type === 'inactive') {
+        filtered = cachedSessions.filter(s => s.status === 'inactive');
+        label = 'inativos';
+      }
+      
+      renderAgents(filtered, 'allAgentsList');
+      document.getElementById('agentsCount').textContent = filtered.length + ' ' + label;
+      document.getElementById('agentSearch').value = '';
+      showToast(`Filtro: ${label}`, 'info');
     }
 
     // Export data as JSON
