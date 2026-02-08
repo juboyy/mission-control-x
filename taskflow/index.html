@@ -1650,6 +1650,11 @@
       <!-- Timeline Container -->
       <div class="timeline-container" id="timelineContainer"></div>
     </div>
+    
+    <!-- Footer -->
+    <div style="text-align:center;padding:var(--space-lg);font-size:11px;color:var(--label-tertiary);margin-bottom:calc(var(--tab-bar-height) + var(--safe-area-bottom) + 20px);">
+      Mission Control X v2.5 • <span id="serverUptime">-</span> uptime • ⌨️ R=Refresh, 1-4=Tabs, Esc=Close
+    </div>
   </main>
 
   <!-- Tab Bar -->
@@ -2574,6 +2579,16 @@
 
         // Update time
         document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        // Update server uptime
+        if (health.uptime) {
+          const uptimeEl = document.getElementById('serverUptime');
+          if (uptimeEl) {
+            const h = Math.floor(health.uptime / 3600);
+            const m = Math.floor((health.uptime % 3600) / 60);
+            uptimeEl.textContent = h > 0 ? `${h}h${m}m` : `${m}m`;
+          }
+        }
 
       } catch (e) {
         console.error('Load error:', e);
