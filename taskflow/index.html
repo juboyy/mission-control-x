@@ -3,402 +3,827 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="theme-color" content="#050507">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <title>Mission Control X • Intelligent Project Management</title>
-  <meta name="description" content="Next-generation task management for development teams. Kanban, GitHub, Jira & Confluence integration.">
-  
+  <title>Mission Control X</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="css/design-system.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/kanban.css">
-  <link rel="stylesheet" href="css/activity.css">
-  <link rel="stylesheet" href="css/responsive.css">
-  
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050507;
+      --surface: #0d0d12;
+      --surface-2: #141419;
+      --surface-3: #1a1a22;
+      --border: rgba(255,255,255,0.06);
+      --border-light: rgba(255,255,255,0.1);
+      --text: #ffffff;
+      --text-secondary: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+      --accent: #00d4ff;
+      --accent-glow: rgba(0,212,255,0.15);
+      --purple: #7c3aed;
+      --purple-glow: rgba(124,58,237,0.15);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gradient: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0 16px;
+      height: 56px;
+      background: rgba(5,5,7,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .logo-text {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Main Layout */
+    .main {
+      padding: 16px;
+      padding-bottom: 100px;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-action {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Hero Card - Cost Overview */
+    .hero-card {
+      background: var(--gradient);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+    
+    .hero-label {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+    
+    .hero-value {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 16px;
+    }
+    
+    .hero-bar {
+      height: 6px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    
+    .hero-bar-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.9);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    
+    .hero-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .stat-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Agents Horizontal Scroll */
+    .agents-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin: 0 -16px;
+      padding: 0 16px 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .agents-scroll::-webkit-scrollbar { display: none; }
+    
+    .agent-card {
+      flex: 0 0 auto;
+      width: 140px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      scroll-snap-align: start;
+      transition: all 0.2s;
+    }
+    
+    .agent-card.main {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--accent-glow), transparent);
+    }
+    
+    .agent-avatar {
+      width: 44px;
+      height: 44px;
+      background: var(--surface-2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    
+    .agent-card.main .agent-avatar {
+      background: var(--gradient);
+    }
+    
+    .agent-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .agent-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .agent-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .agent-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    
+    .agent-stat-label { color: var(--text-muted); }
+    .agent-stat-value { font-weight: 600; color: var(--accent); font-family: 'SF Mono', monospace; }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .tool-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .tool-chip-icon {
+      font-size: 14px;
+    }
+    
+    .tool-chip-count {
+      background: var(--surface-3);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:active { background: var(--surface-2); }
+    
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    
+    .activity-icon.tool { background: var(--accent-glow); }
+    .activity-icon.user { background: var(--purple-glow); }
+    .activity-icon.assistant { background: rgba(16,185,129,0.15); }
+    
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2px;
+    }
+    
+    .activity-title {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    
+    .activity-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .activity-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .activity-tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      background: var(--surface-3);
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+    
+    .activity-tag.session {
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+    
+    .activity-tokens {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', monospace;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background: rgba(5,5,7,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .nav-item.active {
+      color: var(--accent);
+    }
+    
+    .nav-icon {
+      font-size: 22px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    
+    .tabs::-webkit-scrollbar { display: none; }
+    
+    .tab {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Loading */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* View Containers */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+    .empty-desc { font-size: 13px; }
+  </style>
 </head>
 <body>
-  <div id="app" class="app">
-    <!-- Mobile Navigation -->
-    <nav class="mobile-nav" id="mobileNav">
-      <a href="#" class="mobile-nav-item active" data-view="board">
-        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Board</span>
-      </a>
-      <a href="#" class="mobile-nav-item" data-view="timeline">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="12 5 21 12 12 19"/></svg>
-        <span>Timeline</span>
-      </a>
-      <a href="#" class="mobile-nav-item" data-view="integrations">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-        <span>Integrations</span>
-      </a>
-      <a href="#" class="mobile-nav-item" data-view="insights">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M21 21H4.6c-.56 0-.84 0-1.05-.11a1 1 0 0 1-.44-.44C3 20.24 3 19.96 3 19.4V3"/><path d="m7 14 4-4 4 4 6-6"/></svg>
-        <span>Insights</span>
-      </a>
-    </nav>
-
-    <!-- Sidebar (Desktop) -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">
-          <div class="logo-icon">
-            <svg viewBox="0 0 40 40">
-              <defs>
-                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#00d4ff"/>
-                  <stop offset="100%" style="stop-color:#7c3aed"/>
-                </linearGradient>
-              </defs>
-              <circle cx="20" cy="20" r="18" fill="none" stroke="url(#logoGrad)" stroke-width="2"/>
-              <path d="M12 20 L18 26 L28 14" stroke="url(#logoGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <span class="logo-text">Mission Control X</span>
-        </div>
-        <button class="sidebar-toggle" id="sidebarToggle">
-          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">🌀</div>
+      <span class="logo-text">Mission Control X</span>
+    </div>
+    <div class="header-status">
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span id="updateTime">--:--</span>
       </div>
+    </div>
+  </header>
 
-      <div class="sidebar-search">
-        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" placeholder="Search tasks, projects..." id="globalSearch">
-        <kbd>⌘K</kbd>
+  <main class="main">
+    <!-- Hero - Cost Overview -->
+    <div class="hero-card">
+      <div class="hero-label">Custo Total</div>
+      <div class="hero-value" id="totalCost">$0.00</div>
+      <div class="hero-bar">
+        <div class="hero-bar-fill" id="costBar" style="width: 0%"></div>
       </div>
-
-      <nav class="sidebar-nav">
-        <div class="nav-section">
-          <div class="nav-section-title">Workspace</div>
-          <a href="#" class="nav-item active" data-view="board">
-            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <span>Kanban Board</span>
-            <span class="nav-badge">12</span>
-          </a>
-          <a href="#" class="nav-item" data-view="timeline">
-            <svg class="nav-icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="12 5 21 12 12 19"/></svg>
-            <span>Timeline</span>
-          </a>
-          <a href="#" class="nav-item" data-view="calendar">
-            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>Calendar</span>
-          </a>
-          <a href="#" class="nav-item" data-view="backlog">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-            <span>Backlog</span>
-            <span class="nav-badge secondary">24</span>
-          </a>
-        </div>
-
-        <div class="nav-section">
-          <div class="nav-section-title">Integrations</div>
-          <a href="#" class="nav-item" data-view="github">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-            <span>GitHub</span>
-            <span class="status-dot connected"></span>
-          </a>
-          <a href="#" class="nav-item" data-view="jira">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
-            <span>Jira</span>
-            <span class="status-dot connected"></span>
-          </a>
-          <a href="#" class="nav-item" data-view="confluence">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>Confluence</span>
-            <span class="status-dot"></span>
-          </a>
-        </div>
-
-        <div class="nav-section">
-          <div class="nav-section-title">Analytics</div>
-          <a href="#" class="nav-item" data-view="insights">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 21H4.6c-.56 0-.84 0-1.05-.11a1 1 0 0 1-.44-.44C3 20.24 3 19.96 3 19.4V3"/><path d="m7 14 4-4 4 4 6-6"/></svg>
-            <span>Insights</span>
-          </a>
-          <a href="#" class="nav-item" data-view="velocity">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            <span>Velocity</span>
-          </a>
-          <a href="#" class="nav-item" data-view="activity">
-            <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Activity Feed</span>
-            <span class="nav-badge">Live</span>
-          </a>
-        </div>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="user-card">
-          <div class="user-avatar">
-            <span>J</span>
-          </div>
-          <div class="user-info">
-            <span class="user-name">João</span>
-            <span class="user-role">Admin</span>
-          </div>
-          <button class="user-menu-btn">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main" id="mainContent">
-      <!-- Header -->
-      <header class="header">
-        <div class="header-left">
-          <button class="menu-toggle" id="menuToggle">
-            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
-          <div class="breadcrumb">
-            <span class="breadcrumb-item">revenue-OS</span>
-            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            <span class="breadcrumb-item active">Sprint 1</span>
-          </div>
-        </div>
-        <div class="header-actions">
-          <div class="sprint-progress">
-            <div class="sprint-info">
-              <span class="sprint-label">Sprint Progress</span>
-              <span class="sprint-value">68%</span>
-            </div>
-            <div class="sprint-bar">
-              <div class="sprint-fill" style="width: 68%"></div>
-            </div>
-          </div>
-          <div class="header-buttons">
-            <button class="btn btn-ghost" id="filterBtn">
-              <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-              <span class="btn-text">Filter</span>
-            </button>
-            <button class="btn btn-primary" id="newTaskBtn">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span class="btn-text">New Task</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- Board View -->
-      <section class="view active" id="view-board">
-        <div class="kanban-container" id="kanbanBoard">
-          <!-- Columns will be rendered by JS -->
-        </div>
-      </section>
-
-      <!-- Timeline View -->
-      <section class="view" id="view-timeline">
-        <div class="timeline-container">
-          <div class="timeline-header">
-            <h2>Project Timeline</h2>
-            <div class="timeline-controls">
-              <button class="btn btn-ghost active">Week</button>
-              <button class="btn btn-ghost">Month</button>
-              <button class="btn btn-ghost">Quarter</button>
-            </div>
-          </div>
-          <div class="timeline-content" id="timelineContent">
-            <!-- Timeline will be rendered by JS -->
-          </div>
-        </div>
-      </section>
-
-      <!-- Integrations View -->
-      <section class="view" id="view-integrations">
-        <div class="integrations-grid">
-          <div class="integration-card github">
-            <div class="integration-header">
-              <div class="integration-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-              </div>
-              <div class="integration-info">
-                <h3>GitHub</h3>
-                <span class="integration-status connected">Connected</span>
-              </div>
-            </div>
-            <div class="integration-stats">
-              <div class="stat">
-                <span class="stat-value">23</span>
-                <span class="stat-label">Open PRs</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">156</span>
-                <span class="stat-label">Commits</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">8</span>
-                <span class="stat-label">Branches</span>
-              </div>
-            </div>
-            <div class="integration-activity" id="githubActivity">
-              <!-- Activity feed -->
-            </div>
-          </div>
-
-          <div class="integration-card jira">
-            <div class="integration-header">
-              <div class="integration-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
-              </div>
-              <div class="integration-info">
-                <h3>Jira</h3>
-                <span class="integration-status connected">Connected</span>
-              </div>
-            </div>
-            <div class="integration-stats">
-              <div class="stat">
-                <span class="stat-value">12</span>
-                <span class="stat-label">In Sprint</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">45</span>
-                <span class="stat-label">Story Points</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">3</span>
-                <span class="stat-label">Blockers</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="integration-card confluence">
-            <div class="integration-header">
-              <div class="integration-icon">
-                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              </div>
-              <div class="integration-info">
-                <h3>Confluence</h3>
-                <span class="integration-status">Not Connected</span>
-              </div>
-            </div>
-            <button class="btn btn-secondary">Connect</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Insights View -->
-      <section class="view" id="view-insights">
-        <div class="insights-grid">
-          <div class="insight-card large">
-            <h3>Velocity Chart</h3>
-            <div class="chart-container" id="velocityChart"></div>
-          </div>
-          <div class="insight-card">
-            <h3>Burndown</h3>
-            <div class="chart-container" id="burndownChart"></div>
-          </div>
-          <div class="insight-card">
-            <h3>Task Distribution</h3>
-            <div class="distribution-bars" id="distributionBars"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Activity Feed View -->
-      <section class="view" id="view-activity">
-        <!-- Session Info -->
-        <div id="sessionInfo"></div>
-        
-        <!-- Stats Row -->
-        <div class="stats-row" id="activityStats"></div>
-        
-        <!-- Activity Feed -->
-        <div class="activity-feed" id="activityFeed"></div>
-      </section>
-    </main>
-
-    <!-- Task Detail Modal -->
-    <div class="modal" id="taskModal">
-      <div class="modal-backdrop"></div>
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="task-type-badge">
-            <span class="type-icon">📋</span>
-            <span>Feature</span>
-          </div>
-          <button class="modal-close" id="modalClose">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div class="modal-body">
-          <input type="text" class="task-title-input" placeholder="Task title..." id="taskTitleInput">
-          <div class="task-meta-row">
-            <div class="meta-item">
-              <label>Status</label>
-              <select id="taskStatus">
-                <option value="backlog">Backlog</option>
-                <option value="todo">To Do</option>
-                <option value="progress">In Progress</option>
-                <option value="review">Review</option>
-                <option value="done">Done</option>
-              </select>
-            </div>
-            <div class="meta-item">
-              <label>Priority</label>
-              <select id="taskPriority">
-                <option value="low">🟢 Low</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="high">🟠 High</option>
-                <option value="critical">🔴 Critical</option>
-              </select>
-            </div>
-            <div class="meta-item">
-              <label>Assignee</label>
-              <select id="taskAssignee">
-                <option value="">Unassigned</option>
-                <option value="joao">João</option>
-                <option value="imu">Imu 🌀</option>
-              </select>
-            </div>
-          </div>
-          <div class="task-description">
-            <label>Description</label>
-            <textarea placeholder="Add a description..." id="taskDescription"></textarea>
-          </div>
-          <div class="task-integrations">
-            <div class="integration-link github">
-              <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-              <span>Link GitHub Issue</span>
-            </div>
-            <div class="integration-link jira">
-              <svg viewBox="0 0 24 24"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>
-              <span>Link Jira Ticket</span>
-            </div>
-            <div class="integration-link confluence">
-              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              <span>Link Confluence Doc</span>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" id="cancelTask">Cancel</button>
-          <button class="btn btn-primary" id="saveTask">Save Task</button>
-        </div>
+      <div class="hero-meta">
+        <span id="costPercent">0% do budget</span>
+        <span>$15.00/dia</span>
       </div>
     </div>
 
-    <!-- Quick Add (Mobile FAB) -->
-    <button class="fab" id="fabAdd">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </button>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" id="totalTokens">0</div>
+        <div class="stat-label">Tokens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-value" id="totalMessages">0</div>
+        <div class="stat-label">Mensagens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔧</div>
+        <div class="stat-value" id="totalTools">0</div>
+        <div class="stat-label">Tool Calls</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-value" id="totalAgents">0</div>
+        <div class="stat-label">Agentes</div>
+      </div>
+    </div>
 
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toastContainer"></div>
-  </div>
+    <!-- Agents Section -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🎭 Agentes Ativos</span>
+      </div>
+      <div class="agents-scroll" id="agentsList"></div>
+    </div>
 
-  <script src="js/store.js"></script>
-  <script src="js/kanban.js"></script>
-  <script src="js/integrations.js"></script>
-  <script src="js/activity.js"></script>
-  <script src="js/app.js"></script>
+    <!-- Tools Section -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🛠️ Ferramentas Utilizadas</span>
+      </div>
+      <div class="tools-grid" id="toolsList"></div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">📡 Atividades Recentes</span>
+      </div>
+      <div class="activity-feed" id="activityFeed"></div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" data-view="agents">
+      <span class="nav-icon">🤖</span>
+      <span>Agentes</span>
+    </div>
+    <div class="nav-item" data-view="activity">
+      <span class="nav-icon">📡</span>
+      <span>Atividade</span>
+    </div>
+    <div class="nav-item" data-view="settings">
+      <span class="nav-icon">⚙️</span>
+      <span>Config</span>
+    </div>
+  </nav>
+
+  <script>
+    // Utility functions
+    const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
+    
+    const ago = ts => {
+      if (!ts) return '';
+      const s = (Date.now() - new Date(ts)) / 1000;
+      if (s < 60) return 'agora';
+      if (s < 3600) return Math.floor(s/60) + 'm';
+      if (s < 86400) return Math.floor(s/3600) + 'h';
+      return Math.floor(s/86400) + 'd';
+    };
+
+    const agentEmojis = {
+      main: '🌀', imu: '🌀',
+      nami: '🍊', robin: '📚', franky: '🔧',
+      zoro: '⚔️', sanji: '🍳', chopper: '🩺',
+      luffy: '👒', usopp: '🎯', brook: '🎸'
+    };
+
+    const agentRoles = {
+      main: 'Orquestrador',
+      nami: 'Navegadora',
+      robin: 'Arqueóloga',
+      franky: 'Engenheiro',
+      zoro: 'Executor',
+      sanji: 'Provedor',
+      chopper: 'Médico'
+    };
+
+    const toolIcons = {
+      exec: '⚡', read: '📖', write: '✍️', edit: '✏️',
+      web_search: '🔍', web_fetch: '🌐', message: '💬',
+      browser: '🖥️', memory_search: '🧠', cron: '⏰',
+      sessions_spawn: '🚀', process: '⚙️'
+    };
+
+    const activityIcons = {
+      tool: '🔧', user: '👤', assistant: '🤖',
+      message: '💬', decision: '🎯', system: '⚙️'
+    };
+
+    // Load data
+    async function loadData() {
+      try {
+        const [stats, sessions, activities] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/sessions').then(r => r.json()),
+          fetch('/api/activities?limit=20').then(r => r.json())
+        ]);
+
+        // Update hero
+        const cost = stats.totalCost || 0;
+        const pct = Math.min((cost / 15) * 100, 100);
+        document.getElementById('totalCost').textContent = '$' + cost.toFixed(2);
+        document.getElementById('costBar').style.width = pct + '%';
+        document.getElementById('costPercent').textContent = pct.toFixed(1) + '% do budget';
+
+        // Update stats
+        document.getElementById('totalTokens').textContent = fmt(stats.totalTokens || 0);
+        document.getElementById('totalMessages').textContent = 
+          (stats.totalMessages?.user || 0) + (stats.totalMessages?.assistant || 0);
+        document.getElementById('totalTools').textContent = stats.totalToolCalls || 0;
+        document.getElementById('totalAgents').textContent = stats.sessionCount || 0;
+
+        // Render agents
+        const agentsList = document.getElementById('agentsList');
+        agentsList.innerHTML = sessions.map(s => {
+          const label = s.label || 'agent';
+          const key = label.toLowerCase().split('-')[0];
+          const emoji = agentEmojis[key] || '🤖';
+          const role = agentRoles[key] || 'Agente';
+          const isMain = s.kind === 'main';
+          const tokens = s.totalTokens || 0;
+          const cost = s.cost || 0;
+
+          return `
+            <div class="agent-card ${isMain ? 'main' : ''}">
+              <div class="agent-avatar">${emoji}</div>
+              <div class="agent-name">${label}</div>
+              <div class="agent-role">${role}</div>
+              <div class="agent-stats">
+                <div class="agent-stat">
+                  <span class="agent-stat-label">Tokens</span>
+                  <span class="agent-stat-value">${fmt(tokens)}</span>
+                </div>
+                <div class="agent-stat">
+                  <span class="agent-stat-label">Custo</span>
+                  <span class="agent-stat-value">$${cost.toFixed(3)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Render tools
+        const toolCounts = {};
+        activities.forEach(a => {
+          if (a.type === 'tool' && a.tags) {
+            a.tags.forEach(t => {
+              if (t !== 'tool') toolCounts[t] = (toolCounts[t] || 0) + 1;
+            });
+          }
+        });
+
+        const toolsList = document.getElementById('toolsList');
+        toolsList.innerHTML = Object.entries(toolCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([tool, count]) => `
+            <div class="tool-chip">
+              <span class="tool-chip-icon">${toolIcons[tool] || '🔧'}</span>
+              <span>${tool}</span>
+              <span class="tool-chip-count">${count}</span>
+            </div>
+          `).join('') || '<div class="empty-state"><div class="empty-desc">Nenhuma ferramenta usada ainda</div></div>';
+
+        // Render activities
+        const activityFeed = document.getElementById('activityFeed');
+        activityFeed.innerHTML = activities.slice(0, 10).map(a => {
+          const icon = activityIcons[a.type] || '📌';
+          const iconClass = a.type || '';
+          
+          return `
+            <div class="activity-item">
+              <div class="activity-icon ${iconClass}">${a.icon || icon}</div>
+              <div class="activity-content">
+                <div class="activity-header">
+                  <span class="activity-title">${a.title || 'Atividade'}</span>
+                  <span class="activity-time">${ago(a.timestamp)}</span>
+                </div>
+                <div class="activity-desc">${a.description || ''}</div>
+                <div class="activity-meta">
+                  ${a.session ? `<span class="activity-tag session">${a.session}</span>` : ''}
+                  ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => 
+                    `<span class="activity-tag">${t}</span>`
+                  ).join('')}
+                  ${a.tokens ? `<span class="activity-tokens">${fmt(a.tokens)} tok</span>` : ''}
+                  ${a.cost ? `<span class="activity-tokens">$${a.cost.toFixed(4)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') || `
+          <div class="empty-state">
+            <div class="empty-icon">📡</div>
+            <div class="empty-title">Sem atividades</div>
+            <div class="empty-desc">As atividades aparecerão aqui</div>
+          </div>
+        `;
+
+        // Update time
+        document.getElementById('updateTime').textContent = 
+          new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      } catch (e) {
+        console.error('Load error:', e);
+      }
+    }
+
+    // Bottom nav
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        // Future: switch views
+      });
+    });
+
+    // Initial load and poll
+    loadData();
+    setInterval(loadData, 10000);
+
+    // Pull to refresh simulation
+    let touchStart = 0;
+    document.addEventListener('touchstart', e => touchStart = e.touches[0].clientY);
+    document.addEventListener('touchend', e => {
+      if (window.scrollY === 0 && e.changedTouches[0].clientY - touchStart > 100) {
+        loadData();
+      }
+    });
+  </script>
 </body>
 </html>

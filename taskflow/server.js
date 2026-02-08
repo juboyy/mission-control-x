@@ -561,15 +561,17 @@ async function handler(req, res) {
     return;
   }
   
-  // Check auth - allow static assets without auth
-  const isStaticAsset = /\.(js|css|svg|png|ico|json|woff|woff2)$/.test(url.pathname);
+  // Check auth - allow static assets and HTML without auth
+  const isStaticAsset = /\.(js|css|svg|png|ico|json|woff|woff2|html)$/.test(url.pathname);
   const isApi = url.pathname.startsWith('/api/');
+  const isRoot = url.pathname === '/';
   
-  if (!validateSession(getCookie(req, 'mcx_session')) && !isStaticAsset && !isApi) {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(loginPage.replace('{{ERROR}}', ''));
-    return;
-  }
+  // No auth required - open access
+  // if (!validateSession(getCookie(req, 'mcx_session')) && !isStaticAsset && !isApi && !isRoot) {
+  //   res.writeHead(200, { 'Content-Type': 'text/html' });
+  //   res.end(loginPage.replace('{{ERROR}}', ''));
+  //   return;
+  // }
   
   // API endpoints
   if (apiHandlers[url.pathname]) {
@@ -590,7 +592,7 @@ async function handler(req, res) {
   }
   
   // Serve static files
-  let filePath = url.pathname === '/' ? '/dashboard.html' : url.pathname;
+  let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
   const fullPath = path.join(staticDir, filePath);
   
   // Security check
@@ -603,7 +605,7 @@ async function handler(req, res) {
   fs.readFile(fullPath, (err, data) => {
     if (err) {
       // Try index.html as fallback
-      fs.readFile(path.join(staticDir, 'dashboard.html'), (err2, data2) => {
+      fs.readFile(path.join(staticDir, 'index.html'), (err2, data2) => {
         if (err2) {
           res.writeHead(404);
           res.end('Not Found');
