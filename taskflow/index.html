@@ -1546,6 +1546,39 @@
     <!-- Agents View -->
     <div class="view" id="view-agents">
       <h1 class="large-title">Agentes</h1>
+      
+      <!-- Quick Stats -->
+      <div class="stats-grid" style="margin-bottom:var(--space-lg);">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-icon">👒</span>
+            <span class="stat-label">Crew</span>
+          </div>
+          <div class="stat-value" id="crewCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-icon">🟢</span>
+            <span class="stat-label">Ativos</span>
+          </div>
+          <div class="stat-value" id="activeCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-icon">💤</span>
+            <span class="stat-label">Inativos</span>
+          </div>
+          <div class="stat-value" id="inactiveCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-icon">💰</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-value" id="agentsTotalCost">$0</div>
+        </div>
+      </div>
+      
       <div class="list-section">
         <div class="list-header" id="agentsCount">0 ativos</div>
         <div class="list-group" id="allAgentsList"></div>
@@ -2454,6 +2487,22 @@
         renderAgents(sessions, 'agentsList', 4);
         renderAgents(sessions, 'allAgentsList');
         document.getElementById('agentsCount').textContent = sessions.length + ' ativos';
+        
+        // Agent stats
+        const crewCount = sessions.filter(s => isCoreCrew(s.label)).length;
+        const activeCount = sessions.filter(s => s.status !== 'inactive').length;
+        const inactiveCount = sessions.filter(s => s.status === 'inactive').length;
+        const totalAgentCost = sessions.reduce((sum, s) => sum + (s.cost || 0), 0);
+        
+        const crewCountEl = document.getElementById('crewCount');
+        const activeCountEl = document.getElementById('activeCount');
+        const inactiveCountEl = document.getElementById('inactiveCount');
+        const agentsTotalCostEl = document.getElementById('agentsTotalCost');
+        
+        if (crewCountEl) crewCountEl.textContent = crewCount;
+        if (activeCountEl) activeCountEl.textContent = activeCount;
+        if (inactiveCountEl) inactiveCountEl.textContent = inactiveCount;
+        if (agentsTotalCostEl) agentsTotalCostEl.textContent = money(totalAgentCost);
 
         // Activity
         renderActivity(activities, 'activityList', 5);
