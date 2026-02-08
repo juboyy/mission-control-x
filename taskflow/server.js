@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * TaskFlow Server
+ * Mission Control X Server
  * Serve the application with authentication
  */
 
@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const CONFIG = {
   port: parseInt(process.env.PORT || '18950'),
-  password: process.env.PASSWORD || 'taskflow2026',
+  password: process.env.PASSWORD || 'mcx2026',
   sessionTimeout: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -63,7 +63,7 @@ const loginPage = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TaskFlow • Login</title>
+  <title>Mission Control X • Login</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Inter',-apple-system,sans-serif;background:#050507;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;padding:20px}
@@ -97,7 +97,7 @@ const loginPage = `<!DOCTYPE html>
         <path d="M24 40 L36 52 L56 28" stroke="url(#g)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <h1>TaskFlow</h1>
+    <h1>Mission Control X</h1>
     <p class="subtitle">Intelligent Project Management</p>
     <div class="form-card">
       {{ERROR}}
@@ -180,7 +180,7 @@ const server = http.createServer(handler);
 server.listen(CONFIG.port, '0.0.0.0', () => {
   console.log(`
 ╔════════════════════════════════════════╗
-║         🌀 TaskFlow Server             ║
+║         🌀 Mission Control X Server             ║
 ╠════════════════════════════════════════╣
 ║  URL:  http://0.0.0.0:${CONFIG.port}             ║
 ║  Code: ${CONFIG.password}                  ║
