@@ -9,6 +9,7 @@ const path = require('path');
 const url = require('url');
 
 // ===== Configuration =====
+const VERSION = '2.5.0';
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -742,9 +743,11 @@ const routes = {
 
   'GET /api/health': async () => {
     return { 
-      status: 'ok', 
+      status: 'ok',
+      version: VERSION,
       timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
+      node: process.version
     };
   },
 

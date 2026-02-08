@@ -1459,9 +1459,10 @@
   <nav class="navbar">
     <div class="navbar-content">
       <span class="navbar-title">🌀 Mission Control X</span>
-      <div class="navbar-status">
+      <div class="navbar-status" onclick="loadData(true)" style="cursor:pointer;">
         <span class="status-dot"></span>
         <span id="lastUpdate">--:--</span>
+        <span style="margin-left:4px;font-size:12px;">↻</span>
       </div>
     </div>
   </nav>
@@ -2418,13 +2419,16 @@
     async function loadData(showIndicator = false) {
       if (showIndicator) {
         document.getElementById('refreshIndicator').classList.add('active');
+        // Haptic feedback on manual refresh
+        if (navigator.vibrate) navigator.vibrate(10);
       }
 
       try {
-        const [stats, sessions, activities] = await Promise.all([
+        const [stats, sessions, activities, health] = await Promise.all([
           fetch('/api/stats').then(r => r.json()),
           fetch('/api/sessions').then(r => r.json()),
-          fetch('/api/activities?limit=50').then(r => r.json())
+          fetch('/api/activities?limit=50').then(r => r.json()),
+          fetch('/api/health').then(r => r.json()).catch(() => ({}))
         ]);
 
         // Cache data for drill-down
@@ -2475,6 +2479,9 @@
 
     // Toast notifications
     function showToast(message, type = 'info') {
+      // Haptic feedback
+      if (navigator.vibrate) navigator.vibrate(10);
+      
       const existing = document.querySelector('.toast');
       if (existing) existing.remove();
       
