@@ -440,6 +440,10 @@
     .scroll-card.inactive .scroll-card-avatar {
       filter: grayscale(50%);
     }
+    
+    .scroll-card.crew {
+      border: 1px solid var(--purple);
+    }
 
     .agent-row:active {
       background: var(--fill);
@@ -1782,6 +1786,14 @@
 
     // ===== Render Functions =====
 
+    // Core crew - always show these
+    const CORE_CREW = ['main', 'nami', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'luffy', 'usopp', 'brook'];
+    
+    function isCoreCrew(label) {
+      const key = getKey(label);
+      return CORE_CREW.includes(key);
+    }
+
     // Render horizontal scroll cards for agents
     function renderAgentsScroll(sessions, containerId) {
       const container = document.getElementById(containerId);
@@ -1791,24 +1803,25 @@
         return;
       }
 
-      // Separate active from inactive (>30 min = inactive)
-      const activeSessions = sessions.filter(s => s.status !== 'inactive');
-      const inactiveSessions = sessions.filter(s => s.status === 'inactive');
+      // Separate: core crew first, then other active, then other inactive
+      const coreCrew = sessions.filter(s => isCoreCrew(s.label));
+      const otherActive = sessions.filter(s => !isCoreCrew(s.label) && s.status !== 'inactive');
+      const otherInactive = sessions.filter(s => !isCoreCrew(s.label) && s.status === 'inactive');
 
-      const renderCard = (s) => {
+      const renderCard = (s, isCore = false) => {
         const isMain = s.kind === 'main';
-        const isInactive = s.status === 'inactive';
+        const isInactive = s.status === 'inactive' && !isCore;
         const statusColor = s.status === 'active' ? 'var(--green)' : 
                            s.status === 'recent' ? 'var(--blue)' :
                            s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
         return `
-          <div class="scroll-card ${isMain ? 'main' : ''} ${isInactive ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
+          <div class="scroll-card ${isMain ? 'main' : ''} ${isCore ? 'crew' : ''} ${isInactive ? 'inactive' : ''}" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'>
             <div class="scroll-card-avatar" style="position:relative;">
               ${getEmoji(s.label)}
               <span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
             </div>
             <div class="scroll-card-name">${s.label || 'Agent'}</div>
-            <div class="scroll-card-role">${isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label)}</div>
+            <div class="scroll-card-role">${isCore ? getRole(s.label) : (isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label))}</div>
             <div class="scroll-card-stat">
               <span>Custo</span>
               <span class="scroll-card-stat-value">${money(s.cost)}</span>
@@ -1821,14 +1834,24 @@
         `;
       };
 
-      // Show active first, then inactive with separator
-      let html = activeSessions.map(renderCard).join('');
+      // Core crew always first and visible
+      let html = coreCrew.map(s => renderCard(s, true)).join('');
       
-      if (inactiveSessions.length > 0 && activeSessions.length > 0) {
-        html += '<div style="flex:0 0 1px;background:var(--separator);margin:0 8px;align-self:stretch;"></div>';
+      // Then other active agents
+      if (otherActive.length > 0) {
+        if (coreCrew.length > 0) {
+          html += '<div style="flex:0 0 1px;background:var(--separator);margin:0 8px;align-self:stretch;"></div>';
+        }
+        html += otherActive.map(s => renderCard(s, false)).join('');
       }
       
-      html += inactiveSessions.map(renderCard).join('');
+      // Then inactive (non-crew) - collapsed by default, show count
+      if (otherInactive.length > 0) {
+        html += `<div class="scroll-card inactive" style="opacity:0.4;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          <div style="font-size:24px;">💤</div>
+          <div style="font-size:13px;margin-top:8px;">${otherInactive.length} inativos</div>
+        </div>`;
+      }
       
       container.innerHTML = html;
     }
