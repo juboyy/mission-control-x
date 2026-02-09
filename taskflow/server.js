@@ -1188,6 +1188,77 @@ const routes = {
         }
       }
     };
+  },
+
+  // ===== Jira Webhook Handler =====
+  'POST /api/webhooks/jira': async (req, res) => {
+    const body = await parseBody(req);
+    const eventType = body.webhookEvent || body.issue_event_type_name || 'unknown';
+    
+    logger.info('Jira webhook received', { type: eventType });
+    
+    // Parse event
+    const issue = body.issue || {};
+    const key = issue.key || 'N/A';
+    const summary = issue.fields?.summary || 'N/A';
+    const status = issue.fields?.status?.name || 'N/A';
+    const assignee = issue.fields?.assignee?.displayName || 'Unassigned';
+    const priority = issue.fields?.priority?.name || 'Medium';
+    const changelog = body.changelog?.items || [];
+    
+    // Store event for processing
+    const webhookEvent = {
+      timestamp: new Date().toISOString(),
+      type: eventType,
+      issue: { key, summary, status, assignee, priority },
+      changelog,
+      raw: body
+    };
+    
+    // Write to file for agent processing
+    const eventsFile = path.join(__dirname, 'data', 'jira-events.jsonl');
+    fs.appendFileSync(eventsFile, JSON.stringify(webhookEvent) + '\n');
+    
+    logger.info('Jira event stored', { key, type: eventType, status });
+    
+    return { 
+      success: true, 
+      received: true, 
+      event: eventType, 
+      issue: key,
+      timestamp: webhookEvent.timestamp
+    };
+  },
+
+  // GET /api/webhooks/jira/events - List recent Jira events
+  'GET /api/webhooks/jira/events': async (req, res, query) => {
+    const limit = Math.min(Math.max(parseInt(query.limit) || 50, 1), 200);
+    const eventsFile = path.join(__dirname, 'data', 'jira-events.jsonl');
+    
+    if (!fs.existsSync(eventsFile)) {
+      return { success: true, events: [], count: 0 };
+    }
+    
+    const lines = fs.readFileSync(eventsFile, 'utf8')
+      .split('\n')
+      .filter(Boolean)
+      .slice(-limit);
+    
+    const events = lines.map(line => {
+      try {
+        const event = JSON.parse(line);
+        return {
+          timestamp: event.timestamp,
+          type: event.type,
+          issue: event.issue,
+          changelog: event.changelog
+        };
+      } catch (e) {
+        return null;
+      }
+    }).filter(Boolean).reverse();
+    
+    return { success: true, events, count: events.length };
   }
 };
 

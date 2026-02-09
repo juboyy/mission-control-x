@@ -1,5 +1,57 @@
 // Mission Control - Application Logic
 
+// ===== THEME MANAGER =====
+const ThemeManager = {
+  STORAGE_KEY: 'mcx-theme',
+  
+  init() {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    if (saved) {
+      this.setTheme(saved, false);
+    } else {
+      // Respect system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.setTheme(prefersDark ? 'dark' : 'light', false);
+    }
+    
+    // Listen for system preference changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      // Only auto-switch if no manual preference saved
+      if (!localStorage.getItem(this.STORAGE_KEY)) {
+        this.setTheme(e.matches ? 'dark' : 'light', false);
+      }
+    });
+  },
+  
+  setTheme(theme, save = true) {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (save) {
+      localStorage.setItem(this.STORAGE_KEY, theme);
+    }
+    this.updateToggleUI(theme);
+  },
+  
+  toggle() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    this.setTheme(current === 'dark' ? 'light' : 'dark');
+  },
+  
+  updateToggleUI(theme) {
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+      btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+      btn.title = theme === 'dark' ? 'Mudar para Light Mode' : 'Mudar para Dark Mode';
+    }
+  },
+  
+  getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+  }
+};
+
+// Initialize theme ASAP to prevent flash
+ThemeManager.init();
+
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initDate();
