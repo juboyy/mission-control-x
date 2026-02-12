@@ -1,523 +1,124 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
-  <title>Mission Control X</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mission Control X - Real-Time Operations Dashboard</title>
   <style>
-    /* ===== Apple HIG Design System ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     :root {
-      /* Semantic Colors - Dark Mode */
-      --label: #FFFFFF;
-      --label-secondary: rgba(235, 235, 245, 0.6);
-      --label-tertiary: rgba(235, 235, 245, 0.3);
-      --bg-primary: #000000;
-      --bg-secondary: #1C1C1E;
-      --bg-tertiary: #2C2C2E;
-      --bg-grouped: #1C1C1E;
-      --separator: rgba(84, 84, 88, 0.65);
-      --fill: rgba(120, 120, 128, 0.32);
-
-      /* System Colors */
-      --blue: #007AFF;
-      --green: #34C759;
-      --orange: #FF9500;
-      --red: #FF3B30;
-      --purple: #AF52DE;
-      --teal: #5AC8FA;
-      --yellow: #FFD60A;
-
-      /* Spacing - 8pt grid */
+      --bg-dark: #0A0A0F;
+      --bg-elevated: #1A1A24;
+      --bg-card: #25253A;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A0A0B8;
+      --accent-blue: #3B82F6;
+      --accent-purple: #8B5CF6;
+      --accent-green: #10B981;
+      --accent-yellow: #F59E0B;
+      --accent-red: #EF4444;
+      --border-subtle: rgba(255, 255, 255, 0.08);
       --space-xs: 4px;
       --space-sm: 8px;
       --space-md: 16px;
       --space-lg: 24px;
       --space-xl: 32px;
-
-      /* Radius */
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 20px;
-
-      /* Safe areas */
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-      background: var(--bg-primary);
-      color: var(--label);
-      min-height: 100vh;
-      min-height: 100dvh;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-      overscroll-behavior: none;
-    }
-
-    /* ===== Navigation Bar ===== */
-    .navbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding-top: var(--safe-top);
-      background: rgba(0, 0, 0, 0.72);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-bottom: 0.5px solid var(--separator);
-    }
-
-    .navbar-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 44px;
-      padding: 0 var(--space-md);
-    }
-
-    .navbar-title {
-      font-size: 17px;
-      font-weight: 600;
-      letter-spacing: -0.4px;
-    }
-
-    .navbar-status {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      font-size: 13px;
-      color: var(--label-secondary);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    
-    .status-dot.loading {
-      background: var(--orange);
-      animation: pulse 0.3s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ===== Large Title ===== */
-    .large-title {
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 0.37px;
-      padding: var(--space-md);
-      padding-top: var(--space-sm);
-    }
-
-    /* ===== Main Content ===== */
-    main {
-      padding-bottom: calc(83px + var(--safe-bottom));
-    }
-
-    /* ===== Inset Grouped List ===== */
-    .list-section {
-      margin: var(--space-md);
-    }
-
-    .list-header {
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--label-secondary);
-      text-transform: uppercase;
-      letter-spacing: -0.08px;
-      padding: 0 var(--space-md);
-      margin-bottom: var(--space-sm);
-    }
-
-    .list-group {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
       overflow: hidden;
     }
 
-    .list-item {
+    /* ===== LAYOUT ===== */
+    .app {
       display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      padding: 11px var(--space-md);
-      min-height: 44px;
-      position: relative;
-      transition: background 0.15s;
+      height: 100vh;
     }
 
-    .list-item:active {
-      background: var(--fill);
-    }
-
-    .list-item:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 56px;
-      right: 0;
-      bottom: 0;
-      height: 0.5px;
-      background: var(--separator);
-    }
-
-    .list-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--radius-sm);
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-subtle);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
-    .list-icon.blue { background: var(--blue); }
-    .list-icon.green { background: var(--green); }
-    .list-icon.orange { background: var(--orange); }
-    .list-icon.purple { background: var(--purple); }
-    .list-icon.teal { background: var(--teal); }
-    .list-icon.red { background: var(--red); }
-
-    .list-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .list-title {
-      font-size: 17px;
-      font-weight: 400;
-      letter-spacing: -0.4px;
-    }
-
-    .list-subtitle {
-      font-size: 15px;
-      color: var(--label-secondary);
-      margin-top: 2px;
-    }
-
-    .list-value {
-      font-size: 17px;
-      color: var(--label-secondary);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .list-chevron {
-      color: var(--label-tertiary);
-      font-size: 14px;
-      margin-left: var(--space-xs);
-    }
-
-    /* ===== Stats Cards ===== */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-md);
-      padding: 0 var(--space-md);
-      margin-bottom: var(--space-md);
-    }
-
-    .stat-card {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--space-md);
-      transition: transform 0.2s, background 0.15s;
-    }
-
-    .stat-card:active {
-      transform: scale(0.98);
-      background: var(--bg-tertiary);
-    }
-
-    .stat-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      margin-bottom: var(--space-sm);
-    }
-
-    .stat-icon {
-      font-size: 20px;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      color: var(--label-secondary);
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ===== Hero Card ===== */
-    .hero-card {
-      margin: 0 var(--space-md) var(--space-md);
-      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
-      border-radius: var(--radius-xl);
+    .sidebar-header {
       padding: var(--space-lg);
-      position: relative;
-      overflow: hidden;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .hero-card::before {
-      content: '';
-      position: absolute;
-      top: -40%;
-      right: -20%;
-      width: 180px;
-      height: 180px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-    }
-
-    .hero-label {
-      font-size: 13px;
-      font-weight: 500;
-      opacity: 0.9;
-      margin-bottom: var(--space-xs);
-    }
-
-    .hero-value {
-      font-size: 48px;
+    .logo {
+      font-size: 20px;
       font-weight: 700;
-      letter-spacing: -1px;
-      margin-bottom: var(--space-sm);
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
     }
 
-    .hero-subtitle {
-      font-size: 15px;
-      opacity: 0.8;
+    .version {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: var(--space-xs);
+    }
+
+    .sidebar-section {
+      padding: var(--space-lg);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
       margin-bottom: var(--space-md);
     }
 
-    .hero-progress {
-      height: 4px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .hero-progress-fill {
-      height: 100%;
-      background: rgba(255,255,255,0.9);
-      border-radius: 2px;
-      transition: width 0.5s ease;
-    }
-
-    .hero-meta {
+    .agent-list {
       display: flex;
-      justify-content: space-between;
-      margin-top: var(--space-sm);
-      font-size: 13px;
-      opacity: 0.8;
+      flex-direction: column;
+      gap: var(--space-sm);
     }
 
-    /* ===== Agent Row ===== */
-    .agent-row {
+    .agent-item {
       display: flex;
       align-items: center;
-      gap: var(--space-md);
-      padding: var(--space-md);
-      position: relative;
+      gap: var(--space-sm);
+      padding: var(--space-sm);
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: background 0.2s;
     }
 
-    .agent-row:hover {
-      background: var(--fill);
-    }
-
-    /* ===== Horizontal Scroll ===== */
-    .scroll-container {
-      display: flex;
-      gap: var(--space-md);
-      overflow-x: auto;
-      overflow-y: hidden;
-      padding: var(--space-sm) var(--space-md);
-      margin: 0 calc(-1 * var(--space-md));
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-
-    .scroll-container::-webkit-scrollbar {
-      display: none;
-    }
-
-    .scroll-card {
-      flex: 0 0 auto;
-      width: 160px;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--space-md);
-      scroll-snap-align: start;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.15s;
-    }
-
-    .scroll-card:first-child {
-      margin-left: var(--space-md);
-    }
-
-    .scroll-card:last-child {
-      margin-right: var(--space-md);
-    }
-
-    .scroll-card:active {
-      transform: scale(0.97);
-      background: var(--bg-tertiary);
-    }
-
-    .scroll-card.main {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-    }
-
-    .scroll-card-avatar {
-      width: 48px;
-      height: 48px;
-      background: var(--fill);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin-bottom: var(--space-sm);
-    }
-
-    .scroll-card.main .scroll-card-avatar {
-      background: rgba(255,255,255,0.2);
-    }
-
-    .scroll-card-name {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .scroll-card-role {
-      font-size: 12px;
-      color: var(--label-secondary);
-      margin-bottom: var(--space-sm);
-    }
-
-    .scroll-card.main .scroll-card-role {
-      color: rgba(255,255,255,0.8);
-    }
-
-    .scroll-card-stat {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-    }
-
-    .scroll-card-stat-value {
-      font-weight: 600;
-      color: var(--teal);
-    }
-
-    .scroll-card.main .scroll-card-stat-value {
-      color: #fff;
-    }
-
-    .scroll-card.inactive {
-      opacity: 0.5;
-    }
-
-    .scroll-card.inactive .scroll-card-avatar {
-      filter: grayscale(50%);
-    }
-
-    .scroll-card.crew {
-      border: 1px solid var(--purple);
-    }
-
-    .agent-row:active {
-      background: var(--fill);
-    }
-
-    .agent-row:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 68px;
-      right: 0;
-      bottom: 0;
-      height: 0.5px;
-      background: var(--separator);
+    .agent-item:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .agent-avatar {
-      width: 44px;
-      height: 44px;
-      background: var(--fill);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-      position: relative;
-    }
-
-    .agent-avatar.main {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-    }
-
-    /* State Indicators */
-    .state-indicator {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 14px;
-      height: 14px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      border: 2px solid var(--bg-secondary);
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 8px;
-    }
-
-    .state-indicator.idle {
-      background: var(--label-tertiary);
-    }
-
-    .state-indicator.working {
-      background: var(--green);
-      animation: pulse 1s ease-in-out infinite;
-    }
-
-    .state-indicator.error {
-      background: var(--red);
-    }
-
-    .state-indicator.waiting {
-      background: var(--orange);
+      font-size: 16px;
+      flex-shrink: 0;
     }
 
     .agent-info {
@@ -526,4058 +127,671 @@
     }
 
     .agent-name {
-      font-size: 17px;
-      font-weight: 500;
-      letter-spacing: -0.4px;
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .agent-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .agent-badge.supervisor {
-      background: rgba(175, 82, 222, 0.2);
-      color: var(--purple);
-    }
-
-    .agent-badge.worker {
-      background: rgba(0, 122, 255, 0.2);
-      color: var(--blue);
-    }
-
-    .agent-badge.solo {
-      background: rgba(52, 199, 89, 0.2);
-      color: var(--green);
-    }
-
-    .agent-badge.crew {
-      background: rgba(255, 214, 10, 0.2);
-      color: var(--yellow);
-    }
-
-    .agent-row.inactive {
-      opacity: 0.5;
-    }
-
-    /* Crew Groups */
-    .crew-group {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      margin-bottom: var(--space-sm);
+      white-space: nowrap;
       overflow: hidden;
-    }
-
-    .crew-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--space-md);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .crew-header:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .crew-header-left {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .crew-emoji {
-      font-size: 24px;
-    }
-
-    .crew-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--label);
-    }
-
-    .crew-badge {
-      background: var(--fill);
-      color: var(--label-secondary);
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    .crew-header-right {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-    }
-
-    .crew-cost {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--teal);
-    }
-
-    .crew-expand {
-      color: var(--label-tertiary);
-      font-size: 12px;
-    }
-
-    .crew-members {
-      border-top: 1px solid var(--separator);
-      background: var(--bg-primary);
-    }
-
-    .agent-row.sub-agent {
-      padding-left: calc(var(--space-md) + 32px);
-      min-height: 48px;
-    }
-
-    .agent-row.sub-agent .agent-avatar {
-      width: 28px;
-      height: 28px;
-      font-size: 14px;
+      text-overflow: ellipsis;
     }
 
     .agent-role {
-      font-size: 15px;
-      color: var(--label-secondary);
-    }
-
-    .agent-stats {
-      text-align: right;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-
-    .agent-cost {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--teal);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .agent-tokens {
-      font-size: 13px;
-      color: var(--label-secondary);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .agent-chevron {
-      color: var(--label-tertiary);
-      font-size: 18px;
-      margin-left: var(--space-xs);
-    }
-
-    /* ===== Activity Row ===== */
-    .activity-row {
-      display: flex;
-      gap: var(--space-md);
-      padding: var(--space-md);
-      position: relative;
-      cursor: pointer;
-    }
-
-    .activity-row:active {
-      background: var(--fill);
-    }
-
-    .activity-row:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 56px;
-      right: 0;
-      bottom: 0;
-      height: 0.5px;
-      background: var(--separator);
-    }
-
-    .activity-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--fill);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-
-    .activity-icon.tool { background: rgba(0, 122, 255, 0.2); }
-    .activity-icon.user { background: rgba(175, 82, 222, 0.2); }
-    .activity-icon.assistant { background: rgba(52, 199, 89, 0.2); }
-    .activity-icon.error { background: rgba(255, 59, 48, 0.2); }
-
-    .activity-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .activity-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .activity-title {
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .activity-time {
-      font-size: 13px;
-      color: var(--label-secondary);
-      flex-shrink: 0;
-    }
-
-    .activity-desc {
-      font-size: 15px;
-      color: var(--label-secondary);
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-top: 2px;
-    }
-
-    .activity-tags {
-      display: flex;
-      gap: var(--space-sm);
-      margin-top: var(--space-sm);
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      font-size: 12px;
-      padding: 4px 8px;
-      background: var(--fill);
-      border-radius: 6px;
-      color: var(--label-secondary);
-    }
-
-    .tag.accent {
-      background: rgba(0, 122, 255, 0.2);
-      color: var(--blue);
-    }
-
-    .activity-chevron {
-      color: var(--label-tertiary);
-      font-size: 16px;
-      align-self: center;
-    }
-
-    /* ===== Timeline View ===== */
-    .timeline-filters {
-      display: flex;
-      gap: var(--space-sm);
-      padding: 0 var(--space-md) var(--space-md);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    .timeline-filters::-webkit-scrollbar { display: none; }
-
-    .filter-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: var(--fill);
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 11px;
+      color: var(--text-secondary);
       white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1.5px solid transparent;
-    }
-
-    .filter-chip:active { transform: scale(0.96); }
-    .filter-chip.active {
-      background: rgba(0, 122, 255, 0.15);
-      color: var(--blue);
-      border-color: var(--blue);
-    }
-    
-    /* Filter chip hover */
-    .filter-chip {
-      transition: all 0.2s ease;
-    }
-    .filter-chip:hover:not(.active) {
-      background: var(--bg-tertiary);
-      transform: translateY(-1px);
-    }
-
-    .filter-chip .count {
-      background: var(--bg-tertiary);
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-size: 11px;
-      color: var(--label-secondary);
-    }
-
-    .filter-chip.active .count {
-      background: rgba(0, 122, 255, 0.25);
-      color: var(--blue);
-    }
-
-    /* Timeline Container */
-    .timeline-container {
-      padding: 0 var(--space-md);
-    }
-
-    /* Session Group */
-    .session-group {
-      margin-bottom: var(--space-lg);
-    }
-
-    .session-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      padding: var(--space-sm) var(--space-md);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      margin-bottom: var(--space-sm);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .session-header:active { background: var(--bg-tertiary); }
-
-    .session-header-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .session-header-avatar.main {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-    }
-
-    .session-header-avatar:not(.main) {
-      background: var(--fill);
-    }
-
-    .session-header-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .session-header-name {
-      font-size: 15px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .session-header-meta {
-      font-size: 12px;
-      color: var(--label-secondary);
-    }
-
-    .session-header-toggle {
-      font-size: 14px;
-      color: var(--label-tertiary);
-      transition: transform 0.2s;
-    }
-
-    .session-header.collapsed .session-header-toggle {
-      transform: rotate(-90deg);
-    }
-
-    .session-count-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      background: var(--fill);
-      border-radius: 10px;
-      color: var(--label-secondary);
-    }
-
-    /* Timeline Items */
-    .timeline-items {
-      position: relative;
       overflow: hidden;
-      transition: max-height 0.3s ease, opacity 0.2s;
+      text-overflow: ellipsis;
     }
 
-    .timeline-items.collapsed {
-      max-height: 0 !important;
-      opacity: 0;
-    }
-
-    /* Timeline Vertical Line */
-    .timeline-line {
-      position: absolute;
-      left: 23px;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background: linear-gradient(
-        to bottom,
-        var(--separator) 0%,
-        var(--separator) 100%
-      );
-    }
-
-    /* Timeline Node */
-    .timeline-node {
-      position: relative;
-      display: flex;
-      gap: var(--space-md);
-      padding: var(--space-sm) 0;
-      padding-left: 48px;
-      margin-bottom: 2px;
-      cursor: pointer;
-    }
-
-    .timeline-node:active .timeline-card {
-      background: var(--bg-tertiary);
-      transform: scale(0.99);
-    }
-
-    /* Status Dot on Timeline */
-    .timeline-status {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      z-index: 2;
-      box-shadow: 0 0 0 4px var(--bg-primary);
-    }
-
-    .timeline-status.completed {
-      background: var(--green);
-    }
-    .timeline-status.running {
-      background: var(--blue);
-      animation: statusPulse 1.5s ease-in-out infinite;
-    }
-    .timeline-status.pending {
-      background: var(--orange);
-    }
-    .timeline-status.failed {
-      background: var(--red);
-    }
-
-    @keyframes statusPulse {
-      0%, 100% { box-shadow: 0 0 0 4px var(--bg-primary), 0 0 0 6px rgba(0, 122, 255, 0.3); }
-      50% { box-shadow: 0 0 0 4px var(--bg-primary), 0 0 0 10px rgba(0, 122, 255, 0.1); }
-    }
-
-    /* Timeline Card */
-    .timeline-card {
-      flex: 1;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      padding: var(--space-md);
-      transition: all 0.2s;
-      border-left: 3px solid transparent;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .timeline-card:hover {
-      background: var(--bg-tertiary);
-      transform: translateX(2px);
-    }
-
-    .timeline-card.completed { border-left-color: var(--green); }
-    .timeline-card.running { border-left-color: var(--blue); }
-    .timeline-card.pending { border-left-color: var(--orange); }
-    .timeline-card.failed { border-left-color: var(--red); }
-
-    .timeline-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: var(--space-xs);
-    }
-
-    .timeline-card-title {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .timeline-card-icon {
-      font-size: 16px;
-    }
-
-    .timeline-card-time {
-      font-size: 12px;
-      color: var(--label-secondary);
-      white-space: nowrap;
-    }
-
-    .timeline-card-desc {
-      font-size: 14px;
-      color: var(--label-secondary);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: var(--space-sm);
-    }
-
-    .timeline-card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .timeline-card-tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .timeline-tag {
-      font-size: 11px;
-      padding: 3px 8px;
-      background: var(--fill);
-      border-radius: 6px;
-      color: var(--label-secondary);
-    }
-
-    .timeline-tag.type-tool { background: rgba(0, 122, 255, 0.15); color: var(--blue); }
-    .timeline-tag.type-user { background: rgba(175, 82, 222, 0.15); color: var(--purple); }
-    .timeline-tag.type-assistant { background: rgba(52, 199, 89, 0.15); color: var(--green); }
-    .timeline-tag.type-error { background: rgba(255, 59, 48, 0.15); color: var(--red); }
-
-    .timeline-card-chevron {
-      color: var(--label-tertiary);
-      font-size: 16px;
-    }
-
-    /* Child Node (Result) */
-    .timeline-node.child {
-      padding-left: 64px;
-    }
-
-    .timeline-node.child .timeline-status {
-      left: 32px;
-      width: 12px;
-      height: 12px;
-      font-size: 7px;
-    }
-
-    .timeline-node.child .timeline-card {
-      background: var(--bg-tertiary);
-      padding: var(--space-sm) var(--space-md);
-    }
-
-    .timeline-node.child .timeline-card-title {
-      font-size: 13px;
-    }
-
-    .timeline-node.child .timeline-card-desc {
-      font-size: 13px;
-      -webkit-line-clamp: 1;
-    }
-
-    /* Connector Line for Parent-Child */
-    .timeline-node.child::before {
-      content: '';
-      position: absolute;
-      left: 23px;
-      top: 50%;
-      width: 10px;
-      height: 2px;
-      background: var(--separator);
-    }
-
-    /* Timeline Empty State */
-    .timeline-empty {
-      text-align: center;
-      padding: var(--space-xl) var(--space-md);
-      color: var(--label-secondary);
-    }
-
-    .timeline-empty-icon {
-      font-size: 48px;
-      margin-bottom: var(--space-md);
-      opacity: 0.6;
-    }
-
-    .timeline-empty-title {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--label);
-      margin-bottom: var(--space-xs);
-    }
-
-    .timeline-empty-desc {
-      font-size: 14px;
-    }
-
-    /* Status Legend */
-    .status-legend {
-      display: flex;
-      justify-content: center;
-      gap: var(--space-lg);
-      padding: var(--space-sm) var(--space-md) var(--space-md);
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--label-secondary);
-    }
-
-    .legend-dot {
+    .agent-status {
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
 
-    .legend-dot.completed { background: var(--green); }
-    .legend-dot.running { background: var(--blue); }
-    .legend-dot.pending { background: var(--orange); }
-    .legend-dot.failed { background: var(--red); }
+    .agent-status.online {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
 
-    /* ===== Tool Chips ===== */
-    .tools-wrap {
-      display: flex;
-      flex-wrap: wrap;
+    .agent-status.busy {
+      background: var(--accent-yellow);
+      box-shadow: 0 0 8px var(--accent-yellow);
+    }
+
+    .agent-status.offline {
+      background: #4B5563;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+
+    .stat-card {
+      background: var(--bg-card);
       padding: var(--space-md);
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
     }
 
-    .tool-chip {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      padding: var(--space-sm) var(--space-md);
-      background: var(--fill);
-      border-radius: 20px;
-      font-size: 15px;
-      transition: transform 0.15s;
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .tool-chip:active {
-      transform: scale(0.96);
-    }
-    
-    /* Tool chip hover */
-    .tool-chip {
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .tool-chip:hover {
-      background: var(--bg-tertiary);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: var(--space-xs);
     }
 
-    .tool-chip-icon {
-      font-size: 16px;
-    }
-
-    .tool-chip-count {
-      font-size: 13px;
-      color: var(--label-secondary);
-      background: var(--bg-tertiary);
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    /* ===== Tab Bar ===== */
-    .tabbar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(28, 28, 30, 0.94);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-top: 0.5px solid var(--separator);
-      padding-bottom: var(--safe-bottom);
-    }
-
-    .tabbar-content {
-      display: flex;
-      height: 49px;
-    }
-
-    .tab-item {
+    /* ===== MAIN CONTENT ===== */
+    .main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      color: var(--label-tertiary);
-      font-size: 10px;
-      font-weight: 500;
-      transition: color 0.2s;
-      position: relative;
+      overflow: hidden;
     }
 
-    .tab-badge {
-      position: absolute;
-      top: 2px;
-      right: calc(50% - 20px);
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      background: var(--red);
-      border-radius: 9px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .tab-item.active {
-      color: var(--blue);
-    }
-
-    .tab-icon {
-      font-size: 24px;
-      height: 24px;
-    }
-
-    /* ===== Views ===== */
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-      animation: slideIn 0.2s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* ===== Modal Sheets (Multi-level) ===== */
-    .sheet {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-    }
-
-    .sheet.active {
-      display: block;
-    }
-
-    .sheet.level-2 {
-      z-index: 210;
-    }
-
-    .sheet-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      animation: fadeIn 0.25s;
-    }
-
-    .sheet.level-2 .sheet-backdrop {
-      background: rgba(0, 0, 0, 0.3);
-    }
-
-    .sheet-content {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-height: 90vh;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-      padding-bottom: var(--safe-bottom);
-      animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-      overflow-y: auto;
-    }
-
-    .sheet.level-2 .sheet-content {
-      max-height: 85vh;
-      background: var(--bg-tertiary);
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .sheet-handle {
-      width: 36px;
-      height: 5px;
-      background: var(--fill);
-      border-radius: 3px;
-      margin: var(--space-sm) auto var(--space-md);
-    }
-
-    .sheet-header {
+    .header {
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 var(--space-md) var(--space-md);
     }
 
-    .sheet-title {
-      font-size: 17px;
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .btn {
+      padding: var(--space-sm) var(--space-md);
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 13px;
       font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .sheet-back {
-      font-size: 15px;
-      color: var(--blue);
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-blue);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .refresh-indicator {
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: var(--space-xs) var(--space-sm);
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .refresh-indicator.loading {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--accent-yellow);
+    }
+
+    /* ===== BOARD ===== */
+    .board {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: var(--space-lg);
+    }
+
+    .board-columns {
+      display: flex;
+      gap: var(--space-md);
+      height: 100%;
+      min-width: min-content;
+    }
+
+    .column {
+      width: 320px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .column-header {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .column-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .column-count {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .column-cards {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: var(--space-md);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent-blue);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-sm);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .priority-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .priority-high {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+    }
+
+    .priority-medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .priority-low {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .card-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .card-schedule {
       display: flex;
       align-items: center;
       gap: 4px;
     }
 
-    .sheet-close {
-      font-size: 28px;
-      color: var(--label-secondary);
-      line-height: 1;
-      padding: 4px;
-    }
-
-    .sheet-body {
-      padding: 0 var(--space-md) var(--space-lg);
-    }
-
-    /* ===== Detail Components ===== */
-    .detail-avatar {
-      text-align: center;
-      margin-bottom: var(--space-lg);
-    }
-
-    .detail-avatar-icon {
-      font-size: 56px;
-      margin-bottom: var(--space-sm);
-    }
-
-    .detail-avatar-name {
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    .detail-avatar-role {
-      color: var(--label-secondary);
-      margin-top: 4px;
-    }
-
-    .detail-avatar-state {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-sm);
-      margin-top: var(--space-sm);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .detail-avatar-state.idle {
-      background: rgba(142, 142, 147, 0.2);
-      color: var(--label-secondary);
-    }
-
-    .detail-avatar-state.working {
-      background: rgba(52, 199, 89, 0.2);
-      color: var(--green);
-    }
-
-    .detail-avatar-state.error {
-      background: rgba(255, 59, 48, 0.2);
-      color: var(--red);
-    }
-
-    .detail-avatar-state.waiting {
-      background: rgba(255, 149, 0, 0.2);
-      color: var(--orange);
-    }
-
-    .detail-list {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      margin-bottom: var(--space-md);
-    }
-
-    .sheet.level-2 .detail-list {
-      background: var(--bg-secondary);
-    }
-
-    .detail-row {
+    .card-agent {
       display: flex;
-      justify-content: space-between;
-      padding: 12px var(--space-md);
-      font-size: 15px;
+      align-items: center;
+      gap: var(--space-xs);
     }
 
-    .detail-row:not(:last-child) {
-      border-bottom: 0.5px solid var(--separator);
+    .card-agent-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
     }
 
-    .detail-label {
-      color: var(--label-secondary);
+    .card-tags {
+      display: flex;
+      gap: var(--space-xs);
+      flex-wrap: wrap;
+      margin-top: var(--space-sm);
     }
 
-    .detail-value {
-      font-weight: 500;
-      text-align: right;
-      max-width: 60%;
-      word-break: break-word;
+    .card-tag {
+      padding: 2px 8px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent-blue);
     }
 
-    /* Section Headers in Sheets */
-    .sheet-section-header {
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--label-secondary);
-      text-transform: uppercase;
-      letter-spacing: -0.08px;
-      margin: var(--space-md) 0 var(--space-sm);
-    }
-
-    /* Code Block */
-    .code-block {
-      background: var(--bg-primary);
-      border-radius: var(--radius-md);
-      padding: var(--space-md);
-      font-family: 'SF Mono', 'Menlo', monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-      color: var(--label-secondary);
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    /* Empty State */
-    .empty-state {
+    .empty-column {
       text-align: center;
       padding: var(--space-xl);
-      color: var(--label-secondary);
-    }
-
-    .empty-icon {
-      font-size: 48px;
-      margin-bottom: var(--space-md);
-    }
-
-    .empty-title {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--label);
-      margin-bottom: var(--space-xs);
-    }
-
-    /* Refresh Indicator */
-    .refresh-indicator {
-      position: fixed;
-      top: calc(44px + var(--safe-top) + 12px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--bg-secondary);
-      padding: var(--space-sm) var(--space-md);
-      border-radius: 20px;
+      color: var(--text-secondary);
       font-size: 13px;
-      display: none;
-      z-index: 50;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
 
-    .refresh-indicator.active {
+    .loading {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      animation: fadeIn 0.2s;
+      justify-content: center;
+      height: 100%;
+      font-size: 14px;
+      color: var(--text-secondary);
     }
 
-    /* State Dot Inline */
-    .state-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
+    .error {
+      padding: var(--space-lg);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: var(--accent-red);
+      margin: var(--space-lg);
     }
 
-    .state-dot.idle { background: var(--label-tertiary); }
-    .state-dot.working { background: var(--green); animation: pulse 1s infinite; }
-    .state-dot.error { background: var(--red); }
-    .state-dot.waiting { background: var(--orange); }
-
-    /* Scrollbar hidden on mobile */
-    ::-webkit-scrollbar { display: none; }
-
-    /* Desktop-only elements: hidden by default (mobile-first) */
-    .desktop-only {
+    /* ===== MOBILE ===== */
+    .mobile-header {
       display: none;
-    }
-    
-    /* Desktop columns: stack on mobile */
-    .desktop-columns {
-      display: flex;
-      flex-direction: column;
+      padding: var(--space-md);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: center;
       gap: var(--space-md);
     }
 
-    /* ===== DESKTOP ENHANCEMENTS ===== */
-    
-    /* === Tablet (768px+) === */
-    @media (min-width: 768px) {
-      /* Enable custom scrollbar on tablet+ */
-      ::-webkit-scrollbar { 
-        display: block;
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--fill);
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: var(--label-tertiary);
-      }
-
-      /* Container max-width */
-      .navbar-content,
-      main {
-        max-width: 900px;
-        margin: 0 auto;
-      }
-
-      /* Larger touch targets not needed - use hover */
-      .list-item,
-      .agent-row,
-      .activity-row {
-        min-height: 52px;
-        cursor: pointer;
-      }
-
-      /* Stats grid: 4 columns */
-      .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      /* Hover states for cards */
-      .stat-card {
-        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-      }
-      .stat-card:hover {
-        transform: translateY(-2px);
-        background: var(--bg-tertiary);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      }
-
-      /* Scroll cards hover */
-      .scroll-card {
-        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-      }
-      .scroll-card:hover {
-        transform: translateY(-4px) scale(1.02);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-      }
-      .scroll-card:active {
-        transform: translateY(-2px) scale(1.01);
-      }
-
-      /* Agent row hover - more elegant */
-      .agent-row {
-        transition: background 0.2s ease, transform 0.15s ease;
-        border-radius: var(--radius-md);
-        margin: 0 var(--space-sm);
-      }
-      .agent-row:hover {
-        background: var(--bg-tertiary);
-        transform: translateX(4px);
-      }
-
-      /* Activity row hover */
-      .activity-row {
-        transition: background 0.2s ease, transform 0.15s ease;
-        border-radius: var(--radius-md);
-      }
-      .activity-row:hover {
-        background: var(--bg-tertiary);
-        transform: translateX(4px);
-      }
-
-      /* Hero card hover effect */
-      .hero-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-      .hero-card:hover {
-        transform: scale(1.01);
-        box-shadow: 0 16px 48px rgba(0, 122, 255, 0.2);
-      }
-
-      /* Better focus states for keyboard nav */
-      .stat-card:focus,
-      .scroll-card:focus,
-      .agent-row:focus,
-      .activity-row:focus,
-      .tab-item:focus,
-      .filter-chip:focus,
-      .tool-chip:focus {
-        outline: 2px solid var(--blue);
-        outline-offset: 2px;
-      }
-
-      /* Make interactive elements focusable */
-      .stat-card,
-      .scroll-card,
-      .agent-row,
-      .activity-row,
-      .tool-chip,
-      .filter-chip {
-        outline: none;
-      }
-
-      /* Tooltips base */
-      [data-tooltip] {
-        position: relative;
-      }
-      [data-tooltip]::before {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(-8px);
-        padding: 6px 12px;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--separator);
-        border-radius: var(--radius-sm);
-        font-size: 12px;
-        color: var(--label);
-        white-space: nowrap;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        pointer-events: none;
-      }
-      [data-tooltip]::after {
-        content: '';
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 6px solid transparent;
-        border-top-color: var(--bg-tertiary);
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s, visibility 0.2s;
-        pointer-events: none;
-      }
-      [data-tooltip]:hover::before,
-      [data-tooltip]:hover::after {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(-4px);
-      }
-      [data-tooltip]:hover::after {
-        transform: translateX(-50%);
-      }
-
-      /* Tab bar: centered with max-width */
-      .tabbar-content {
-        max-width: 500px;
-        margin: 0 auto;
-      }
-      .tab-item {
-        transition: color 0.2s, transform 0.15s;
-      }
-      .tab-item:hover:not(.active) {
-        color: var(--label-secondary);
-        transform: translateY(-2px);
-      }
+    .menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: var(--space-xs);
     }
 
-    /* === Desktop (1024px+) === */
-    @media (min-width: 1024px) {
-      /* Show desktop-only elements */
-      .desktop-only {
-        display: block !important;
-      }
-
-      /* 2-column layout for Overview */
-      .desktop-columns {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-lg);
-        align-items: start;
-      }
-
-      /* Larger container */
-      .navbar-content {
-        max-width: 1200px;
-        padding: 0 var(--space-lg);
-      }
-
-      /* Main layout with sidebar */
-      body {
-        display: flex;
-        flex-direction: column;
-      }
-
-      main {
-        max-width: 1200px;
-        padding-left: var(--space-lg);
-        padding-right: var(--space-lg);
-        padding-bottom: calc(60px + var(--safe-bottom));
-      }
-
-      /* Convert tab bar to horizontal nav */
-      .tabbar {
-        position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: var(--space-md);
-        right: auto;
-        width: auto;
-        border-radius: var(--radius-xl);
-        background: rgba(28, 28, 30, 0.95);
-        border: 1px solid var(--separator);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        padding: var(--space-sm) var(--space-md);
-        padding-bottom: var(--space-sm);
-      }
-
-      .tabbar-content {
-        height: 44px;
-        gap: var(--space-sm);
-      }
-
-      .tab-item {
-        flex: none;
-        flex-direction: row;
-        gap: var(--space-sm);
-        padding: var(--space-sm) var(--space-md);
-        border-radius: var(--radius-md);
-        transition: all 0.2s ease;
-      }
-      .tab-item:hover:not(.active) {
-        background: var(--fill);
-        transform: none;
-      }
-      .tab-item.active {
-        background: var(--blue);
-        color: #fff;
-      }
-      .tab-item .tab-icon {
-        font-size: 18px;
-        height: 18px;
-      }
-      .tab-item span:last-child {
-        font-size: 13px;
-      }
-      .tab-badge {
-        position: static;
-        margin-left: var(--space-xs);
-      }
-
-      /* Two-column layout for Overview */
-      #view-overview .list-section:last-of-type {
-        margin-top: var(--space-lg);
-      }
-
-      /* Desktop 2-column layout - enhanced */
-      .desktop-columns {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-xl);
-      }
-      .desktop-only {
-        display: block !important;
-      }
-
-      /* Grid layout for agents + activities */
-      .desktop-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-lg);
-      }
-
-      /* Scroll container: show more cards */
-      .scroll-card {
-        width: 180px;
-      }
-
-      /* Sheet becomes modal */
-      .sheet-content {
-        max-width: 600px;
-        margin: 0 auto;
-        border-radius: var(--radius-xl);
-        max-height: 85vh;
-      }
-
-      .sheet.level-2 .sheet-content {
-        max-width: 550px;
-      }
-
-      /* Keyboard hint in footer */
-      .keyboard-hint {
-        display: inline;
-      }
-    }
-
-    /* === Large Desktop (1440px+) === */
-    @media (min-width: 1440px) {
-      .navbar-content,
-      main {
-        max-width: 1400px;
-      }
-
-      /* 3-column layout option */
-      .stats-grid {
-        gap: var(--space-lg);
-      }
-
-      /* Larger scroll cards */
-      .scroll-card {
-        width: 200px;
-        padding: var(--space-lg);
-      }
-
-      .scroll-card-avatar {
-        width: 56px;
-        height: 56px;
-        font-size: 28px;
-      }
-
-      /* Agent rows more spacious */
-      .agent-row {
-        padding: var(--space-md) var(--space-lg);
-      }
-      .agent-avatar {
-        width: 52px;
-        height: 52px;
-        font-size: 26px;
-      }
-
-      /* Activity rows */
-      .activity-row {
-        padding: var(--space-md) var(--space-lg);
-      }
-
-      /* Timeline cards */
-      .timeline-card {
-        padding: var(--space-lg);
-      }
-
-      /* Sheet modal centered */
-      .sheet-content {
-        position: absolute;
-        bottom: auto;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        animation: modalFadeIn 0.3s ease;
-        max-height: 80vh;
-      }
-
-      @keyframes modalFadeIn {
-        from {
-          opacity: 0;
-          transform: translate(-50%, -48%);
-        }
-        to {
-          opacity: 1;
-          transform: translate(-50%, -50%);
-        }
-      }
-
-      /* Hero card more impactful */
-      .hero-card {
-        padding: var(--space-xl);
-      }
-      .hero-value {
-        font-size: 56px;
-      }
-    }
-
-    /* === Smooth animations === */
-    @media (prefers-reduced-motion: no-preference) {
-      .stat-card,
-      .scroll-card,
-      .agent-row,
-      .activity-row,
-      .timeline-card,
-      .tool-chip,
-      .filter-chip,
-      .tab-item {
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      /* Entrance animations for views */
-      .view.active {
-        animation: viewEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      @keyframes viewEnter {
-        from {
-          opacity: 0;
-          transform: translateY(16px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* Stagger animation for list items */
-      .list-group .agent-row,
-      .list-group .activity-row {
-        animation: listItemEnter 0.3s ease backwards;
-      }
-      .list-group .agent-row:nth-child(1),
-      .list-group .activity-row:nth-child(1) { animation-delay: 0.05s; }
-      .list-group .agent-row:nth-child(2),
-      .list-group .activity-row:nth-child(2) { animation-delay: 0.1s; }
-      .list-group .agent-row:nth-child(3),
-      .list-group .activity-row:nth-child(3) { animation-delay: 0.15s; }
-      .list-group .agent-row:nth-child(4),
-      .list-group .activity-row:nth-child(4) { animation-delay: 0.2s; }
-      .list-group .agent-row:nth-child(5),
-      .list-group .activity-row:nth-child(5) { animation-delay: 0.25s; }
-
-      @keyframes listItemEnter {
-        from {
-          opacity: 0;
-          transform: translateX(-12px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-    }
-
-    /* Focus visible only for keyboard */
-    :focus:not(:focus-visible) {
-      outline: none;
-    }
-    :focus-visible {
-      outline: 2px solid var(--blue);
-      outline-offset: 2px;
-    }
-
-    /* ===== MOBILE ENHANCEMENTS ===== */
-    
-    /* Touch targets - minimum 44px for all interactive elements */
-    .tab-item,
-    .filter-chip,
-    .tool-chip,
-    .list-item,
-    .agent-row,
-    .activity-row,
-    .timeline-node,
-    .session-header,
-    .scroll-card,
-    .stat-card {
-      min-height: 44px;
-    }
-
-    .tab-item {
-      min-width: 44px;
-    }
-
-    .filter-chip,
-    .tool-chip {
-      min-height: 44px;
-      padding: 10px 16px;
-    }
-
-    /* Bottom sheet improvements */
-    .sheet-content {
-      max-height: 85vh;
-      min-height: 40vh;
-      padding-bottom: calc(var(--safe-bottom) + 20px);
-    }
-
-    .sheet-body {
-      padding: 0 var(--space-md) calc(var(--safe-bottom) + var(--space-xl));
-      max-height: calc(85vh - 100px);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .sheet-handle {
-      width: 40px;
-      height: 5px;
-      margin: 12px auto 16px;
-    }
-
-    /* Pull-to-refresh visual indicator */
-    .refresh-indicator {
-      top: calc(44px + var(--safe-top) + 16px);
-      padding: 12px 20px;
-      border-radius: 24px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    }
-
-    .refresh-indicator .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--blue);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Horizontal scroll with snap points */
-    .scroll-container {
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      scroll-padding: var(--space-md);
-      gap: 12px;
-      padding: var(--space-md);
-    }
-
-    .scroll-card {
-      scroll-snap-align: start;
-      scroll-snap-stop: normal;
-      width: 150px;
-      flex-shrink: 0;
-    }
-
-    .scroll-card:first-child {
-      margin-left: 0;
-    }
-
-    .scroll-card:last-child {
-      margin-right: 0;
-    }
-
-    /* Safe area padding for notch and home indicator */
-    .navbar {
-      padding-top: max(var(--safe-top), 8px);
-    }
-
-    .tabbar {
-      padding-bottom: max(var(--safe-bottom), 8px);
-    }
-
-    main {
-      padding-bottom: calc(83px + max(var(--safe-bottom), 20px));
-    }
-
-    /* ===== iPhone SE and small screens (<390px) ===== */
-    @media screen and (max-width: 389px) {
-      :root {
-        --space-md: 12px;
-        --space-lg: 20px;
-      }
-
-      .large-title {
-        font-size: 28px;
-        padding: var(--space-sm) var(--space-md);
-      }
-
-      .hero-card {
-        padding: var(--space-md);
-        margin: 0 var(--space-sm) var(--space-md);
-      }
-
-      .hero-value {
-        font-size: 36px;
-      }
-
-      .hero-subtitle {
-        font-size: 13px;
-      }
-
-      .stats-grid {
-        gap: var(--space-sm);
-        padding: 0 var(--space-sm);
-      }
-
-      .stat-card {
-        padding: var(--space-sm);
-      }
-
-      .stat-value {
-        font-size: 22px;
-      }
-
-      .stat-label {
-        font-size: 11px;
-      }
-
-      .scroll-card {
-        width: 130px;
-        padding: var(--space-sm);
-      }
-
-      .scroll-card-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-      }
-
-      .scroll-card-name {
-        font-size: 13px;
-      }
-
-      .scroll-card-role {
-        font-size: 11px;
-      }
-
-      .list-header {
-        font-size: 12px;
-        padding: 0 var(--space-sm);
-      }
-
-      .list-section {
-        margin: var(--space-sm);
-      }
-
-      .agent-row,
-      .activity-row {
-        padding: var(--space-sm);
-        gap: var(--space-sm);
-      }
-
-      .agent-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-      }
-
-      .agent-name {
-        font-size: 15px;
-      }
-
-      .agent-role {
-        font-size: 13px;
-      }
-
-      .agent-cost {
-        font-size: 15px;
-      }
-
-      .agent-tokens {
-        font-size: 11px;
-      }
-
-      .activity-title {
-        font-size: 14px;
-      }
-
-      .activity-desc {
-        font-size: 13px;
-        -webkit-line-clamp: 1;
-      }
-
-      .activity-time {
-        font-size: 11px;
-      }
-
-      .tabbar-content {
-        height: 54px;
-      }
-
-      .tab-icon {
-        font-size: 22px;
-      }
-
-      .tab-item span:last-child {
-        font-size: 9px;
-      }
-
-      /* Sheets */
-      .sheet-content {
-        max-height: 90vh;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      }
-
-      .detail-avatar-icon {
-        font-size: 48px;
-      }
-
-      .detail-avatar-name {
-        font-size: 18px;
-      }
-
-      .detail-row {
-        font-size: 14px;
-        padding: 10px var(--space-sm);
-      }
-
-      /* Timeline */
-      .timeline-card {
-        padding: var(--space-sm);
-      }
-
-      .timeline-card-title {
-        font-size: 13px;
-      }
-
-      .timeline-card-desc {
-        font-size: 12px;
-      }
-
-      .filter-chip {
-        padding: 8px 12px;
-        font-size: 12px;
-        min-height: 40px;
-      }
-
-      .filter-chip .count {
-        font-size: 10px;
-        padding: 2px 5px;
-      }
-
-      /* Search input */
-      #agentSearch {
-        padding: 10px 14px;
-        font-size: 15px;
-      }
-    }
-
-    /* ===== iPhone 14 and medium screens (<430px) ===== */
-    @media screen and (max-width: 429px) and (min-width: 390px) {
-      .large-title {
-        font-size: 30px;
-      }
-
-      .hero-value {
-        font-size: 42px;
-      }
-
-      .stat-value {
-        font-size: 24px;
-      }
-
-      .scroll-card {
-        width: 145px;
-      }
-
-      .agent-name {
-        font-size: 16px;
-      }
-
-      .agent-role {
-        font-size: 14px;
-      }
-
-      .activity-desc {
-        -webkit-line-clamp: 2;
-      }
-
-      .tabbar-content {
-        height: 52px;
-      }
-
-      /* Timeline adjustments */
-      .timeline-card-desc {
-        font-size: 13px;
-      }
-
-      .session-header {
-        padding: var(--space-sm) var(--space-md);
-      }
-    }
-
-    /* ===== Larger phones (>430px) ===== */
-    @media screen and (min-width: 430px) {
-      .scroll-card {
-        width: 165px;
-      }
-
-      .scroll-container {
-        gap: var(--space-md);
-      }
-    }
-
-    /* ===== Touch-specific enhancements ===== */
-    @media (hover: none) and (pointer: coarse) {
-      /* Larger touch targets for touch devices */
-      .list-item,
-      .agent-row,
-      .activity-row {
-        min-height: 52px;
-      }
-
-      .filter-chip,
-      .tool-chip {
-        min-height: 48px;
-      }
-
-      /* Remove hover states that don't make sense on touch */
-      .agent-row:hover,
-      .timeline-card:hover,
-      .session-header:hover {
-        background: transparent;
-        transform: none;
-      }
-
-      /* Keep active states */
-      .agent-row:active,
-      .timeline-card:active,
-      .session-header:active {
-        background: var(--fill);
-      }
-
-      .timeline-card:active {
-        transform: scale(0.99);
-      }
-    }
-
-    /* ===== Landscape mode adjustments ===== */
-    @media screen and (max-height: 500px) and (orientation: landscape) {
-      .large-title {
-        font-size: 24px;
-        padding: var(--space-xs) var(--space-md);
-      }
-
-      .hero-card {
-        padding: var(--space-sm);
-      }
-
-      .hero-value {
-        font-size: 32px;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      .sheet-content {
-        max-height: 95vh;
-      }
-
-      .tabbar-content {
-        height: 44px;
-      }
-    }
-
-    /* Toast notifications */
-    .toast {
-      position: fixed;
-      bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 16px);
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--bg-secondary);
-      border: 1px solid var(--separator);
-      border-radius: var(--radius-lg);
-      padding: 12px 20px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      z-index: 10000;
-      opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    .toast.error { border-color: var(--red); }
-    .toast.success { border-color: var(--green); }
-
-    /* Skeleton loading */
-    .skeleton {
-      background: linear-gradient(90deg, var(--fill) 25%, var(--bg-tertiary) 50%, var(--fill) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: var(--radius-sm);
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    .skeleton-card {
-      height: 140px;
-      min-width: 120px;
-      border-radius: var(--radius-lg);
-    }
-    .skeleton-row {
-      height: 60px;
-      margin-bottom: 8px;
-    }
-
-    /* ===== ADDITIONAL POLISH ===== */
-    
-    /* Focus visible for accessibility */
-    *:focus-visible {
-      outline: 2px solid var(--blue);
-      outline-offset: 2px;
-    }
-
-    /* Selection color */
-    ::selection {
-      background: var(--blue);
-      color: white;
-    }
-
-    /* Smooth scroll */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    /* Better link styling in descriptions */
-    a {
-      color: var(--blue);
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-
-    /* ===== Rate Limit Fallback ===== */
-    .rate-limit-overlay {
+    .mobile-overlay {
+      display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      animation: fadeIn 0.3s ease;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 99;
     }
 
-    .rate-limit-card {
-      background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
-      border-radius: var(--radius-xl);
-      padding: var(--space-xl);
-      max-width: 360px;
-      width: 90%;
-      text-align: center;
-      border: 1px solid var(--separator);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
-      animation: slideUp 0.4s ease;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .rate-limit-icon {
-      font-size: 64px;
-      margin-bottom: var(--space-md);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .rate-limit-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--label);
-      margin: 0 0 var(--space-sm) 0;
-    }
-
-    .rate-limit-desc {
-      font-size: 15px;
-      color: var(--label-secondary);
-      margin: 0 0 var(--space-lg) 0;
-      line-height: 1.5;
-    }
-
-    .rate-limit-timer {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-      margin-bottom: var(--space-lg);
-    }
-
-    .rate-limit-progress {
-      flex: 1;
-      height: 8px;
-      background: var(--fill);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .rate-limit-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--orange), var(--green));
-      border-radius: 4px;
-      transition: width 0.1s linear;
-      width: 0%;
-    }
-
-    #rateLimitCountdown {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--orange);
-      min-width: 45px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .rate-limit-tips {
-      background: var(--fill);
-      border-radius: var(--radius-md);
-      padding: var(--space-sm) var(--space-md);
-      margin-bottom: var(--space-lg);
-    }
-
-    .rate-limit-tips p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--label-tertiary);
-    }
-
-    .rate-limit-btn {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-      color: white;
-      border: none;
-      border-radius: var(--radius-lg);
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      width: 100%;
-    }
-
-    .rate-limit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(10, 132, 255, 0.4);
-    }
-
-    .rate-limit-btn:active {
-      transform: translateY(0);
-    }
-
-    #rateLimitFallback {
-      transition: opacity 0.3s ease;
-    }
-
-    /* ===== Operations Dashboard ===== */
-    .operations-dashboard {
-      background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
-      border-radius: var(--radius-xl);
-      padding: var(--space-md);
-      margin-bottom: var(--space-lg);
-      border: 1px solid var(--separator);
-    }
-
-    .ops-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--space-md);
-      padding-bottom: var(--space-sm);
-      border-bottom: 1px solid var(--separator);
-    }
-
-    .ops-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--label);
-    }
-
-    .ops-status {
-      font-size: 12px;
-      color: var(--green);
-      font-weight: 500;
-    }
-
-    .ops-section {
-      margin-bottom: var(--space-md);
-    }
-
-    .ops-section:last-child {
-      margin-bottom: 0;
-    }
-
-    .ops-section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--label-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: var(--space-sm);
-    }
-
-    .ops-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-sm);
-    }
-
-    @media (max-width: 500px) {
-      .ops-grid {
-        grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 768px) {
+      .mobile-header {
+        display: flex;
       }
-    }
 
-    .ops-card {
-      background: var(--fill);
-      border-radius: var(--radius-md);
-      padding: var(--space-sm);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
+      .header {
+        display: none;
+      }
 
-    .ops-icon {
-      font-size: 18px;
-    }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+      }
 
-    .ops-label {
-      font-size: 10px;
-      color: var(--label-tertiary);
-    }
+      .sidebar.open {
+        transform: translateX(0);
+      }
 
-    .ops-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--label);
-    }
+      .mobile-overlay.show {
+        display: block;
+      }
 
-    .ops-crons-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-xs);
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .ops-cron-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--fill);
-      padding: var(--space-sm) var(--space-md);
-      border-radius: var(--radius-md);
-      font-size: 13px;
-    }
-
-    .ops-cron-name {
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .ops-cron-status {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-    }
-
-    .ops-cron-status.disabled {
-      background: var(--label-tertiary);
-    }
-
-    .ops-cron-next {
-      font-size: 11px;
-      color: var(--label-secondary);
-    }
-
-    .ops-crew {
-      display: flex;
-      gap: var(--space-sm);
-      flex-wrap: wrap;
-    }
-
-    .crew-member {
-      width: 40px;
-      height: 40px;
-      background: var(--fill);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
-      position: relative;
-    }
-
-    .crew-status {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--label-tertiary);
-      border: 2px solid var(--bg-secondary);
-    }
-
-    .crew-member.active .crew-status {
-      background: var(--green);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .crew-member:hover {
-      transform: scale(1.1);
-      background: var(--bg-tertiary);
-    }
-
-    /* Code blocks in activity details */
-    .code-block {
-      font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    /* Pulse animation for active status */
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 4px var(--green); }
-      50% { box-shadow: 0 0 12px var(--green); }
-    }
-    .scroll-card.main .scroll-card-avatar span[style*="green"] {
-      animation: glow 2s ease-in-out infinite;
-    }
-
-    /* Print styles */
-    @media print {
-      .navbar, .tabbar, .sheet, #scrollTopBtn { display: none !important; }
-      main { padding: 0 !important; max-width: 100% !important; }
-      .view { display: block !important; page-break-after: always; }
+      .column {
+        width: 280px;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <div class="navbar-content">
-      <span class="navbar-title">🌀 Mission Control X</span>
-      <div class="navbar-status" onclick="loadData(true)" style="cursor:pointer;" data-tooltip="Clique para atualizar (R)" tabindex="0" role="button" onkeydown="if(event.key==='Enter')loadData(true)">
-        <span class="status-dot"></span>
-        <span id="lastUpdate">--:--</span>
-        <span style="margin-left:4px;font-size:12px;">↻</span>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span>🌀</span>
+          <span>Mission Control X</span>
+        </div>
+        <div class="version" id="version">Loading...</div>
       </div>
-    </div>
-  </nav>
 
-  <!-- Refresh Indicator -->
-  <div class="refresh-indicator" id="refreshIndicator">
-    <span>↻</span>
-    <span>Atualizando...</span>
+      <div class="sidebar-section">
+        <div class="section-title">Oracle Team</div>
+        <div class="agent-list" id="oracleTeam">
+          <div class="loading">Loading agents...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">Specialized Agents</div>
+        <div class="agent-list" id="specializedTeam">
+          <div class="loading">Loading agents...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">Statistics</div>
+        <div class="stats-grid" id="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="statAgents">-</div>
+            <div class="stat-label">Active Agents</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statTasks">-</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statRecurring">-</div>
+            <div class="stat-label">Recurring</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statEnabled">-</div>
+            <div class="stat-label">Enabled</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Mobile Header -->
+      <div class="mobile-header">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <div class="logo">
+          <span>🌀</span>
+          <span>Mission Control X</span>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <header class="header">
+        <h1 class="header-title">Operations Dashboard</h1>
+        <div class="header-actions">
+          <div class="refresh-indicator" id="refreshIndicator">
+            <span>●</span>
+            <span id="refreshText">Live</span>
+          </div>
+          <button class="btn" onclick="loadBoardData()">🔄 Refresh</button>
+        </div>
+      </header>
+
+      <!-- Board -->
+      <div class="board">
+        <div class="board-columns">
+          <div class="column">
+            <div class="column-header">
+              <div class="column-title">Recurring</div>
+              <div class="column-count" id="countRecurring">0</div>
+            </div>
+            <div class="column-cards" id="columnRecurring">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+
+          <div class="column">
+            <div class="column-header">
+              <div class="column-title">Queued</div>
+              <div class="column-count" id="countQueued">0</div>
+            </div>
+            <div class="column-cards" id="columnQueued">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+
+          <div class="column">
+            <div class="column-header">
+              <div class="column-title">In Progress</div>
+              <div class="column-count" id="countInProgress">0</div>
+            </div>
+            <div class="column-cards" id="columnInProgress">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+
+          <div class="column">
+            <div class="column-header">
+              <div class="column-title">Review</div>
+              <div class="column-count" id="countReview">0</div>
+            </div>
+            <div class="column-cards" id="columnReview">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
-  <!-- Main Content -->
-  <main>
-    <!-- Overview View (L0) -->
-    <div class="view active" id="view-overview">
-      <h1 class="large-title">Overview</h1>
-
-      <!-- Hero Card -->
-      <div class="hero-card" data-tooltip="Custo total do dia vs budget de $15">
-        <div class="hero-label">Custo Total</div>
-        <div class="hero-value" id="totalCost">$0.00</div>
-        <div class="hero-subtitle" id="tokensSub">0 tokens processados</div>
-        <div class="hero-progress">
-          <div class="hero-progress-fill" id="costFill" style="width: 0%"></div>
-        </div>
-        <div class="hero-meta">
-          <span id="costPercent">0% do budget</span>
-          <span onclick="exportData()" style="cursor:pointer;" data-tooltip="Baixar JSON com todos os dados" tabindex="0" role="button" onkeydown="if(event.key==='Enter')exportData()">📥 Export</span>
-          <span>$15.00/dia</span>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="stats-grid">
-        <div class="stat-card" onclick="switchView('agents')" tabindex="0" role="button" data-tooltip="Ver todos os agentes" onkeydown="if(event.key==='Enter')switchView('agents')">
-          <div class="stat-header">
-            <span class="stat-icon">🤖</span>
-            <span class="stat-label">Agentes</span>
-          </div>
-          <div class="stat-value" id="statAgents">0</div>
-        </div>
-        <div class="stat-card" onclick="switchView('activity')" tabindex="0" role="button" data-tooltip="Ver atividade recente" onkeydown="if(event.key==='Enter')switchView('activity')">
-          <div class="stat-header">
-            <span class="stat-icon">💬</span>
-            <span class="stat-label">Mensagens</span>
-          </div>
-          <div class="stat-value" id="statMessages">0</div>
-        </div>
-        <div class="stat-card" onclick="switchView('tools')" tabindex="0" role="button" data-tooltip="Ver ferramentas usadas" onkeydown="if(event.key==='Enter')switchView('tools')">
-          <div class="stat-header">
-            <span class="stat-icon">🔧</span>
-            <span class="stat-label">Tool Calls</span>
-          </div>
-          <div class="stat-value" id="statTools">0</div>
-        </div>
-        <div class="stat-card" tabindex="0" role="button" data-tooltip="Total de tokens consumidos">
-          <div class="stat-header">
-            <span class="stat-icon">⚡</span>
-            <span class="stat-label">Tokens</span>
-          </div>
-          <div class="stat-value" id="statTokens">0K</div>
-        </div>
-      </div>
-
-      <!-- Agents Horizontal Scroll -->
-      <div class="list-section">
-        <div class="list-header">Agentes Ativos</div>
-        <div class="scroll-container" id="agentsScroll"></div>
-      </div>
-
-      <!-- Desktop: 2-column layout for Agents + Activities -->
-      <div class="desktop-columns">
-        <!-- Agents List (hidden on mobile, shown on desktop) -->
-        <div class="list-section desktop-only">
-          <div class="list-header">Top Agentes por Custo</div>
-          <div class="list-group" id="agentsListDesktop"></div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="list-section">
-          <div class="list-header">Atividade Recente</div>
-          <div class="list-group" id="activityList"></div>
-        </div>
-      </div>
-
-      <!-- Agents List (hidden, for drill-down on mobile) -->
-      <div class="list-section" style="display:none;">
-        <div class="list-group" id="agentsList"></div>
-      </div>
-    </div>
-
-    <!-- Agents View -->
-    <div class="view" id="view-agents">
-      <h1 class="large-title">Agentes</h1>
-      
-      <!-- Search -->
-      <div style="padding:0 var(--space-md) var(--space-md);">
-        <input type="text" id="agentSearch" placeholder="🔍 Buscar agente..." 
-               style="width:100%;padding:12px 16px;border-radius:var(--radius-lg);border:none;background:var(--fill);color:var(--label);font-size:16px;outline:none;"
-               oninput="filterAgentsList(this.value)">
-      </div>
-      
-      <!-- Quick Stats - Clickable to filter -->
-      <div class="stats-grid" style="margin-bottom:var(--space-lg);">
-        <div class="stat-card" onclick="filterAgentsByType('crew')" style="cursor:pointer;">
-          <div class="stat-header">
-            <span class="stat-icon">👒</span>
-            <span class="stat-label">Crew</span>
-          </div>
-          <div class="stat-value" id="crewCount">0</div>
-        </div>
-        <div class="stat-card" onclick="filterAgentsByType('active')" style="cursor:pointer;">
-          <div class="stat-header">
-            <span class="stat-icon">🟢</span>
-            <span class="stat-label">Ativos</span>
-          </div>
-          <div class="stat-value" id="activeCount">0</div>
-        </div>
-        <div class="stat-card" onclick="filterAgentsByType('inactive')" style="cursor:pointer;">
-          <div class="stat-header">
-            <span class="stat-icon">💤</span>
-            <span class="stat-label">Inativos</span>
-          </div>
-          <div class="stat-value" id="inactiveCount">0</div>
-        </div>
-        <div class="stat-card" onclick="filterAgentsByType('all')" style="cursor:pointer;">
-          <div class="stat-header">
-            <span class="stat-icon">💰</span>
-            <span class="stat-label">Total</span>
-          </div>
-          <div class="stat-value" id="agentsTotalCost">$0</div>
-        </div>
-      </div>
-      
-      <div class="list-section">
-        <div class="list-header" id="agentsCount">0 ativos</div>
-        <div class="list-group" id="allAgentsList"></div>
-      </div>
-    </div>
-
-    <!-- Tools View -->
-    <div class="view" id="view-tools">
-      <h1 class="large-title">Ferramentas</h1>
-      
-      <!-- Cost Breakdown by Agent -->
-      <div class="list-section">
-        <div class="list-header">Custo por Agente</div>
-        <div class="list-group">
-          <div id="costBreakdown" style="padding: var(--space-md);"></div>
-        </div>
-      </div>
-      
-      <div class="list-section">
-        <div class="list-header" id="toolsCount">0 tipos</div>
-        <div class="list-group">
-          <div class="tools-wrap" id="toolsList"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Activity View -->
-    <div class="view" id="view-activity">
-      <h1 class="large-title">Atividade</h1>
-
-      <!-- Operations Dashboard -->
-      <div class="operations-dashboard" id="operationsDashboard">
-        <div class="ops-header">
-          <span class="ops-title">⚙️ Centro de Operações</span>
-          <span class="ops-status" id="opsStatus">● Online</span>
-        </div>
-        
-        <!-- System Status -->
-        <div class="ops-section">
-          <div class="ops-section-title">Sistema</div>
-          <div class="ops-grid">
-            <div class="ops-card">
-              <span class="ops-icon">🟢</span>
-              <span class="ops-label">Status</span>
-              <span class="ops-value" id="sysStatus">Online</span>
-            </div>
-            <div class="ops-card">
-              <span class="ops-icon">⏱️</span>
-              <span class="ops-label">Uptime</span>
-              <span class="ops-value" id="sysUptime">--</span>
-            </div>
-            <div class="ops-card">
-              <span class="ops-icon">💾</span>
-              <span class="ops-label">Memória</span>
-              <span class="ops-value" id="sysMemory">-- MB</span>
-            </div>
-            <div class="ops-card">
-              <span class="ops-icon">🔄</span>
-              <span class="ops-label">Crons Ativos</span>
-              <span class="ops-value" id="sysCrons">0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crons Section -->
-        <div class="ops-section">
-          <div class="ops-section-title">Automações Programadas</div>
-          <div class="ops-crons-list" id="opsCronsList">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <!-- Agents Quick View -->
-        <div class="ops-section">
-          <div class="ops-section-title">Tripulação</div>
-          <div class="ops-crew" id="opsCrew">
-            <div class="crew-member" data-agent="main" title="Imu - Orquestrador"><span>🌀</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="robin" title="Robin - Arqueóloga"><span>📚</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="franky" title="Franky - Engenheiro"><span>🔧</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="zoro" title="Zoro - Executor"><span>⚔️</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="sanji" title="Sanji - Provedor"><span>🍳</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="chopper" title="Chopper - Médico"><span>🩺</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="nami" title="Nami - Navegadora"><span>🍊</span><div class="crew-status"></div></div>
-            <div class="crew-member" data-agent="usopp" title="Usopp - Comunicador"><span>🎯</span><div class="crew-status"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status Legend -->
-      <div class="status-legend">
-        <div class="legend-item"><span class="legend-dot completed"></span>Completed</div>
-        <div class="legend-item"><span class="legend-dot running"></span>Running</div>
-        <div class="legend-item"><span class="legend-dot pending"></span>Pending</div>
-        <div class="legend-item"><span class="legend-dot failed"></span>Failed</div>
-      </div>
-
-      <!-- Filters -->
-      <div class="timeline-filters" id="activityFilters" role="tablist" aria-label="Filtros de atividade">
-        <div class="filter-chip active" data-filter="all" onclick="setActivityFilter('all')" tabindex="0" role="tab" aria-selected="true" onkeydown="if(event.key==='Enter')setActivityFilter('all')">
-          <span>📋</span> Todos <span class="count" id="filterCountAll">0</span>
-        </div>
-        <div class="filter-chip" data-filter="tool" onclick="setActivityFilter('tool')" tabindex="0" role="tab" aria-selected="false" onkeydown="if(event.key==='Enter')setActivityFilter('tool')">
-          <span>🔧</span> Tool <span class="count" id="filterCountTool">0</span>
-        </div>
-        <div class="filter-chip" data-filter="user" onclick="setActivityFilter('user')" tabindex="0" role="tab" aria-selected="false" onkeydown="if(event.key==='Enter')setActivityFilter('user')">
-          <span>👤</span> User <span class="count" id="filterCountUser">0</span>
-        </div>
-        <div class="filter-chip" data-filter="assistant" onclick="setActivityFilter('assistant')" tabindex="0" role="tab" aria-selected="false" onkeydown="if(event.key==='Enter')setActivityFilter('assistant')">
-          <span>🤖</span> Assistant <span class="count" id="filterCountAssistant">0</span>
-        </div>
-        <div class="filter-chip" data-filter="completed" onclick="setActivityFilter('completed')" tabindex="0" role="tab" aria-selected="false" onkeydown="if(event.key==='Enter')setActivityFilter('completed')">
-          <span>🟢</span> Completed
-        </div>
-        <div class="filter-chip" data-filter="failed" onclick="setActivityFilter('failed')" tabindex="0" role="tab" aria-selected="false" onkeydown="if(event.key==='Enter')setActivityFilter('failed')">
-          <span>🔴</span> Failed
-        </div>
-      </div>
-
-      <!-- Timeline Container -->
-      <div class="timeline-container" id="timelineContainer"></div>
-    </div>
-    
-    <!-- Footer -->
-    <div style="text-align:center;padding:var(--space-lg);font-size:11px;color:var(--label-tertiary);margin-bottom:calc(var(--tab-bar-height) + var(--safe-area-bottom) + 20px);">
-      Mission Control X v2.5 • <span id="serverUptime">-</span> uptime • ⌨️ R=Refresh, 1-4=Tabs, Esc=Close
-    </div>
-  </main>
-
-  <!-- Tab Bar -->
-  <nav class="tabbar" role="navigation" aria-label="Navegação principal">
-    <div class="tabbar-content">
-      <div class="tab-item active" data-view="overview" tabindex="0" role="tab" aria-selected="true" data-tooltip="Dashboard (1)" onkeydown="if(event.key==='Enter')switchView('overview')">
-        <span class="tab-icon">📊</span>
-        <span>Overview</span>
-      </div>
-      <div class="tab-item" data-view="agents" tabindex="0" role="tab" aria-selected="false" data-tooltip="Agentes (2)" onkeydown="if(event.key==='Enter')switchView('agents')">
-        <span class="tab-icon">🤖</span>
-        <span>Agentes</span>
-        <span class="tab-badge" id="agentsBadge" style="display:none;"></span>
-      </div>
-      <div class="tab-item" data-view="tools" tabindex="0" role="tab" aria-selected="false" data-tooltip="Ferramentas (3)" onkeydown="if(event.key==='Enter')switchView('tools')">
-        <span class="tab-icon">🔧</span>
-        <span>Tools</span>
-      </div>
-      <div class="tab-item" data-view="activity" tabindex="0" role="tab" aria-selected="false" data-tooltip="Timeline (4)" onkeydown="if(event.key==='Enter')switchView('activity')">
-        <span class="tab-icon">📡</span>
-        <span>Atividade</span>
-        <span class="tab-badge" id="activityBadge" style="display:none;"></span>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Scroll to Top Button -->
-  <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" 
-    style="position:fixed;bottom:calc(var(--tab-bar-height) + var(--safe-area-bottom) + 70px);right:20px;
-           width:44px;height:44px;border-radius:22px;border:none;background:var(--blue);
-           color:#fff;font-size:20px;cursor:pointer;display:none;z-index:100;
-           box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:opacity 0.2s;">↑</button>
-
-  <!-- L1: Agent Detail Sheet -->
-  <div class="sheet" id="agentSheet">
-    <div class="sheet-backdrop" onclick="closeAgentSheet()"></div>
-    <div class="sheet-content">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header">
-        <span class="sheet-title" id="agentSheetTitle">Detalhes</span>
-        <span class="sheet-close" onclick="closeAgentSheet()">×</span>
-      </div>
-      <div class="sheet-body" id="agentSheetBody"></div>
-    </div>
-  </div>
-
-  <!-- L2: Activity Detail Sheet -->
-  <div class="sheet level-2" id="activitySheet">
-    <div class="sheet-backdrop" onclick="closeActivitySheet()"></div>
-    <div class="sheet-content">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header">
-        <span class="sheet-back" onclick="closeActivitySheet()">‹ Voltar</span>
-        <span class="sheet-title" id="activitySheetTitle">Atividade</span>
-        <span class="sheet-close" onclick="closeAllSheets()">×</span>
-      </div>
-      <div class="sheet-body" id="activitySheetBody"></div>
-    </div>
-  </div>
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <script>
-    // ===== Helpers =====
-    const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
-    const money = n => '$' + (n || 0).toFixed(2);
-    const ago = ts => {
-      if (!ts) return '';
-      const s = (Date.now() - new Date(ts)) / 1000;
-      if (s < 60) return 'agora';
-      if (s < 3600) return Math.floor(s/60) + ' min';
-      if (s < 86400) return Math.floor(s/3600) + 'h';
-      return Math.floor(s/86400) + 'd';
-    };
-    const timeStr = ts => ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+    // Mobile menu
+    const menuBtn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
 
-    // Convert URLs to clickable links
-    function linkify(text) {
-      if (!text) return '';
-      const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
-      return text.replace(urlRegex, '<a href="$1" target="_blank" style="color:var(--blue);text-decoration:underline;word-break:break-all;">$1</a>');
-    }
-
-    // Rate limit state
-    let isRateLimited = false;
-    let rateLimitResetTime = null;
-
-    // Show rate limit fallback UI
-    function showRateLimitFallback(resetSeconds = 60) {
-      isRateLimited = true;
-      rateLimitResetTime = Date.now() + (resetSeconds * 1000);
-      
-      const fallback = document.createElement('div');
-      fallback.id = 'rateLimitFallback';
-      fallback.innerHTML = `
-        <div class="rate-limit-overlay">
-          <div class="rate-limit-card">
-            <div class="rate-limit-icon">⏳</div>
-            <h2 class="rate-limit-title">Limite de Requisições</h2>
-            <p class="rate-limit-desc">O servidor está processando muitas solicitações. Aguarde um momento.</p>
-            <div class="rate-limit-timer">
-              <div class="rate-limit-progress">
-                <div class="rate-limit-progress-fill" id="rateLimitProgress"></div>
-              </div>
-              <span id="rateLimitCountdown">${resetSeconds}s</span>
-            </div>
-            <div class="rate-limit-tips">
-              <p>💡 Dica: Os dados são atualizados automaticamente a cada 30s</p>
-            </div>
-            <button class="rate-limit-btn" onclick="dismissRateLimit()">
-              Usar dados em cache
-            </button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(fallback);
-      
-      // Countdown timer
-      const updateCountdown = () => {
-        const remaining = Math.max(0, Math.ceil((rateLimitResetTime - Date.now()) / 1000));
-        const progress = Math.max(0, Math.min(100, (1 - remaining / resetSeconds) * 100));
-        
-        const countdown = document.getElementById('rateLimitCountdown');
-        const progressBar = document.getElementById('rateLimitProgress');
-        
-        if (countdown) countdown.textContent = `${remaining}s`;
-        if (progressBar) progressBar.style.width = `${progress}%`;
-        
-        if (remaining <= 0) {
-          dismissRateLimit();
-          loadData(true);
-        } else if (isRateLimited) {
-          requestAnimationFrame(() => setTimeout(updateCountdown, 100));
-        }
-      };
-      updateCountdown();
-    }
-
-    function dismissRateLimit() {
-      isRateLimited = false;
-      const fallback = document.getElementById('rateLimitFallback');
-      if (fallback) {
-        fallback.style.opacity = '0';
-        setTimeout(() => fallback.remove(), 300);
-      }
-    }
-
-    // Fetch with retry and exponential backoff
-    async function fetchWithRetry(url, retries = 3) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const res = await fetch(url);
-          
-          // Handle rate limiting (429)
-          if (res.status === 429) {
-            const retryAfter = parseInt(res.headers.get('Retry-After') || '60');
-            if (!isRateLimited) {
-              showRateLimitFallback(retryAfter);
-            }
-            throw new Error('Rate limited');
-          }
-          
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return await res.json();
-        } catch (e) {
-          if (e.message === 'Rate limited') throw e;
-          if (i === retries - 1) throw e;
-          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
-        }
-      }
-    }
-
-    const emojis = { main:'🌀', nami:'🍊', robin:'📚', franky:'🔧', zoro:'⚔️', sanji:'🍳', chopper:'🩺', luffy:'👒', usopp:'🎯', brook:'🎸', cron:'⏰' };
-    const roles = { main:'Orquestrador', nami:'Navegadora', robin:'Arqueóloga', franky:'Engenheiro', zoro:'Executor', sanji:'Provedor', chopper:'Médico', usopp:'Comunicador', cron:'Scheduler' };
-    const toolIcons = { exec:'⚡', read:'📖', write:'✍️', edit:'✏️', web_search:'🔍', web_fetch:'🌐', message:'💬', browser:'🖥️', memory_search:'🧠', cron:'⏰', sessions_spawn:'🚀', process:'⚙️', tts:'🔊', canvas:'🎨', nodes:'📱' };
-    const stateLabels = { idle: 'Idle', working: 'Trabalhando', error: 'Erro', waiting: 'Aguardando' };
-
-    const getKey = label => (label || '').toLowerCase().split('-')[0].replace('cron:', '').trim();
-    const getEmoji = label => emojis[getKey(label)] || '🤖';
-    const getRole = label => roles[getKey(label)] || 'Agente';
-
-    // Determine agent state based on activity
-    function getAgentState(agent, activities) {
-      const agentActivities = activities.filter(a =>
-        a.session && a.session.toLowerCase().includes(getKey(agent.label))
-      );
-
-      if (!agentActivities.length) return 'idle';
-
-      const latest = agentActivities[0];
-      const timeSince = (Date.now() - new Date(latest.timestamp)) / 1000;
-
-      // Check for errors
-      if (latest.type === 'error' || (latest.tags && latest.tags.includes('error'))) {
-        return 'error';
-      }
-
-      // If recent activity (< 30s), consider working
-      if (timeSince < 30) return 'working';
-
-      // If waiting on tool
-      if (latest.type === 'tool' && timeSince < 120) return 'waiting';
-
-      return 'idle';
-    }
-
-    // Get agent badge type
-    function getAgentBadge(agent, sessions) {
-      const label = getKey(agent.label);
-      if (label === 'main') return 'supervisor';
-      if (agent.kind === 'subagent') return 'worker';
-      return 'solo';
-    }
-
-    // ===== Data Storage =====
-    let cachedSessions = [];
-    let cachedActivities = [];
-
-    // ===== View switching =====
-    let currentView = 'overview';
-
-    function switchView(view) {
-      currentView = view;
-      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
-      document.querySelectorAll('.tab-item').forEach(t => {
-        const isActive = t.dataset.view === view;
-        t.classList.toggle('active', isActive);
-        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      });
-    }
-
-    document.querySelectorAll('.tab-item').forEach(tab => {
-      tab.addEventListener('click', () => switchView(tab.dataset.view));
+    menuBtn?.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      mobileOverlay.classList.toggle('show');
     });
 
-    // ===== Sheet Management =====
-    let currentAgent = null;
-    let currentActivity = null;
+    mobileOverlay?.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      mobileOverlay.classList.remove('show');
+    });
 
-    // L1: Open Agent Sheet
-    async function openAgentSheet(agent) {
-      currentAgent = agent;
-      const state = getAgentState(agent, cachedActivities);
-      const badge = getAgentBadge(agent, cachedSessions);
-      const parentCrew = getParentCrew(agent.label);
-      const isCore = isCoreCrew(agent.label);
+    // API endpoint
+    const API_BASE = window.location.origin;
+    const REFRESH_INTERVAL = 30000; // 30 seconds
 
-      // Show sheet immediately with loading state
-      document.getElementById('agentSheetTitle').textContent = agent.label || 'Agente';
-      document.getElementById('agentSheetBody').innerHTML = `
-        <div class="detail-avatar">
-          <div class="detail-avatar-icon">${getEmoji(agent.label)}</div>
-          <div class="detail-avatar-name">${agent.label || 'Agent'}</div>
-          <div class="detail-avatar-role">${getRole(agent.label)}</div>
-          <div class="detail-avatar-state ${state}">
-            <span class="state-dot ${state}"></span>
-            ${stateLabels[state] || 'Idle'}
-          </div>
-          ${parentCrew && !isCore ? `<div style="margin-top:8px;font-size:12px;color:var(--label-secondary);">Filho de ${emojis[parentCrew] || '👤'} ${parentCrew.charAt(0).toUpperCase() + parentCrew.slice(1)}</div>` : ''}
-        </div>
-
-        <div class="detail-list">
-          <div class="detail-row"><span class="detail-label">Modelo</span><span class="detail-value">${(agent.model || '').split('/').pop() || 'N/A'}</span></div>
-          <div class="detail-row"><span class="detail-label">Canal</span><span class="detail-value">${agent.channel || 'N/A'}</span></div>
-          <div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-value"><span class="agent-badge ${badge}">${badge}</span></span></div>
-          ${parentCrew ? `<div class="detail-row"><span class="detail-label">Parent</span><span class="detail-value">${emojis[parentCrew] || '👤'} ${parentCrew}</span></div>` : ''}
-          <div class="detail-row"><span class="detail-label">Tokens</span><span class="detail-value">${fmt(agent.totalTokens || 0)}</span></div>
-          <div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(agent.cost)}</span></div>
-          <div class="detail-row"><span class="detail-label">Última atividade</span><span class="detail-value">${ago(agent.updatedAt)}</span></div>
-          <div class="detail-row"><span class="detail-label">Mensagens</span><span class="detail-value">${agent.messageCount || 0}</span></div>
-          <div class="detail-row"><span class="detail-label">Tool Calls</span><span class="detail-value">${agent.toolCalls || 0}</span></div>
-          <div class="detail-row" onclick="copyToClipboard('${agent.sessionId}')" style="cursor:pointer;">
-            <span class="detail-label">Session ID</span>
-            <span class="detail-value" style="font-size:12px;font-family:monospace;">${agent.sessionId?.substring(0,8)}... 📋</span>
-          </div>
-        </div>
-
-        <div class="sheet-section-header">Atividades Recentes</div>
-        <div class="list-group" id="agentActivitiesList">
-          <div style="text-align:center;padding:20px;color:var(--label-tertiary)">Carregando...</div>
-        </div>
-      `;
-      document.getElementById('agentSheet').classList.add('active');
-
-      // Fetch activities for this specific session
+    // Load board data
+    async function loadBoardData() {
+      const refreshIndicator = document.getElementById('refreshIndicator');
+      const refreshText = document.getElementById('refreshText');
+      
       try {
-        const response = await fetch(`/api/sessions/${agent.sessionId}/activities`);
+        refreshIndicator.classList.add('loading');
+        refreshText.textContent = 'Syncing...';
+
+        const response = await fetch(`${API_BASE}/api/board`);
         const data = await response.json();
-        const activities = data.activities || [];
 
-        const listEl = document.getElementById('agentActivitiesList');
-        if (activities.length > 0) {
-          listEl.innerHTML = activities.slice(0, 20).map(a => `
-            <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
-              <div class="activity-icon ${a.type}">${a.icon || toolIcons[a.tags?.[0]] || '📌'}</div>
-              <div class="activity-content">
-                <div class="activity-header">
-                  <span class="activity-title">${a.title || 'Atividade'}</span>
-                  <span class="activity-time" data-timestamp="${a.timestamp}">${ago(a.timestamp)}</span>
-                </div>
-                <div class="activity-desc">${a.description || ''}</div>
-              </div>
-              <span class="activity-chevron">›</span>
-            </div>
-          `).join('');
-        } else {
-          listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Sem atividades</div></div>';
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch board data');
         }
-      } catch (e) {
-        console.error('Failed to load activities:', e);
-        document.getElementById('agentActivitiesList').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div></div>';
-      }
-    }
 
-    function closeAgentSheet() {
-      document.getElementById('agentSheet').classList.remove('active');
-      currentAgent = null;
-    }
+        // Update version
+        document.getElementById('version').textContent = `v${data.version} • ${new Date(data.timestamp).toLocaleTimeString()}`;
 
-    // L2: Open Activity Sheet
-    function openActivitySheet(activity) {
-      currentActivity = activity;
+        // Update stats
+        document.getElementById('statAgents').textContent = data.stats.totalAgents;
+        document.getElementById('statTasks').textContent = data.stats.totalTasks;
+        document.getElementById('statRecurring').textContent = data.stats.recurring;
+        document.getElementById('statEnabled').textContent = data.stats.enabled;
 
-      const tags = activity.tags || [];
-      const toolName = tags.find(t => t !== 'tool' && toolIcons[t]) || tags[0] || 'unknown';
+        // Update agents
+        renderAgents(data.agents);
 
-      document.getElementById('activitySheetTitle').textContent = activity.title || 'Atividade';
-      document.getElementById('activitySheetBody').innerHTML = `
-        <div class="detail-avatar">
-          <div class="detail-avatar-icon">${activity.icon || toolIcons[toolName] || '📌'}</div>
-          <div class="detail-avatar-name">${activity.title || 'Tool Call'}</div>
-          <div class="detail-avatar-role">${activity.type || 'activity'}</div>
-        </div>
+        // Update board
+        renderBoard(data.cards);
 
-        <div class="detail-list">
-          <div class="detail-row"><span class="detail-label">Sessão</span><span class="detail-value">${activity.session || 'N/A'}</span></div>
-          <div class="detail-row"><span class="detail-label">Horário</span><span class="detail-value">${timeStr(activity.timestamp)}</span></div>
-          <div class="detail-row"><span class="detail-label">Tipo</span><span class="detail-value">${activity.type || 'N/A'}</span></div>
-          ${activity.duration ? `<div class="detail-row"><span class="detail-label">Duração</span><span class="detail-value">${activity.duration}ms</span></div>` : ''}
-          ${activity.cost ? `<div class="detail-row"><span class="detail-label">Custo</span><span class="detail-value" style="color:var(--teal)">${money(activity.cost)}</span></div>` : ''}
-        </div>
+        refreshIndicator.classList.remove('loading');
+        refreshText.textContent = 'Live';
 
-        <div class="sheet-section-header">Descrição Completa</div>
-        <div class="detail-list">
-          <div style="padding: var(--space-md); font-size: 15px; line-height: 1.5; color: var(--label-secondary);">
-            ${linkify(activity.description) || 'Sem descrição disponível.'}
-          </div>
-        </div>
-
-        <div class="sheet-section-header">Tags</div>
-        <div class="activity-tags" style="padding: 0 0 var(--space-md);">
-          ${tags.map(t => `<span class="tag${t === toolName ? ' accent' : ''}">${t}</span>`).join('') || '<span class="tag">none</span>'}
-        </div>
-
-        ${activity.input ? `
-          <div class="sheet-section-header">Input</div>
-          <div class="code-block">${typeof activity.input === 'object' ? JSON.stringify(activity.input, null, 2) : activity.input}</div>
-        ` : ''}
-
-        ${activity.output ? `
-          <div class="sheet-section-header">Output</div>
-          <div class="code-block">${typeof activity.output === 'object' ? JSON.stringify(activity.output, null, 2) : String(activity.output).substring(0, 500)}${String(activity.output).length > 500 ? '...' : ''}</div>
-        ` : ''}
-      `;
-      document.getElementById('activitySheet').classList.add('active');
-    }
-
-    function closeActivitySheet() {
-      document.getElementById('activitySheet').classList.remove('active');
-      currentActivity = null;
-    }
-
-    function closeAllSheets() {
-      closeActivitySheet();
-      closeAgentSheet();
-    }
-
-    // ===== Render Functions =====
-
-    // Core crew - always show these
-    const CORE_CREW = ['main', 'nami', 'robin', 'franky', 'zoro', 'sanji', 'chopper', 'luffy', 'usopp', 'brook'];
-
-    // Crew hierarchy - which crew member spawned which agents
-    const CREW_CHILDREN = {
-      robin: ['analysis', 'research', 'docs', 'transcript'],
-      franky: ['infra', 'build', 'scripts', 'mcx'],
-      nami: ['ux', 'design', 'gemini', 'nav'],
-      zoro: ['implement', 'execute', 'code'],
-      sanji: ['api', 'data', 'crud'],
-      chopper: ['debug', 'test', 'skills', 'agent'],
-      usopp: ['slack', 'notify', 'standup', 'alert', 'comm']
-    };
-
-    function isCoreCrew(label) {
-      const key = getKey(label);
-      return CORE_CREW.includes(key);
-    }
-
-    function getParentCrew(label) {
-      const lowerLabel = (label || '').toLowerCase();
-      for (const [crew, keywords] of Object.entries(CREW_CHILDREN)) {
-        if (keywords.some(k => lowerLabel.includes(k))) {
-          return crew;
-        }
-      }
-      return null;
-    }
-
-    // Filter agents by search query
-    function filterAgentsList(query) {
-      const q = (query || '').toLowerCase().trim();
-      const filtered = q ? cachedSessions.filter(s => 
-        (s.label || '').toLowerCase().includes(q) ||
-        getKey(s.label).includes(q) ||
-        (getParentCrew(s.label) || '').includes(q)
-      ) : cachedSessions;
-      
-      renderAgents(filtered, 'allAgentsList');
-      document.getElementById('agentsCount').textContent = filtered.length + ' encontrados';
-    }
-
-    // Filter agents by type (crew/active/inactive/all)
-    function filterAgentsByType(type) {
-      let filtered = cachedSessions;
-      let label = 'todos';
-      
-      if (type === 'crew') {
-        filtered = cachedSessions.filter(s => isCoreCrew(s.label));
-        label = 'crew';
-      } else if (type === 'active') {
-        filtered = cachedSessions.filter(s => s.status !== 'inactive');
-        label = 'ativos';
-      } else if (type === 'inactive') {
-        filtered = cachedSessions.filter(s => s.status === 'inactive');
-        label = 'inativos';
-      }
-      
-      renderAgents(filtered, 'allAgentsList');
-      document.getElementById('agentsCount').textContent = filtered.length + ' ' + label;
-      document.getElementById('agentSearch').value = '';
-      showToast(`Filtro: ${label}`, 'info');
-    }
-
-    // Export data as JSON
-    function exportData() {
-      const data = {
-        exportedAt: new Date().toISOString(),
-        sessions: cachedSessions,
-        activities: cachedActivities,
-        summary: {
-          totalCost: cachedSessions.reduce((sum, s) => sum + (s.cost || 0), 0),
-          totalTokens: cachedSessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0),
-          sessionCount: cachedSessions.length,
-          activityCount: cachedActivities.length
-        }
-      };
-      
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `mcx-export-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      showToast('Dados exportados!', 'success');
-    }
-
-    // Copy to clipboard
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('Copiado: ' + text.substring(0, 20) + '...', 'success');
-      }).catch(() => {
-        showToast('Erro ao copiar', 'error');
-      });
-    }
-
-    // Render operations dashboard
-    function renderOperations(ops) {
-      if (!ops || !ops.system) return;
-
-      // System stats
-      document.getElementById('sysStatus').textContent = ops.system.status === 'online' ? 'Online' : 'Offline';
-      document.getElementById('sysUptime').textContent = formatUptime(ops.system.uptime);
-      document.getElementById('sysMemory').textContent = ops.system.memory + ' MB';
-      document.getElementById('sysCrons').textContent = ops.crons?.enabled || 0;
-
-      // Update status indicator
-      const statusEl = document.getElementById('opsStatus');
-      if (statusEl) {
-        statusEl.innerHTML = ops.system.status === 'online' 
-          ? '● Online' 
-          : '<span style="color:var(--red)">● Offline</span>';
-      }
-
-      // Update crew status based on active sessions
-      updateCrewStatus();
-
-      // Render crons list
-      const cronsList = document.getElementById('opsCronsList');
-      if (cronsList && ops.crons?.list) {
-        const cronIcons = {
-          'always-creating': '🔄',
-          'daily-standup': '🌅',
-          'code-review': '⚔️',
-          'daily-wrap': '📚',
-          'sla-alert': '🚨',
-          'infra-check': '🔧',
-          'doc-sync': '📚',
-          'sprint-planning': '🍊',
-          'sprint-report': '📊',
-          'week-preview': '🌀',
-          'tech-news-daily': '📰'
-        };
-
-        cronsList.innerHTML = ops.crons.list.slice(0, 8).map(cron => {
-          const icon = cronIcons[cron.name] || '⏰';
-          const nextRun = cron.nextRun ? formatNextRun(cron.nextRun) : '--';
-          const statusClass = cron.enabled ? '' : 'disabled';
-          
-          return `
-            <div class="ops-cron-item">
-              <div class="ops-cron-name">
-                <span class="ops-cron-status ${statusClass}"></span>
-                <span>${icon}</span>
-                <span>${cron.name}</span>
-              </div>
-              <div class="ops-cron-next">${nextRun}</div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    function formatUptime(seconds) {
-      if (!seconds) return '--';
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      if (h > 24) return Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
-      if (h > 0) return h + 'h ' + m + 'm';
-      return m + 'm';
-    }
-
-    function formatNextRun(timestamp) {
-      const diff = timestamp - Date.now();
-      if (diff < 0) return 'agora';
-      const mins = Math.floor(diff / 60000);
-      const hours = Math.floor(mins / 60);
-      if (hours > 24) return Math.floor(hours / 24) + 'd';
-      if (hours > 0) return hours + 'h ' + (mins % 60) + 'm';
-      return mins + 'm';
-    }
-
-    // Update crew member status indicators
-    function updateCrewStatus() {
-      if (!cachedSessions) return;
-
-      const crewLabels = {
-        main: ['main'],
-        robin: ['robin', 'robin-research'],
-        franky: ['franky', 'franky-infra'],
-        zoro: ['zoro', 'zoro-impl'],
-        sanji: ['sanji', 'sanji-api'],
-        chopper: ['chopper', 'chopper-debug'],
-        nami: ['nami', 'nami-ux'],
-        usopp: ['usopp', 'usopp-comm']
-      };
-
-      const activeLabels = cachedSessions
-        .filter(s => s.status === 'active' || s.status === 'recent')
-        .map(s => (s.label || '').toLowerCase());
-
-      document.querySelectorAll('.crew-member[data-agent]').forEach(el => {
-        const agent = el.dataset.agent;
-        const labels = crewLabels[agent] || [];
-        const isActive = labels.some(label => 
-          activeLabels.some(active => active.includes(label))
-        );
+      } catch (error) {
+        console.error('Failed to load board data:', error);
+        refreshIndicator.classList.remove('loading');
+        refreshText.textContent = 'Error';
         
-        el.classList.toggle('active', isActive);
-        el.title = el.title.split(' - ')[0] + ' - ' + 
-          (isActive ? '🟢 Trabalhando' : '⚫ Idle');
-      });
+        // Show error in columns
+        ['columnRecurring', 'columnQueued', 'columnInProgress', 'columnReview'].forEach(id => {
+          const col = document.getElementById(id);
+          col.innerHTML = `<div class="error">Failed to load: ${error.message}</div>`;
+        });
+      }
     }
 
-    // Render horizontal scroll cards for agents
-    function renderAgentsScroll(sessions, containerId) {
-      const container = document.getElementById(containerId);
+    function renderAgents(agents) {
+      const oracleTeam = document.getElementById('oracleTeam');
+      const specializedTeam = document.getElementById('specializedTeam');
 
-      if (!sessions.length) {
-        container.innerHTML = '<div class="empty-state" style="padding:20px;text-align:center;color:var(--label-tertiary)">Nenhum agente ativo</div>';
+      const oracle = agents.filter(a => a.team === 'Oracle');
+      const specialized = agents.filter(a => a.team === 'Specialized');
+
+      oracleTeam.innerHTML = oracle.length > 0
+        ? oracle.map(agent => `
+            <div class="agent-item">
+              <div class="agent-avatar">${agent.emoji}</div>
+              <div class="agent-info">
+                <div class="agent-name">${agent.name}</div>
+                <div class="agent-role">${agent.role}</div>
+              </div>
+              <div class="agent-status ${agent.status}"></div>
+            </div>
+          `).join('')
+        : '<div class="empty-column">No oracle agents</div>';
+
+      specializedTeam.innerHTML = specialized.length > 0
+        ? specialized.map(agent => `
+            <div class="agent-item">
+              <div class="agent-avatar">${agent.emoji}</div>
+              <div class="agent-info">
+                <div class="agent-name">${agent.name}</div>
+                <div class="agent-role">${agent.role}</div>
+              </div>
+              <div class="agent-status ${agent.status}"></div>
+            </div>
+          `).join('')
+        : '<div class="empty-column">No specialized agents</div>';
+    }
+
+    function renderBoard(cards) {
+      renderColumn('columnRecurring', 'countRecurring', cards.RECURRING || []);
+      renderColumn('columnQueued', 'countQueued', cards.QUEUED || []);
+      renderColumn('columnInProgress', 'countInProgress', cards['IN PROGRESS'] || []);
+      renderColumn('columnReview', 'countReview', cards.REVIEW || []);
+    }
+
+    function renderColumn(columnId, countId, cards) {
+      const column = document.getElementById(columnId);
+      const count = document.getElementById(countId);
+
+      count.textContent = cards.length;
+
+      if (cards.length === 0) {
+        column.innerHTML = '<div class="empty-column">No tasks</div>';
         return;
       }
 
-      // Separate: core crew first, then other active, then other inactive
-      const coreCrew = sessions.filter(s => isCoreCrew(s.label));
-      const otherActive = sessions.filter(s => !isCoreCrew(s.label) && s.status !== 'inactive');
-      const otherInactive = sessions.filter(s => !isCoreCrew(s.label) && s.status === 'inactive');
-
-      const renderCard = (s, isCore = false) => {
-        const isMain = s.kind === 'main';
-        const isInactive = s.status === 'inactive' && !isCore;
-        const parentCrew = getParentCrew(s.label);
-        const statusColor = s.status === 'active' ? 'var(--green)' : 
-                           s.status === 'recent' ? 'var(--blue)' :
-                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
-        const tooltipText = `${s.label}: ${money(s.cost)} • ${fmt(s.totalTokens || 0)} tokens`;
-        return `
-          <div class="scroll-card ${isMain ? 'main' : ''} ${isCore ? 'crew' : ''} ${isInactive ? 'inactive' : ''}" 
-               onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
-               tabindex="0" role="button"
-               data-tooltip="${tooltipText}"
-               onkeydown="if(event.key==='Enter')openAgentSheet(${JSON.stringify(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;')})">
-            <div class="scroll-card-avatar" style="position:relative;">
-              ${getEmoji(s.label)}
-              <span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
-            </div>
-            <div class="scroll-card-name">${s.label || 'Agent'}</div>
-            <div class="scroll-card-role">${isCore ? getRole(s.label) : (parentCrew ? `${emojis[parentCrew] || '👤'} ${parentCrew}` : (isInactive ? `Inativo (${s.minutesSinceActive}m)` : getRole(s.label)))}</div>
-            <div class="scroll-card-stat">
-              <span>Custo</span>
-              <span class="scroll-card-stat-value">${money(s.cost)}</span>
-            </div>
-            <div class="scroll-card-stat" style="margin-top:4px;">
-              <span>Tokens</span>
-              <span class="scroll-card-stat-value">${fmt(s.totalTokens || 0)}</span>
-            </div>
+      column.innerHTML = cards.map(card => `
+        <div class="card" data-id="${card.id}">
+          <div class="card-header">
+            <div class="card-title">${card.title}</div>
+            <div class="priority-badge priority-${card.priority}">${card.priority}</div>
           </div>
-        `;
-      };
-
-      // Core crew always first and visible
-      let html = coreCrew.map(s => renderCard(s, true)).join('');
-
-      // Then other active agents
-      if (otherActive.length > 0) {
-        if (coreCrew.length > 0) {
-          html += '<div style="flex:0 0 1px;background:var(--separator);margin:0 8px;align-self:stretch;"></div>';
-        }
-        html += otherActive.map(s => renderCard(s, false)).join('');
-      }
-
-      // Then inactive (non-crew) - collapsed by default, show count
-      if (otherInactive.length > 0) {
-        html += `<div class="scroll-card inactive" style="opacity:0.4;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-          <div style="font-size:24px;">💤</div>
-          <div style="font-size:13px;margin-top:8px;">${otherInactive.length} inativos</div>
-        </div>`;
-      }
-
-      container.innerHTML = html;
-    }
-
-    function renderAgents(sessions, containerId, limit) {
-      const container = document.getElementById(containerId);
-
-      // Aggregate by crew member
-      const crewMembers = {
-        main: { emoji: '🌀', name: 'Imu', role: 'Orquestrador', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        zoro: { emoji: '⚔️', name: 'Zoro', role: 'Executor', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        robin: { emoji: '📚', name: 'Robin', role: 'Arqueóloga', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        franky: { emoji: '🔧', name: 'Franky', role: 'Engenheiro', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        chopper: { emoji: '🩺', name: 'Chopper', role: 'Médico', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        nami: { emoji: '🍊', name: 'Nami', role: 'Navegadora', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        usopp: { emoji: '🎯', name: 'Usopp', role: 'Atirador', sessions: [], cost: 0, tokens: 0, status: 'inactive' },
-        sanji: { emoji: '🍳', name: 'Sanji', role: 'Cozinheiro', sessions: [], cost: 0, tokens: 0, status: 'inactive' }
-      };
-
-      // Aggregate sessions into crew members
-      sessions.forEach(s => {
-        const crew = s.parentCrew;
-        if (crew && crewMembers[crew]) {
-          crewMembers[crew].sessions.push(s);
-          crewMembers[crew].cost += s.cost || 0;
-          crewMembers[crew].tokens += s.totalTokens || 0;
-          // Update status (active > recent > idle > inactive)
-          const statusPriority = { active: 0, recent: 1, idle: 2, inactive: 3 };
-          if (statusPriority[s.status] < statusPriority[crewMembers[crew].status]) {
-            crewMembers[crew].status = s.status;
-          }
-        }
-      });
-
-      // Convert to array and sort by cost
-      const crewArray = Object.entries(crewMembers)
-        .map(([key, data]) => ({ key, ...data }))
-        .filter(c => c.sessions.length > 0 || c.key === 'main')
-        .sort((a, b) => b.cost - a.cost);
-
-      if (!crewArray.length) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
-        return;
-      }
-
-      const displayList = limit ? crewArray.slice(0, limit) : crewArray;
-
-      container.innerHTML = displayList.map(crew => {
-        const statusColor = crew.status === 'active' ? 'var(--green)' :
-                           crew.status === 'recent' ? 'var(--blue)' :
-                           crew.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
-        const isMain = crew.key === 'main';
-        const sessionCount = crew.sessions.length;
-
-        return `
-          <div class="agent-row" 
-               onclick='openCrewSheet("${crew.key}", ${JSON.stringify(crew).replace(/'/g, "&#39;")})'
-               tabindex="0" role="button">
-            <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
-              ${crew.emoji}
-              <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
+          ${card.description ? `<div class="card-description">${card.description}</div>` : ''}
+          <div class="card-meta">
+            <div class="card-schedule">
+              <span>⏰</span>
+              <span>${card.schedule}</span>
             </div>
-            <div class="agent-info">
-              <div class="agent-name">
-                ${crew.name}
-                <span class="agent-badge crew">CREW</span>
-                ${sessionCount > 1 ? `<span class="agent-badge solo">${sessionCount}</span>` : ''}
+            ${card.agent ? `
+              <div class="card-agent">
+                <div class="card-agent-avatar">${card.agent.emoji}</div>
+                <span>${card.agent.name.split(' ')[0]}</span>
               </div>
-              <div class="agent-role">${crew.role}</div>
-            </div>
-            <div class="agent-stats">
-              <div class="agent-cost">${money(crew.cost)}</div>
-              <div class="agent-tokens">${fmt(crew.tokens)} tok</div>
-            </div>
-            <span class="agent-chevron">›</span>
+            ` : ''}
           </div>
-        `;
-      }).join('');
-    }
-
-    function openCrewSheet(crewKey, crewData) {
-      // If only one session, open that session directly
-      if (crewData.sessions.length === 1) {
-        openAgentSheet(crewData.sessions[0]);
-        return;
-      }
-      
-      // Otherwise show crew detail with list of sessions
-      document.getElementById('agentSheetTitle').textContent = crewData.name;
-      document.getElementById('agentSheetContent').innerHTML = `
-        <div class="sheet-section">
-          <div class="detail-avatar">
-            <div class="detail-avatar-icon">${crewData.emoji}</div>
-            <div class="detail-avatar-name">${crewData.name}</div>
-            <div class="detail-avatar-role">${crewData.role}</div>
-          </div>
-        </div>
-        <div class="sheet-section">
-          <div class="detail-row">
-            <span class="detail-label">Custo Total</span>
-            <span class="detail-value" style="color:var(--teal)">${money(crewData.cost)}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Tokens Total</span>
-            <span class="detail-value">${fmt(crewData.tokens)}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Sessões</span>
-            <span class="detail-value">${crewData.sessions.length}</span>
-          </div>
-        </div>
-        <div class="sheet-section">
-          <div class="section-header">Sessões</div>
-          ${crewData.sessions.map(s => `
-            <div class="agent-row sub-agent" onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})' style="padding:12px;">
-              <div class="agent-info" style="flex:1;">
-                <div class="agent-name" style="font-size:14px;">${s.label}</div>
-                <div class="agent-role" style="font-size:12px;">${s.status} • ${fmt(s.totalTokens || 0)} tok</div>
-              </div>
-              <div class="agent-cost" style="font-size:14px;">${money(s.cost)}</div>
+          ${card.tags && card.tags.length > 0 ? `
+            <div class="card-tags">
+              ${card.tags.map(tag => `<div class="card-tag">${tag}</div>`).join('')}
             </div>
-          `).join('')}
-        </div>
-      `;
-      document.getElementById('agentSheet').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function renderAgentRow(s, statusColor) {
-      const isMain = s.kind === 'main';
-      const isCore = isCoreCrew(s.label);
-      const isInactive = s.status === 'inactive';
-      const badge = getAgentBadge(s, cachedSessions);
-      return `
-        <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" 
-             onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
-             tabindex="0" role="button"
-             style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
-          <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
-            ${getEmoji(s.label)}
-            <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">
-              ${s.label || 'Agent'}
-              ${isCore ? '<span class="agent-badge crew">CREW</span>' : ''}
-              <span class="agent-badge ${badge}">${badge}</span>
-            </div>
-            <div class="agent-role">${isInactive ? `Inativo há ${s.minutesSinceActive} min` : getRole(s.label)}</div>
-          </div>
-          <div class="agent-stats">
-            <div class="agent-cost">${money(s.cost)}</div>
-            <div class="agent-tokens">${fmt(s.totalTokens || 0)} tok</div>
-          </div>
-          <span class="agent-chevron">›</span>
-        </div>
-      `;
-    }
-
-    function toggleCrewGroup(crew) {
-      const members = document.getElementById('members-' + crew);
-      const expand = document.getElementById('expand-' + crew);
-      if (members.style.display === 'none') {
-        members.style.display = 'block';
-        expand.textContent = '▼';
-      } else {
-        members.style.display = 'none';
-        expand.textContent = '▶';
-      }
-    }
-
-    // Legacy render for compatibility
-    function renderAgentsLegacy(sessions, containerId, limit) {
-      const list = limit ? sessions.slice(0, limit) : sessions;
-      const container = document.getElementById(containerId);
-
-      if (!list.length) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">Nenhum agente ativo</div></div>';
-        return;
-      }
-
-      // Sort: core crew first, then by status, then by cost
-      const sorted = [...list].sort((a, b) => {
-        const aCore = isCoreCrew(a.label) ? 0 : 1;
-        const bCore = isCoreCrew(b.label) ? 0 : 1;
-        if (aCore !== bCore) return aCore - bCore;
-
-        const statusOrder = { active: 0, recent: 1, idle: 2, inactive: 3 };
-        const aStatus = statusOrder[a.status] || 3;
-        const bStatus = statusOrder[b.status] || 3;
-        if (aStatus !== bStatus) return aStatus - bStatus;
-
-        return (b.cost || 0) - (a.cost || 0);
-      });
-
-      container.innerHTML = sorted.map((s) => {
-        const isMain = s.kind === 'main';
-        const isCore = isCoreCrew(s.label);
-        const isInactive = s.status === 'inactive';
-        const state = getAgentState(s, cachedActivities);
-        const badge = getAgentBadge(s, sorted);
-        const statusColor = s.status === 'active' ? 'var(--green)' :
-                           s.status === 'recent' ? 'var(--blue)' :
-                           s.status === 'idle' ? 'var(--orange)' : 'var(--label-tertiary)';
-        const tooltipText = `Clique para ver detalhes de ${s.label}`;
-        return `
-          <div class="agent-row ${isInactive && !isCore ? 'inactive' : ''}" 
-               onclick='openAgentSheet(${JSON.stringify(s).replace(/'/g, "&#39;")})'
-               tabindex="0" role="button"
-               aria-label="${s.label}: ${money(s.cost)}, ${fmt(s.totalTokens || 0)} tokens"
-               onkeydown="if(event.key==='Enter')this.click()"
-               style="${isInactive && !isCore ? 'opacity:0.5;' : ''}">
-            <div class="agent-avatar ${isMain ? 'main' : ''}" style="position:relative;">
-              ${getEmoji(s.label)}
-              <span style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${statusColor};border-radius:50%;border:2px solid var(--bg-secondary);"></span>
-            </div>
-            <div class="agent-info">
-              <div class="agent-name">
-                ${s.label || 'Agent'}
-                ${isCore ? '<span class="agent-badge crew">CREW</span>' : ''}
-                <span class="agent-badge ${badge}">${badge}</span>
-              </div>
-              <div class="agent-role">${isInactive ? `Inativo há ${s.minutesSinceActive} min` : getRole(s.label)}</div>
-            </div>
-            <div class="agent-stats">
-              <div class="agent-cost">${money(s.cost)}</div>
-              <div class="agent-tokens">${fmt(s.totalTokens || 0)} tok</div>
-            </div>
-            <span class="agent-chevron">›</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderActivity(activities, containerId, limit) {
-      const list = limit ? activities.slice(0, limit) : activities;
-      const container = document.getElementById(containerId);
-
-      if (!list.length) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Nenhuma atividade</div></div>';
-        return;
-      }
-
-      container.innerHTML = list.map(a => {
-        const toolName = (a.tags || []).find(t => t !== 'tool' && toolIcons[t]) || a.tags?.[0];
-        return `
-          <div class="activity-row" onclick='openActivitySheet(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
-            <div class="activity-icon ${a.type}">${a.icon || toolIcons[toolName] || '📌'}</div>
-            <div class="activity-content">
-              <div class="activity-header">
-                <span class="activity-title">${a.title || 'Atividade'}</span>
-                <span class="activity-time" data-timestamp="${a.timestamp}">${ago(a.timestamp)}</span>
-              </div>
-              <div class="activity-desc">${a.description || ''}</div>
-              <div class="activity-tags">
-                ${a.session ? `<span class="tag accent">${a.session}</span>` : ''}
-                ${(a.tags || []).filter(t => t !== 'tool').slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}
-              </div>
-            </div>
-            <span class="activity-chevron">›</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // ===== Timeline View (Activity) =====
-    let currentActivityFilter = 'all';
-    let collapsedSessions = new Set();
-
-    // Filter activities
-    function filterActivities(activities, filter) {
-      if (filter === 'all') return activities;
-      if (filter === 'tool') return activities.filter(a => a.type === 'tool');
-      if (filter === 'user') return activities.filter(a => a.type === 'user');
-      if (filter === 'assistant') return activities.filter(a => a.type === 'assistant');
-      if (filter === 'completed') return activities.filter(a => getActivityStatus(a) === 'completed');
-      if (filter === 'failed') return activities.filter(a => getActivityStatus(a) === 'failed');
-      if (filter === 'running') return activities.filter(a => getActivityStatus(a) === 'running');
-      return activities;
-    }
-
-    function setActivityFilter(filter) {
-      currentActivityFilter = filter;
-      
-      // Update filter buttons
-      document.querySelectorAll('.filter-chip').forEach(el => {
-        el.classList.toggle('active', el.dataset.filter === filter);
-      });
-      
-      // Re-render with filter
-      const filtered = filterActivities(cachedActivities, filter);
-      renderTimeline(filtered);
-      
-      // Update counts
-      const activityCountEl = document.getElementById('activityCount');
-      if (activityCountEl) activityCountEl.textContent = filtered.length + ' eventos';
-      
-      // Show toast
-      const filterNames = { all: 'Todos', tool: 'Tools', user: 'User', assistant: 'Assistant', completed: 'Completed', failed: 'Failed' };
-      showToast(`Filtro: ${filterNames[filter] || filter}`, 'info');
-    }
-
-    // Determine activity status
-    function getActivityStatus(activity) {
-      // Check for error states
-      if (activity.type === 'error' || (activity.tags && activity.tags.includes('error'))) {
-        return 'failed';
-      }
-      if (activity.error || activity.status === 'error' || activity.status === 'failed') {
-        return 'failed';
-      }
-
-      // Check for running/pending
-      if (activity.status === 'running' || activity.status === 'pending') {
-        return activity.status;
-      }
-
-      // Check timing - if very recent tool call, might be running
-      if (activity.type === 'tool') {
-        const timeSince = (Date.now() - new Date(activity.timestamp)) / 1000;
-        if (timeSince < 5 && !activity.output && !activity.result) {
-          return 'running';
-        }
-        if (timeSince < 30 && !activity.output && !activity.result) {
-          return 'pending';
-        }
-      }
-
-      return 'completed';
-    }
-
-    // Get status icon
-    function getStatusIcon(status) {
-      switch(status) {
-        case 'completed': return '✓';
-        case 'running': return '●';
-        case 'pending': return '○';
-        case 'failed': return '✕';
-        default: return '●';
-      }
-    }
-
-    // Group activities by session
-    function groupActivitiesBySession(activities) {
-      const groups = {};
-
-      activities.forEach(activity => {
-        const session = activity.session || 'unknown';
-        if (!groups[session]) {
-          groups[session] = [];
-        }
-        groups[session].push(activity);
-      });
-
-      // Sort sessions by most recent activity
-      const sortedGroups = Object.entries(groups).sort((a, b) => {
-        const aTime = new Date(a[1][0]?.timestamp || 0);
-        const bTime = new Date(b[1][0]?.timestamp || 0);
-        return bTime - aTime;
-      });
-
-      return sortedGroups;
-    }
-
-    // Create parent-child relationships (tool call → result)
-    function buildActivityTree(activities) {
-      const result = [];
-      let i = 0;
-
-      while (i < activities.length) {
-        const current = activities[i];
-        const node = { ...current, children: [] };
-
-        // Check if next item is a result of this tool call
-        if (current.type === 'tool' && activities[i + 1]) {
-          const next = activities[i + 1];
-          // If next is a tool_result or same tool with output
-          if (next.type === 'tool_result' ||
-              (next.toolCallId && next.toolCallId === current.toolCallId) ||
-              (next.parentId && next.parentId === current.id)) {
-            node.children.push(next);
-            i++; // Skip the child
-          }
-        }
-
-        result.push(node);
-        i++;
-      }
-
-      return result;
-    }
-
-    // Filter activities
-    function filterActivities(activities, filter) {
-      if (filter === 'all') return activities;
-      if (filter === 'completed' || filter === 'failed' || filter === 'running' || filter === 'pending') {
-        return activities.filter(a => getActivityStatus(a) === filter);
-      }
-      return activities.filter(a => a.type === filter);
-    }
-
-    // Set filter
-    function setActivityFilter(filter) {
-      currentActivityFilter = filter;
-
-      // Update filter chips UI
-      document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.filter === filter);
-      });
-
-      // Re-render timeline
-      renderTimeline(cachedActivities);
-    }
-
-    // Toggle session collapse
-    function toggleSessionCollapse(sessionKey) {
-      if (collapsedSessions.has(sessionKey)) {
-        collapsedSessions.delete(sessionKey);
-      } else {
-        collapsedSessions.add(sessionKey);
-      }
-      renderTimeline(cachedActivities);
-    }
-
-    // Main timeline render function
-    function renderTimeline(activities) {
-      const container = document.getElementById('timelineContainer');
-      if (!container) return;
-
-      // Update filter counts
-      const toolCount = activities.filter(a => a.type === 'tool').length;
-      const userCount = activities.filter(a => a.type === 'user').length;
-      const assistantCount = activities.filter(a => a.type === 'assistant').length;
-
-      const filterCountAll = document.getElementById('filterCountAll');
-      const filterCountTool = document.getElementById('filterCountTool');
-      const filterCountUser = document.getElementById('filterCountUser');
-      const filterCountAssistant = document.getElementById('filterCountAssistant');
-
-      if (filterCountAll) filterCountAll.textContent = activities.length;
-      if (filterCountTool) filterCountTool.textContent = toolCount;
-      if (filterCountUser) filterCountUser.textContent = userCount;
-      if (filterCountAssistant) filterCountAssistant.textContent = assistantCount;
-
-      // Apply filters
-      const filtered = filterActivities(activities, currentActivityFilter);
-
-      if (!filtered.length) {
-        container.innerHTML = `
-          <div class="timeline-empty">
-            <div class="timeline-empty-icon">📭</div>
-            <div class="timeline-empty-title">Nenhuma atividade</div>
-            <div class="timeline-empty-desc">
-              ${currentActivityFilter !== 'all' ? 'Tente outro filtro' : 'Aguardando eventos...'}
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      // Group by session
-      const groups = groupActivitiesBySession(filtered);
-
-      // Render groups
-      container.innerHTML = groups.map(([sessionKey, sessionActivities]) => {
-        const isCollapsed = collapsedSessions.has(sessionKey);
-        const agentKey = getKey(sessionKey);
-        const isMain = agentKey === 'main';
-
-        // Build activity tree for parent-child relationships
-        const activityTree = buildActivityTree(sessionActivities);
-
-        // Calculate session stats
-        const completedCount = sessionActivities.filter(a => getActivityStatus(a) === 'completed').length;
-        const failedCount = sessionActivities.filter(a => getActivityStatus(a) === 'failed').length;
-        const runningCount = sessionActivities.filter(a => getActivityStatus(a) === 'running').length;
-
-        return `
-          <div class="session-group">
-            <div class="session-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleSessionCollapse('${sessionKey}')">
-              <div class="session-header-avatar ${isMain ? 'main' : ''}">
-                ${getEmoji(sessionKey)}
-              </div>
-              <div class="session-header-info">
-                <div class="session-header-name">
-                  ${sessionKey || 'Unknown'}
-                  <span class="session-count-badge">${sessionActivities.length} eventos</span>
-                </div>
-                <div class="session-header-meta">
-                  ${completedCount ? `<span style="color:var(--green)">✓${completedCount}</span> ` : ''}
-                  ${runningCount ? `<span style="color:var(--blue)">●${runningCount}</span> ` : ''}
-                  ${failedCount ? `<span style="color:var(--red)">✕${failedCount}</span>` : ''}
-                  ${!completedCount && !runningCount && !failedCount ? 'Sem atividades' : ''}
-                </div>
-              </div>
-              <span class="session-header-toggle">▼</span>
-            </div>
-
-            <div class="timeline-items ${isCollapsed ? 'collapsed' : ''}" style="max-height: ${isCollapsed ? 0 : activityTree.length * 120 + 50}px">
-              <div class="timeline-line"></div>
-              ${activityTree.map(node => renderTimelineNode(node)).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // Render a single timeline node (with optional children)
-    function renderTimelineNode(node) {
-      const status = getActivityStatus(node);
-      const statusIcon = getStatusIcon(status);
-      const toolName = (node.tags || []).find(t => t !== 'tool' && toolIcons[t]) || node.tags?.[0];
-      const icon = node.icon || toolIcons[toolName] || '📌';
-
-      let html = `
-        <div class="timeline-node" onclick='openActivitySheet(${JSON.stringify(node).replace(/'/g, "&#39;")})'>
-          <div class="timeline-status ${status}">${statusIcon}</div>
-          <div class="timeline-card ${status}">
-            <div class="timeline-card-header">
-              <div class="timeline-card-title">
-                <span class="timeline-card-icon">${icon}</span>
-                ${node.title || 'Atividade'}
-              </div>
-              <span class="timeline-card-time">${timeStr(node.timestamp)}</span>
-            </div>
-            <div class="timeline-card-desc">${node.description || ''}</div>
-            <div class="timeline-card-footer">
-              <div class="timeline-card-tags">
-                <span class="timeline-tag type-${node.type}">${node.type}</span>
-                ${(node.tags || []).filter(t => t !== 'tool' && t !== node.type).slice(0, 2).map(t =>
-                  `<span class="timeline-tag">${t}</span>`
-                ).join('')}
-                ${node.duration ? `<span class="timeline-tag">${node.duration}ms</span>` : ''}
-              </div>
-              <span class="timeline-card-chevron">›</span>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Render children (tool results)
-      if (node.children && node.children.length) {
-        html += node.children.map(child => {
-          const childStatus = getActivityStatus(child);
-          const childIcon = getStatusIcon(childStatus);
-
-          return `
-            <div class="timeline-node child" onclick='openActivitySheet(${JSON.stringify(child).replace(/'/g, "&#39;")})'>
-              <div class="timeline-status ${childStatus}">${childIcon}</div>
-              <div class="timeline-card ${childStatus}">
-                <div class="timeline-card-header">
-                  <div class="timeline-card-title">
-                    <span class="timeline-card-icon">↳</span>
-                    ${child.title || 'Result'}
-                  </div>
-                  <span class="timeline-card-time">${ago(child.timestamp)}</span>
-                </div>
-                ${child.description ? `<div class="timeline-card-desc">${child.description}</div>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      return html;
-    }
-
-    function renderCostBreakdown(sessions) {
-      const container = document.getElementById('costBreakdown');
-      if (!container || !sessions.length) return;
-
-      const maxCost = Math.max(...sessions.map(s => s.cost || 0));
-      const sorted = [...sessions].sort((a, b) => (b.cost || 0) - (a.cost || 0)).slice(0, 8);
-
-      container.innerHTML = sorted.map(s => {
-        const cost = s.cost || 0;
-        const pct = maxCost > 0 ? (cost / maxCost) * 100 : 0;
-        const isCore = isCoreCrew(s.label);
-        return `
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-            <div style="width:24px;text-align:center;">${getEmoji(s.label)}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:500;margin-bottom:4px;">${s.label}${isCore ? ' ⭐' : ''}</div>
-              <div style="height:8px;background:var(--fill);border-radius:4px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:4px;transition:width 0.3s;"></div>
-              </div>
-            </div>
-            <div style="font-size:14px;font-weight:600;color:var(--teal);min-width:60px;text-align:right;">${money(cost)}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderTools(activities) {
-      const counts = {};
-      activities.forEach(a => {
-        if (a.type === 'tool' && a.tags) {
-          a.tags.forEach(t => { if (t !== 'tool') counts[t] = (counts[t] || 0) + 1; });
-        }
-      });
-
-      // Render cost breakdown
-      renderCostBreakdown(cachedSessions);
-
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      document.getElementById('toolsCount').textContent = sorted.length + ' tipos';
-
-      const container = document.getElementById('toolsList');
-      if (!sorted.length) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-title">Nenhuma ferramenta</div></div>';
-        return;
-      }
-
-      container.innerHTML = sorted.map(([tool, count]) => `
-        <div class="tool-chip">
-          <span class="tool-chip-icon">${toolIcons[tool] || '🔧'}</span>
-          <span>${tool}</span>
-          <span class="tool-chip-count">${count}x</span>
+          ` : ''}
         </div>
       `).join('');
     }
 
-    // ===== Load Data =====
-    async function loadData(showIndicator = false) {
-      const statusDot = document.querySelector('.status-dot');
-      if (showIndicator) {
-        document.getElementById('refreshIndicator').classList.add('active');
-        // Haptic feedback on manual refresh
-        if (navigator.vibrate) navigator.vibrate(10);
-      }
-      if (statusDot) statusDot.classList.add('loading');
+    // Initial load
+    loadBoardData();
 
-      try {
-        const [stats, sessions, activities, health, operations] = await Promise.all([
-          fetchWithRetry('/api/stats'),
-          fetchWithRetry('/api/sessions'),
-          fetchWithRetry('/api/activities?limit=50'),
-          fetch('/api/health').then(r => r.json()).catch(() => ({})),
-          fetch('/api/operations').then(r => r.json()).catch(() => ({ operations: {} }))
-        ]);
-
-        // Cache data for drill-down
-        cachedSessions = sessions;
-        cachedActivities = activities;
-
-        // Render operations dashboard
-        renderOperations(operations.operations || {});
-
-        // Hero
-        const cost = stats.totalCost || 0;
-        const pct = Math.min((cost / 15) * 100, 100);
-        document.getElementById('totalCost').textContent = money(cost);
-        document.getElementById('tokensSub').textContent = fmt(stats.totalTokens || 0) + ' tokens';
-        document.getElementById('costFill').style.width = pct + '%';
-        document.getElementById('costPercent').textContent = pct.toFixed(1) + '% usado';
-
-        // Stats
-        document.getElementById('statAgents').textContent = stats.sessionCount || 0;
-        document.getElementById('statMessages').textContent = (stats.totalMessages?.user || 0) + (stats.totalMessages?.assistant || 0);
-        document.getElementById('statTools').textContent = stats.totalToolCalls || 0;
-        document.getElementById('statTokens').textContent = fmt(stats.totalTokens || 0);
-
-        // Agents - Horizontal scroll + list
-        renderAgentsScroll(sessions, 'agentsScroll');
-        renderAgents(sessions, 'agentsList', 4);
-        renderAgents(sessions, 'allAgentsList');
-        // Desktop: top agents by cost
-        const topByCost = [...sessions].sort((a, b) => (b.cost || 0) - (a.cost || 0)).slice(0, 5);
-        renderAgents(topByCost, 'agentsListDesktop');
-        document.getElementById('agentsCount').textContent = sessions.length + ' ativos';
-        
-        // Agent stats
-        const crewCount = sessions.filter(s => isCoreCrew(s.label)).length;
-        const activeCount = sessions.filter(s => s.status !== 'inactive').length;
-        const inactiveCount = sessions.filter(s => s.status === 'inactive').length;
-        const totalAgentCost = sessions.reduce((sum, s) => sum + (s.cost || 0), 0);
-        
-        const crewCountEl = document.getElementById('crewCount');
-        const activeCountEl = document.getElementById('activeCount');
-        const inactiveCountEl = document.getElementById('inactiveCount');
-        const agentsTotalCostEl = document.getElementById('agentsTotalCost');
-        
-        if (crewCountEl) crewCountEl.textContent = crewCount;
-        if (activeCountEl) activeCountEl.textContent = activeCount;
-        if (inactiveCountEl) inactiveCountEl.textContent = inactiveCount;
-        if (agentsTotalCostEl) agentsTotalCostEl.textContent = money(totalAgentCost);
-
-        // Activity
-        renderActivity(activities, 'activityList', 5);
-        renderTimeline(activities);  // New timeline view
-        const activityCountEl = document.getElementById('activityCount');
-        if (activityCountEl) activityCountEl.textContent = activities.length + ' eventos';
-
-        // Tools
-        renderTools(activities);
-
-        // Update time
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
-        // Update server uptime
-        if (health.uptime) {
-          const uptimeEl = document.getElementById('serverUptime');
-          if (uptimeEl) {
-            const h = Math.floor(health.uptime / 3600);
-            const m = Math.floor((health.uptime % 3600) / 60);
-            uptimeEl.textContent = h > 0 ? `${h}h${m}m` : `${m}m`;
-          }
-        }
-
-        // Update tab badges
-        const activeAgents = sessions.filter(s => s.status === 'active').length;
-        const agentsBadge = document.getElementById('agentsBadge');
-        if (agentsBadge) {
-          if (activeAgents > 0) {
-            agentsBadge.textContent = activeAgents;
-            agentsBadge.style.display = 'flex';
-            agentsBadge.style.background = 'var(--green)';
-          } else {
-            agentsBadge.style.display = 'none';
-          }
-        }
-
-        const failedActivities = activities.filter(a => getActivityStatus(a) === 'failed').length;
-        const activityBadge = document.getElementById('activityBadge');
-        if (activityBadge) {
-          if (failedActivities > 0) {
-            activityBadge.textContent = failedActivities;
-            activityBadge.style.display = 'flex';
-          } else {
-            activityBadge.style.display = 'none';
-          }
-        }
-
-      } catch (e) {
-        console.error('Load error:', e);
-        showToast('Erro ao carregar dados', 'error');
-      }
-
-      const statusDotEnd = document.querySelector('.status-dot');
-      if (statusDotEnd) statusDotEnd.classList.remove('loading');
-
-      setTimeout(() => {
-        document.getElementById('refreshIndicator').classList.remove('active');
-      }, 500);
-    }
-
-    // Toast notifications
-    function showToast(message, type = 'info') {
-      // Haptic feedback
-      if (navigator.vibrate) navigator.vibrate(10);
-      
-      const existing = document.querySelector('.toast');
-      if (existing) existing.remove();
-      
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `
-        <span>${type === 'error' ? '⚠️' : type === 'success' ? '✓' : 'ℹ️'}</span>
-        <span>${message}</span>
-      `;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => toast.classList.add('show'), 10);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
-
-    // ===== Touch Gestures =====
-    // Pull to refresh
-    let touchStartY = 0;
-    document.addEventListener('touchstart', e => {
-      if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
-    });
-    document.addEventListener('touchend', e => {
-      if (touchStartY && window.scrollY === 0 && e.changedTouches[0].clientY - touchStartY > 80) {
-        loadData(true);
-      }
-      touchStartY = 0;
-    });
-
-    // Swipe to close sheets
-    let sheetTouchStart = 0;
-
-    document.querySelector('#agentSheet .sheet-content')?.addEventListener('touchstart', e => {
-      sheetTouchStart = e.touches[0].clientY;
-    });
-    document.querySelector('#agentSheet .sheet-content')?.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeAgentSheet();
-    });
-
-    document.querySelector('#activitySheet .sheet-content')?.addEventListener('touchstart', e => {
-      sheetTouchStart = e.touches[0].clientY;
-    });
-    document.querySelector('#activitySheet .sheet-content')?.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - sheetTouchStart > 80) closeActivitySheet();
-    });
-
-    // Swipe left/right to navigate tabs
-    let swipeStartX = 0;
-    let swipeStartY = 0;
-    const views = ['overview', 'agents', 'tools', 'activity'];
-    
-    document.querySelector('main')?.addEventListener('touchstart', e => {
-      swipeStartX = e.touches[0].clientX;
-      swipeStartY = e.touches[0].clientY;
-    });
-    
-    document.querySelector('main')?.addEventListener('touchend', e => {
-      const diffX = e.changedTouches[0].clientX - swipeStartX;
-      const diffY = e.changedTouches[0].clientY - swipeStartY;
-      
-      // Only trigger if horizontal swipe is dominant
-      if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY) * 2) {
-        const currentView = document.querySelector('.view.active')?.id?.replace('view-', '');
-        const currentIndex = views.indexOf(currentView);
-        
-        if (diffX > 0 && currentIndex > 0) {
-          // Swipe right - go to previous tab
-          switchView(views[currentIndex - 1]);
-        } else if (diffX < 0 && currentIndex < views.length - 1) {
-          // Swipe left - go to next tab
-          switchView(views[currentIndex + 1]);
-        }
-      }
-    });
-
-    // ===== Init =====
-    loadData();
-    
-    // Auto-refresh every 30 seconds
-    let refreshInterval = setInterval(() => loadData(), 30000);
-    
-    // Update timestamps every 60 seconds
-    setInterval(() => {
-      document.querySelectorAll('.activity-time').forEach(el => {
-        const ts = el.dataset.timestamp;
-        if (ts) el.textContent = ago(ts);
-      });
-    }, 60000);
-    
-    // Pause refresh when tab is hidden
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        clearInterval(refreshInterval);
-      } else {
-        loadData();
-        refreshInterval = setInterval(() => loadData(), 30000);
-      }
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      // Escape closes sheets
-      if (e.key === 'Escape') {
-        if (document.getElementById('activitySheet').classList.contains('active')) {
-          closeActivitySheet();
-        } else if (document.getElementById('agentSheet').classList.contains('active')) {
-          closeAgentSheet();
-        }
-      }
-      // R to refresh
-      if (e.key === 'r' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
-        loadData(true);
-      }
-      // 1-4 for tabs
-      if (e.key >= '1' && e.key <= '4' && document.activeElement.tagName !== 'INPUT') {
-        const tabs = ['overview', 'agents', 'tools', 'activity'];
-        switchView(tabs[parseInt(e.key) - 1]);
-      }
-    });
-
-    // Scroll to top button visibility
-    window.addEventListener('scroll', () => {
-      const btn = document.getElementById('scrollTopBtn');
-      if (btn) btn.style.display = window.scrollY > 300 ? 'block' : 'none';
-    });
+    // Auto-refresh
+    setInterval(loadBoardData, REFRESH_INTERVAL);
   </script>
 </body>
 </html>

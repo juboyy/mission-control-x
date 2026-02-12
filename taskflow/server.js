@@ -12,8 +12,15 @@ const zlib = require('zlib');
 const os = require('os');
 const crypto = require('crypto');
 
+// ===== Import MCX Infrastructure =====
+const agentSpawner = require('./lib/agent-spawner');
+const messageQueue = require('./lib/message-queue');
+const heartbeat = require('./lib/heartbeat');
+const metricsCollector = require('./lib/metrics');
+const alerts = require('./lib/alerts');
+
 // ===== Configuration =====
-const VERSION = '2.13.0';
+const VERSION = '2.14.0'; // MCX Infrastructure added
 const PORT = process.env.PORT || 18950;
 const OPENCLAW_SESSIONS = path.join(process.env.HOME, '.openclaw', 'agents', 'main', 'sessions');
 const STATS_FILE = path.join(__dirname, 'data', 'session-stats.json');
@@ -1107,6 +1114,35 @@ const routes = {
     };
   },
 
+  'GET /api/board': async () => {
+    // Fetch cron data and transform to Kanban board format
+    const { execSync } = require('child_process');
+    try {
+      const cronData = execSync('openclaw cron list --json 2>/dev/null', { encoding: 'utf8', timeout: 5000 });
+      const parsed = JSON.parse(cronData);
+      
+      // Load MCX data transformer  
+      const { transformCronsToMCX } = require('./js/mcx-data.js');
+      const mcxData = transformCronsToMCX(parsed.jobs || []);
+      
+      return {
+        success: true,
+        version: VERSION,
+        ...mcxData,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      logger.error('Failed to fetch board data', { error: error.message });
+      return {
+        success: false,
+        error: 'Failed to fetch cron data from OpenClaw',
+        agents: [],
+        cards: { RECURRING: [], QUEUED: [], 'IN PROGRESS': [], REVIEW: [] },
+        stats: { totalAgents: 0, totalTasks: 0, enabled: 0, recurring: 0, queued: 0, inProgress: 0 }
+      };
+    }
+  },
+
   'GET /api/timeline': async (req, res, query) => {
     const limit = parseInt(query.limit) || 50;
     const activities = await activityRepo.findRecent(limit);
@@ -1130,6 +1166,133 @@ const routes = {
       timeline: Object.entries(byHour).map(([hour, items]) => ({ hour, items, count: items.length }))
     };
   },
+
+  // ===== MCX Infrastructure Endpoints (v2.14.0) =====
+
+  // Agent Management
+  'POST /api/agents/spawn': async (req, res) => {
+    const body = await parseBody(req);
+    const { label, task, model, timeout, budget } = body;
+    
+    if (!label || !task) {
+      throw new ApiError(400, 'label and task are required', {
+        missing: [!label && 'label', !task && 'task'].filter(Boolean)
+      });
+    }
+    
+    try {
+      const result = await agentSpawner.spawn(label, task, {
+        model: model || 'google-antigravity/claude-opus-4-6-thinking',
+        timeout: timeout || 600,
+        budget: budget || 1.0
+      });
+      return { success: true, result };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to spawn agent', { cause: error.message });
+    }
+  },
+
+  'GET /api/agents/status': async (req, res) => {
+    try {
+      const agents = await agentSpawner.listAll();
+      return {
+        success: true,
+        timestamp: new Date().toISOString(),
+        agents,
+        stats: {
+          total: agents.length,
+          active: agents.filter(a => a.status === 'busy').length,
+          idle: agents.filter(a => a.status === 'idle').length,
+          done: agents.filter(a => a.status === 'done').length
+        }
+      };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to get agent status', { cause: error.message });
+    }
+  },
+
+  // Message Queue
+  'POST /api/messages/send': async (req, res) => {
+    const body = await parseBody(req);
+    
+    if (!body.from || !body.to || !body.task) {
+      throw new ApiError(400, 'from, to, and task are required', {
+        missing: [!body.from && 'from', !body.to && 'to', !body.task && 'task'].filter(Boolean)
+      });
+    }
+    
+    try {
+      const messageId = await messageQueue.send(body);
+      return { success: true, messageId };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to send message', { cause: error.message });
+    }
+  },
+
+  'GET /api/messages/:agent': async (req, res, query, params) => {
+    try {
+      const messages = await messageQueue.getMessages(params.agent);
+      return { success: true, messages, count: messages.length };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to get messages', { cause: error.message });
+    }
+  },
+
+  // Heartbeat Monitor
+  'GET /api/heartbeat': async (req, res) => {
+    return {
+      success: true,
+      ...heartbeat.getStatus()
+    };
+  },
+
+  // Advanced Metrics
+  'GET /api/metrics/advanced': async (req, res, query) => {
+    try {
+      const hours = parseInt(query.hours) || 24;
+      const summary = metricsCollector.getSummary(hours);
+      return { success: true, ...summary };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to get metrics summary', { cause: error.message });
+    }
+  },
+
+  // Alerts
+  'GET /api/alerts': async (req, res) => {
+    try {
+      const active = alerts.getActive();
+      return { success: true, alerts: active, count: active.length };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to get alerts', { cause: error.message });
+    }
+  },
+
+  // Cost Metrics (from extract-costs.py output)
+  'GET /api/metrics/cost': async (req, res) => {
+    try {
+      const costFile = path.join(__dirname, 'data', 'cost-metrics.json');
+      if (!fs.existsSync(costFile)) {
+        return {
+          success: true,
+          message: 'No cost data yet. Run scripts/extract-costs.py first.',
+          by_model: {},
+          by_agent: {},
+          total_cost: 0,
+          total_tokens: 0
+        };
+      }
+      
+      const data = JSON.parse(fs.readFileSync(costFile, 'utf8'));
+      return {
+        success: true,
+        ...data
+      };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to read cost metrics', { cause: error.message });
+    }
+  },
+
+  // ===== End MCX Infrastructure =====
 
   'GET /api/operations': async () => {
     // Read crons from OpenClaw
@@ -1291,6 +1454,7 @@ function matchRoute(method, pathname) {
     'GET /api/sessions/:id/activities': /^\/api\/sessions\/([^/]+)\/activities$/,
     'GET /api/activities/:id': /^\/api\/activities\/([^/]+)$/,
     'GET /api/notes/:activityId': /^\/api\/notes\/([^/]+)$/,
+    'GET /api/messages/:agent': /^\/api\/messages\/([^/]+)$/,
     'PATCH /api/activities/:id/status': /^\/api\/activities\/([^/]+)\/status$/,
     'DELETE /api/bookmarks/:id': /^\/api\/bookmarks\/([^/]+)$/
   };
@@ -1337,6 +1501,16 @@ const dynamicRoutes = {
   'GET /api/notes/:activityId': async (req, res, query, params) => {
     const notes = userDataRepo.getNotes(params.id);
     return { success: true, notes, activityId: params.id };
+  },
+
+  // GET /api/messages/:agent
+  'GET /api/messages/:agent': async (req, res, query, params) => {
+    try {
+      const messages = await messageQueue.getMessages(params.id);
+      return { success: true, messages, count: messages.length, agent: params.id };
+    } catch (error) {
+      throw new ApiError(500, 'Failed to get messages', { cause: error.message });
+    }
   },
 
   // PATCH /api/activities/:id/status - Atualizar status
@@ -1462,7 +1636,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Static file serving
-  let filePath = pathname === '/' ? '/index.html' : pathname;
+  let filePath = pathname === '/' ? '/mcx-dashboard.html' : pathname;
   const fullPath = path.join(STATIC_DIR, filePath);
 
   // Security: prevent directory traversal
@@ -1538,6 +1712,9 @@ const server = http.createServer(async (req, res) => {
 
 // ===== Start Server =====
 server.listen(PORT, '0.0.0.0', () => {
+  // Start heartbeat monitor
+  heartbeat.start();
+  
   logger.info('Server started', { version: VERSION, port: PORT });
   console.log(`
 ╔═══════════════════════════════════════════╗
@@ -1551,6 +1728,9 @@ server.listen(PORT, '0.0.0.0', () => {
 ║  CRUD:  /api/notes, /api/bookmarks        ║
 ║         /api/activities/:id/status        ║
 ║         /api/bookmarks/suggestions        ║
+║  MCX:   /api/agents/spawn, /api/agents/status ║
+║         /api/messages/send, /api/heartbeat ║
+║         /api/metrics/cost, /api/alerts    ║
 ║  Data:  Real-time OpenClaw sessions       ║
 ║  New:   Logging, Rate Limit, Compression  ║
 ╚═══════════════════════════════════════════╝
