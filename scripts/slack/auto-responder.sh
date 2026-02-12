@@ -39,16 +39,25 @@ for CHANNEL in $CHANNELS; do
         
         echo "[$(date -Iseconds)] Pergunta em $CHANNEL_ID de $USER: $TEXT"
         
-        # Gerar resposta via OpenClaw sessions_send
+        # Limpar menção
         QUESTION=$(echo "$TEXT" | sed 's/<@[A-Z0-9]*>//g' | xargs)
         
-        ANSWER=$(timeout 30 bash -c "
-            echo 'Responda esta pergunta do time no Slack de forma técnica e concisa (max 300 palavras):
-
-$QUESTION
-
-Use contexto do código em /home/ubuntu/.openclaw/workspace/revenue-OS-1622 se relevante.' | head -c 2000
-        " 2>&1 || echo "⏱️ Processando sua pergunta... (pode demorar um pouco)")
+        # Gerar resposta via OpenClaw (isolated session)
+        ANSWER=$(timeout 45 bash -c "
+            cd /home/ubuntu/.openclaw/workspace
+            echo '$QUESTION' | openclaw sessions spawn \
+              --task 'Responda esta pergunta do time revenue-OS de forma técnica e concisa (max 300 palavras). Use contexto do código em /home/ubuntu/.openclaw/workspace/revenue-OS-1622 se relevante. Seja direto, sem repetir a pergunta.' \
+              --cleanup delete \
+              --timeout 40 2>&1 | tail -100
+        " 2>&1 || echo "⏱️ Processando sua pergunta... (enviando em background)")
+        
+        # Filtrar apenas a resposta útil (remover logs)
+        CLEAN_ANSWER=$(echo "$ANSWER" | grep -v "session_spawn\|sessionKey\|Spawning\|Waiting" | tail -20 | head -15)
+        
+        # Se vazio, usar fallback
+        if [ -z "$CLEAN_ANSWER" ]; then
+            CLEAN_ANSWER="🤔 Analisando sua pergunta... Respondo em instantes!"
+        fi
         
         # Enviar resposta em thread
         curl -s -X POST https://slack.com/api/chat.postMessage \
@@ -57,7 +66,7 @@ Use contexto do código em /home/ubuntu/.openclaw/workspace/revenue-OS-1622 se r
           -d "{
             \"channel\": \"$CHANNEL_ID\",
             \"thread_ts\": \"$TS\",
-            \"text\": $(echo "$ANSWER" | jq -Rs .)
+            \"text\": $(echo "$CLEAN_ANSWER" | jq -Rs .)
           }" > /dev/null
         
         echo "[$(date -Iseconds)] ✅ Respondido em $CHANNEL_ID thread $TS"
