@@ -40,7 +40,17 @@ TICKET_JSON=$(curl -s -X GET \
 SUMMARY=$(echo "$TICKET_JSON" | jq -r '.fields.summary')
 STATUS=$(echo "$TICKET_JSON" | jq -r '.fields.status.name')
 SP=$(echo "$TICKET_JSON" | jq -r '.fields.customfield_10016 // 0')
-EPIC_NAME=$(echo "$TICKET_JSON" | jq -r '.fields.customfield_10014 // "N/A"')
+
+# Epic name via parent (field correto)
+EPIC_KEY=$(echo "$TICKET_JSON" | jq -r '.fields.parent.key // empty')
+if [ -n "$EPIC_KEY" ]; then
+    EPIC_JSON=$(curl -s -X GET \
+        -u "$JIRA_USER:$JIRA_TOKEN" \
+        "$JIRA_DOMAIN/rest/api/3/issue/$EPIC_KEY?fields=summary")
+    EPIC_NAME=$(echo "$EPIC_JSON" | jq -r '.fields.summary // "N/A"')
+else
+    EPIC_NAME="Sem EPIC"
+fi
 
 log "Ticket: $SUMMARY (Status: $STATUS, SP: $SP)"
 

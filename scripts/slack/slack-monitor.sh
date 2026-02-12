@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/dedupe-manager.sh"
 
 # Carregar credenciais Jira
 JIRA_USER="art@vivaldi.finance"
-JIRA_TOKEN="${JIRA_TOKEN:-$(grep '^JIRA_TOKEN=' /home/ubuntu/.openclaw/workspace/.env 2>/dev/null | cut -d'=' -f2)}"
+JIRA_TOKEN="$(grep '^JIRA_TOKEN=' /home/ubuntu/.openclaw/workspace/.env 2>/dev/null | cut -d'=' -f2)"
 JIRA_DOMAIN="https://vivaldi-revopos.atlassian.net"
 
 log "🎯 USOPP - Slack Autonomous Monitor iniciando..."
@@ -30,8 +30,7 @@ log "Última verificação: $(date -d @$LAST_CHECK +'%H:%M BRT')"
 # 1. MONITORAR NOVOS TICKETS CONCLUÍDOS (via Jira API)
 log "Verificando tickets concluídos recentemente..."
 
-JIRA_USER="${JIRA_USER:-art@vivaldi.finance}"
-JIRA_TOKEN="${JIRA_TOKEN:-$(grep '^JIRA_TOKEN=' /home/ubuntu/.openclaw/workspace/.env 2>/dev/null | cut -d'=' -f2)}"
+# Credentials already loaded above
 
 # Buscar tickets que transitaram para CONCLUIDO nas últimas 10min
 COMPLETED_JSON=$(curl -s -X POST \
