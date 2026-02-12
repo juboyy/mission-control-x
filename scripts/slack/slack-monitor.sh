@@ -9,6 +9,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/slack-client.sh"
 source "$SCRIPT_DIR/dedupe-manager.sh"
 
+# Carregar credenciais Jira
+JIRA_USER="art@vivaldi.finance"
+JIRA_TOKEN="${JIRA_TOKEN:-$(grep '^JIRA_TOKEN=' /home/ubuntu/.openclaw/workspace/.env 2>/dev/null | cut -d'=' -f2)}"
+JIRA_DOMAIN="https://vivaldi-revopos.atlassian.net"
+
 log "🎯 USOPP - Slack Autonomous Monitor iniciando..."
 
 # Carregar estado anterior
@@ -52,7 +57,6 @@ if [ "$COMPLETED_COUNT" -gt 0 ]; then
             
             # Marcar como notificado (usando dedupe-manager)
             mark_notified "ticket_completed" "$TICKET_KEY"
-            mv "$STATE_FILE.tmp" "$STATE_FILE"
         else
             log "Ticket $TICKET_KEY já notificado (skip)"
         fi
